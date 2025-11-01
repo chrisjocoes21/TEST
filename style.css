@@ -10,7 +10,7 @@
     --secondary-color: #144272;
     --accent-color: #2C74B3;
     --highlight-color: #205295;
-    --background-color: #f3f4f6; /* Modificado: de #ffffff a gris SaaS */
+    --background-color: #f3f4f6; /* Idea 1: Fondo gris SaaS */
     --card-bg: #ffffff;
     --text-primary: #000000;
     --text-secondary: #000000;
@@ -25,7 +25,7 @@
     --warning-color: #eab308;
     --alert-color: #dc2626;
     --negative-balance: rgba(220, 38, 38, 0.8);
-    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Modificado: Sombra más suave y moderna */
+    --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* Idea 1: Sombra moderna */
     --transition: all 0.2s ease;
     --gold-gradient: linear-gradient(135deg, #FFD700, #FFA500);
     --silver-gradient: linear-gradient(135deg, #C0C0C0, #A9A9A9);
@@ -53,16 +53,14 @@ body {
     flex-direction: column;
 }
 
-/* Overlay para difuminar fondo */
+/* Overlay (Optimización 2) */
 .page-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(255, 255, 255, 0.85); /* Modificado: 0.5 a 0.85 */
-    /* backdrop-filter: blur(4px); - Eliminado por rendimiento */
-    /* -webkit-backdrop-filter: blur(4px); - Eliminado por rendimiento */
+    background: rgba(255, 255, 255, 0.85); /* Fondo opaco, sin blur */
     z-index: 998;
     opacity: 0;
     visibility: hidden;
@@ -238,9 +236,8 @@ body {
     width: 100%;
     top: 0;
     z-index: 1000;
-    /* border-bottom: 1px solid var(--border-color); - Eliminado */
-    box-shadow: var(--card-shadow); /* Añadido */
-    transition: background-color 0.3s, box-shadow 0.3s; /* Modificado */
+    box-shadow: var(--card-shadow); /* Idea 1: Sombra moderna */
+    transition: background-color 0.3s, box-shadow 0.3s;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -277,8 +274,7 @@ body {
     background: var(--card-bg);
     padding: 1rem;
     border-radius: 8px;
-    /* border: 1px solid var(--border-color); - Eliminado */
-    box-shadow: var(--card-shadow); /* Añadido */
+    box-shadow: var(--card-shadow); /* Idea 1: Sombra moderna */
 }
 
 .dashboard-title {
@@ -288,7 +284,7 @@ body {
     margin-bottom: 0.5rem;
 }
 .dashboard-subtitle {
-    color: #555; /* Modificado: gris más sutil */
+    color: #555; /* Idea 3: Texto más suave */
     font-size: 0.875rem;
 }
 
@@ -338,18 +334,17 @@ body {
     flex-shrink: 0;
     background: var(--card-bg);
     border-radius: 8px;
-    box-shadow: var(--card-shadow);
+    box-shadow: var(--card-shadow); /* Idea 1: Sombra moderna */
     position: relative;
     overflow: visible;
     opacity: 1;
     margin: 0;
-    /* border: 1px solid var(--border-color); - Eliminado */
     transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s;
 }
 
 .grupo-container:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07); /* Sombra de hover más pronunciada */
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.07); /* Idea 1: Sombra hover más pronunciada */
 }
 .grupo-container.oculto { display: none; }
 .grupo-container.expandido {
@@ -365,9 +360,9 @@ body {
     position: relative;
     cursor: pointer;
     border-radius: 8px;
-    overflow: hidden; /* Añadido para contener el pseudo-elemento */
+    overflow: hidden; /* Idea 2: Para contener el borde */
 }
-/* Añadido: Pseudo-elemento para el borde de acento */
+/* Idea 2: Pseudo-elemento para el borde de acento */
 .grupo-header::before {
     content: '';
     position: absolute;
@@ -375,11 +370,11 @@ body {
     left: 0;
     right: 0;
     height: 4px;
-    background: transparent; /* Default */
+    background: transparent;
     border-top-left-radius: 8px;
     border-top-right-radius: 8px;
 }
-/* Eliminado: Fondos de gradiente de los headers */
+/* Idea 2: Aplicar gradientes al borde */
 .grupo-container.top-1 .grupo-header::before { background: var(--diamond-gradient); }
 .grupo-container.top-2 .grupo-header::before { background: var(--gold-gradient); }
 .grupo-container.top-3 .grupo-header::before { background: var(--silver-gradient); }
@@ -389,13 +384,9 @@ body {
 .grupo-container.negative .grupo-header::before { background: var(--negative-gradient); }
 
 
-/* Legibilidad del texto en cabeceras con fondo - ELIMINADO */
-/* ... */
-
-
 .grupo-nombre {
-    font-size: 1rem; /* Modificado: un poco más grande */
-    font-weight: 600; /* Modificado: más grosor */
+    font-size: 1rem; /* Idea 3: Tipografía */
+    font-weight: 600; /* Idea 3: Tipografía */
     margin-bottom: 0.5rem;
     display: flex;
     align-items: center;
@@ -403,16 +394,16 @@ body {
 }
 
 .grupo-total {
-    font-size: 1.75rem; /* Modificado: más grande */
-    font-weight: 700; /* Modificado: más grosor */
+    font-size: 1.75rem; /* Idea 3: Tipografía */
+    font-weight: 700; /* Idea 3: Tipografía */
     display: flex;
     align-items: baseline;
     gap: 0.5rem;
 }
 .grupo-total span {
     font-size: 0.875rem;
-    font-weight: 500; /* Modificado: peso normal */
-    color: #555; /* Modificado: gris más sutil */
+    font-weight: 500;
+    color: #555; /* Idea 3: Texto más suave */
 }
 
 .usuarios-lista {
@@ -423,20 +414,15 @@ body {
     border-top: none;
 }
 .usuarios-lista.show {
-    display: grid; /* Modificado: de flex a grid */
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Añadido: para la grilla responsive */
-    gap: 0.5rem; /* Modificado: 0.2rem a 0.5rem para más espacio */
-    padding: 0.5rem; /* Modificado: 0.2rem a 0.5rem */
-    /* flex-wrap: wrap; - Eliminado */
-    /* justify-content: center; - Eliminado */
-    /* align-items: center; - Eliminado */
+    display: grid; /* Optimización Grid */
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Optimización Grid */
+    gap: 0.5rem; /* Optimización Grid */
+    padding: 0.5rem; /* Optimización Grid */
     border-radius: 0 0 8px 8px;
     background: var(--card-bg);
 }
 
 .usuario-item {
-    /* width: 270px; - Eliminado: la grilla maneja el ancho */
-    /* flex: 0 0 auto; - Eliminado */
     padding: 0.3rem 0.5rem;
     display: flex;
     align-items: center;
@@ -445,7 +431,7 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 4px;
     background: var(--user-card-bg);
-    /* box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); - Eliminado: más limpio */
+    /* box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); - Idea 3: Eliminada por limpieza */
     transition: all 0.2s ease;
     position: relative;
     overflow: hidden;
@@ -465,9 +451,9 @@ body {
 .usuario-item.cambio-rapido::after { background: var(--warning-color); }
 .usuario-item.cambio-persistente::after { background: var(--alert-color); }
 .usuario-item:hover {
-    background: #e9ecef; /* Modificado: hover más sutil */
+    background: #e9ecef; /* Idea 3: hover más sutil */
     transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra re-activada en hover */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Idea 3: Sombra solo en hover */
 }
 .usuario-item.cicla-special-condition {
     background-color: #000000;
@@ -565,7 +551,6 @@ body {
     opacity: 0;
     pointer-events: auto;
     margin-bottom: 0;
-    backdrop-filter: blur(10px);
     border: 1px solid var(--border-color);
 }
 .change-notification.show { transform: translateX(0); opacity: 1; transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.6s ease; }
@@ -593,9 +578,9 @@ body {
     padding: 10px;
 }
 
-.student-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.85); /* backdrop-filter: blur(8px); - Eliminado por rendimiento */ z-index: 1002; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+.student-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.85); /* Optimización 2: sin blur */ z-index: 1002; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
 .student-modal.active { display: flex; opacity: 1; visibility: visible; align-items: center; justify-content: center; }
-.student-modal-content { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; width: 90%; max-width: 420px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); transform: translateY(-20px); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; /* border: 1px solid var(--border-color); - Mantenido para el modal */ }
+.student-modal-content { background: var(--card-bg); padding: 1.5rem; border-radius: 12px; width: 90%; max-width: 420px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); transform: translateY(-20px); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; border: 1px solid var(--border-color); }
 .student-modal.active .student-modal-content { transform: translateY(0); opacity: 1; }
 .student-modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid var(--accent-color); }
 .student-modal-title { font-size: 1.25rem; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 0.5rem; }
@@ -618,8 +603,8 @@ body {
 .student-info-value.position-5 { background: var(--gold-opaque-4-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; color: #DAA520; }
 .student-info-value.position-6 { background: var(--gold-opaque-5-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; color: #B8860B; }
 .student-info-value.accent { color: var(--text-primary); }
-        
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.85); /* backdrop-filter: blur(8px); - Eliminado por rendimiento */ z-index: 1001; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
+
+.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.85); /* Optimización 2: sin blur */ z-index: 1001; opacity: 0; visibility: hidden; transition: opacity 0.3s ease, visibility 0.3s ease; }
 .modal.active { display: flex; opacity: 1; visibility: visible; align-items: center; justify-content: center; }
 .modal-content { background: var(--card-bg); padding: 2rem; border-radius: 12px; width: 90%; max-width: 500px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1); transform: translateY(-20px); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; }
 .modal.active .modal-content { transform: translateY(0); opacity: 1; }
@@ -629,12 +614,12 @@ body {
 .modal-footer { display: flex; gap: 0.75rem; justify-content: flex-end; }
 .modal-btn { padding: 0.625rem 1rem; border: none; border-radius: 6px; cursor: pointer; font-size: 0.875rem; font-weight: 500; transition: var(--transition); }
 .modal-btn.cancel {
-    background: transparent; /* Modificado: fondo transparente */
-    color: #333; /* Modificado: color de texto */
-    border: 1px solid var(--border-color); /* Modificado: borde sutil */
+    background: transparent; /* Idea 3: Botón moderno */
+    color: #333; /* Idea 3: Botón moderno */
+    border: 1px solid var(--border-color); /* Idea 3: Botón moderno */
 }
 .modal-btn.cancel:hover {
-    background: #f1f3f5; /* Añadido: hover sutil */
+    background: #f1f3f5; /* Idea 3: Botón moderno */
     opacity: 1;
 }
 .modal-btn.submit { background: var(--gold-gradient); color: #000000; }
@@ -657,8 +642,7 @@ body {
     margin: 1.5rem 0 1rem;
     background-color: var(--card-bg);
     border-radius: 8px;
-    /* border: 1px solid var(--border-color); - Eliminado */
-    box-shadow: var(--card-shadow); /* Añadido */
+    box-shadow: var(--card-shadow); /* Idea 1: Sombra moderna */
 }
 .countdown-title {
     font-size: 0.9rem;
@@ -725,18 +709,16 @@ body {
     font-size: 0.875rem;
     font-weight: 600;
     transition: var(--transition);
-    background: var(--primary-color); /* Modificado: color primario */
-    color: #ffffff !important; /* Modificado: texto blanco */
-    /* border: 1px solid var(--border-color); - Eliminado */
+    background: var(--primary-color); /* Idea 1: Botón moderno */
+    color: #ffffff !important; /* Idea 1: Botón moderno */
     text-decoration: none;
     display: inline-block;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05); /* Sombra sutil */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 .access-btn:hover {
     opacity: 0.9;
     transform: translateY(-1px);
-    /* background-color: var(--border-color); - Eliminado */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra de hover */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .footer {
@@ -748,10 +730,10 @@ body {
 }
 
 @media (max-width: 1200px) {
-    /* .usuario-item { width: calc(50% - 0.2rem); } - Eliminado: la grilla lo maneja */
+    /* Optimización Grid: ya no es necesario */
 }
 @media (max-width: 992px) {
-    /* .usuario-item { width: 100%; } - Eliminado: la grilla lo maneja */
+    /* Optimización Grid: ya no es necesario */
 }
 @media (max-width: 768px) {
     .grupo-container { width: 100%; max-width: 350px; }
@@ -764,3 +746,4 @@ body {
     .student-modal-content { width: 95%; max-width: 350px; padding: 1rem; }
     .student-info-grid { grid-template-columns: 1fr; gap: 0.5rem; }
 }
+
