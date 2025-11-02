@@ -434,6 +434,7 @@ const AppUI = {
 
     // --- FUNCIONES DE BÚSQUEDA (AUTOCOMPLETE) v0.2.4 ---
     
+    // CAMBIO v0.3.4: Corregido el bug de autocomplete (se pasa inputId a handleStudentSearch)
     setupSearchInput: function(inputId, resultsId, stateKey, onSelectCallback) {
         const input = document.getElementById(inputId);
         const results = document.getElementById(resultsId);
@@ -448,7 +449,7 @@ const AppUI = {
                 onSelectCallback(null);
             }
             
-            AppUI.handleStudentSearch(query, resultsId, stateKey, onSelectCallback);
+            AppUI.handleStudentSearch(query, inputId, resultsId, stateKey, onSelectCallback);
         });
         
         // Ocultar resultados si se hace clic fuera
@@ -461,12 +462,13 @@ const AppUI = {
         // Mostrar resultados al hacer focus
         input.addEventListener('focus', () => {
              if (input.value) {
-                 AppUI.handleStudentSearch(input.value, resultsId, stateKey, onSelectCallback);
+                 AppUI.handleStudentSearch(input.value, inputId, resultsId, stateKey, onSelectCallback);
              }
         });
     },
     
-    handleStudentSearch: function(query, resultsId, stateKey, onSelectCallback) {
+    // CAMBIO v0.3.4: Corregido el bug de autocomplete (se recibe inputId)
+    handleStudentSearch: function(query, inputId, resultsId, stateKey, onSelectCallback) {
         const resultsContainer = document.getElementById(resultsId);
         
         if (query.length < 1) {
@@ -489,7 +491,7 @@ const AppUI = {
                 div.className = 'p-2 hover:bg-gray-100 cursor-pointer text-sm';
                 div.textContent = `${student.nombre} (${student.grupoNombre})`;
                 div.onclick = () => {
-                    const input = document.getElementById(resultsId.replace('-results', '-search'));
+                    const input = document.getElementById(inputId); // <-- CORRECCIÓN
                     input.value = student.nombre;
                     AppState.currentSearch[stateKey].query = student.nombre;
                     AppState.currentSearch[stateKey].selected = student.nombre;
@@ -1335,13 +1337,32 @@ const AppUI = {
 
         const timerEl = document.getElementById('countdown-timer');
         const messageEl = document.getElementById('auction-message');
+        const tiendaBtn = document.getElementById('tienda-btn'); // CAMBIO v0.3.4: Botón de tienda
 
         if (now >= auctionStart && now <= auctionEnd) {
             timerEl.classList.add('hidden');
             messageEl.classList.remove('hidden');
+
+            // --- HABILITAR TIENDA --- (NUEVO)
+            if (tiendaBtn) {
+                tiendaBtn.disabled = false;
+                tiendaBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+                tiendaBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                // Opcional: añadirle un link o función onclick
+                // tiendaBtn.onclick = () => { window.open('LINK_DE_LA_TIENDA', '_blank'); };
+            }
+            
         } else {
             timerEl.classList.remove('hidden');
             messageEl.classList.add('hidden');
+            
+            // --- DESHABILITAR TIENDA --- (NUEVO)
+            if (tiendaBtn && !tiendaBtn.disabled) { // Solo si no está ya deshabilitado
+                tiendaBtn.disabled = true;
+                tiendaBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                tiendaBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                // tiendaBtn.onclick = null;
+            }
 
             let targetDate = auctionStart;
             if (now > auctionEnd) {
@@ -1673,3 +1694,4 @@ window.onload = function() {
     console.log("window.onload disparado. Iniciando AppUI...");
     AppUI.init();
 };
+
