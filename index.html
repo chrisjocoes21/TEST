@@ -100,9 +100,9 @@
                         <!-- Columna 1: Resumen del Banco (Bóveda + Tesorería) -->
                         <div class="lg:w-1/4 flex-shrink-0">
                             <h3 class="text-lg font-semibold text-gray-800 mb-2">Resumen del Banco</h3>
-                            <!-- CAMBIO v0.3.1: Se quita el fondo blanco. Ahora es un CONTENEDOR de 2 tarjetas. -->
-                            <div id="boveda-card-container" class="space-y-4">
-                                <!-- Tarjetas Bóveda y Tesorería (Compactas) se inyectarán aquí -->
+                            <!-- CAMBIO v0.3.3: Vuelve a tener space-y-3 para las dos tarjetas compactas -->
+                            <div id="boveda-card-container" class="space-y-3">
+                                <!-- Tarjetas Bóveda y Tesorería (Compactas) se inyectarán aquí desde script.js -->
                             </div>
                         </div>
                         
@@ -153,11 +153,11 @@
                 </div>
                 
                 <!-- MÓDULOS DE HOME -->
-                <!-- CAMBIO v0.3.1: Cambiado a 6 columnas (2-1-3) -->
-                <div id="home-modules-grid" class="hidden grid grid-cols-1 lg:grid-cols-6 gap-6 mb-6">
+                <!-- CAMBIO v0.3.3: Cambiado a 12 columnas (4-2-6) para dar más espacio a Anuncios -->
+                <div id="home-modules-grid" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
                     
-                    <!-- Panel de "Alumnos en Riesgo" (col-span-2) -->
-                    <div id="riesgo-container" class="bg-white rounded-lg shadow-md lg:col-span-2">
+                    <!-- Panel de "Alumnos en Riesgo" (col-span-4) -->
+                    <div id="riesgo-container" class="bg-white rounded-lg shadow-md lg:col-span-4">
                         <h3 class="text-lg font-semibold text-gray-800 p-4 border-b border-gray-200">Alumnos en Riesgo</h3>
                         
                         <div class="overflow-x-auto">
@@ -179,8 +179,8 @@
                         </div>
                     </div>
 
-                    <!-- Panel de "Estadísticas Rápidas" (col-span-1) -->
-                    <div id="quick-stats-container" class="bg-white rounded-lg shadow-md lg:col-span-1">
+                    <!-- Panel de "Estadísticas Rápidas" (col-span-2) -->
+                    <div id="quick-stats-container" class="bg-white rounded-lg shadow-md lg:col-span-2">
                         <h3 class="text-lg font-semibold text-gray-800 p-4 border-b border-gray-200">Estadísticas</h3>
                         <div id="quick-stats-list" class="p-4 space-y-3">
                             <!-- Stats will be injected here -->
@@ -188,9 +188,9 @@
                         </div>
                     </div>
 
-                    <!-- Tablón de Anuncios (col-span-3) -->
-                    <!-- CAMBIO v0.3.1: Aumentado a col-span-3 -->
-                    <div id="anuncios-container" class="bg-white rounded-lg shadow-md lg:col-span-3">
+                    <!-- Tablón de Anuncios (col-span-6) -->
+                    <!-- CAMBIO v0.3.3: Aumentado a col-span-6 -->
+                    <div id="anuncios-container" class="bg-white rounded-lg shadow-md lg:col-span-6">
                         <div class="flex justify-between items-center p-4 border-b border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-800">Tablón de Anuncios</h3>
                             <button id="anuncios-modal-btn" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Ver Todos</button>
@@ -498,54 +498,66 @@
                     <h2 class="text-lg font-semibold text-gray-900">Reglas y Economía del Banco</h2>
                     <button id="reglas-modal-close" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
                 </div>
-                <!-- CAMBIO v0.2.5: Contenido reescrito, sin asteriscos y más claro -->
-                <div class="space-y-6 max-h-[70vh] overflow-y-auto pr-2 text-gray-600">
+                <!-- 
+                  CAMBIO v0.3.3: 
+                  - Texto completamente reescrito para mayor coherencia y sin asteriscos.
+                  - Añadida la clase "no-scrollbar" para ocultar el scroll.
+                -->
+                <div class="space-y-6 max-h-[70vh] overflow-y-auto pr-2 text-gray-600 no-scrollbar">
                     
                     <!-- Sección 1: Tesorería y Anti-Inflación -->
                     <div class="p-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
                         <h4 class="font-bold text-blue-800">Economía Cerrada y Tesorería</h4>
                         <ul class="mt-1 text-sm list-disc pl-5 space-y-1 text-gray-700">
                             <li>El Banco (Tesorería) es la única fuente de creación de Pinceles.</li>
-                            <li>Las acciones del administrador (otorgar préstamos o depósitos a grupos) están **limitadas** por el saldo total de la Tesorería.</li>
-                            <li>La Tesorería obtiene ingresos de Impuestos Diarios, Comisiones P2P, Cobro de Préstamos y un Ingreso Pasivo Diario (para simular crecimiento económico).</li>
+                            <li>Todas las acciones del administrador (otorgar préstamos, depósitos a grupos) están <strong>limitadas</strong> por el saldo disponible en la Tesorería.</li>
+                            <li>La Tesorería genera ingresos a través de:
+                                <ul class="list-[circle] pl-4">
+                                    <li>Impuesto Pasivo Diario (0.05% a saldos > 100 ℙ).</li>
+                                    <li>Comisión por Transferencia P2P (10%).</li>
+                                    <li>Cobro de intereses de préstamos vencidos.</li>
+                                    <li>Multas (retiros de pinceles) impuestas por el administrador.</li>
+                                    <li>Ingreso Pasivo Diario (simulación de crecimiento económico).</li>
+                                </ul>
+                            </li>
                         </ul>
                     </div>
 
-                    <!-- Sección 2: Préstamos (V9) -->
+                    <!-- Sección 2: Préstamos (Admin) -->
                     <div>
                         <h4 class="font-semibold text-gray-800">Préstamos Bancarios (Admin)</h4>
                         <ul class="mt-1 text-sm list-disc pl-5 space-y-1">
-                            <li>El plazo de pago es fijo: **7 días** para todos los préstamos.</li>
-                            <li>**Elegibilidad (General):** Un alumno solo puede solicitar un préstamo si no tiene uno activo.</li>
-                            <li>**Paquete Rescate:** Es universal. Está disponible para cualquier alumno (con saldo positivo, cero, o negativo) siempre que no tenga un préstamo activo.
-                                <br><span class="text-xs text-gray-500">(Excepción: Si la deuda es mayor al monto del rescate, no se puede solicitar).</span>
+                            <li>El plazo de pago para todos los préstamos es de <strong>7 días</strong>.</li>
+                            <li><strong>Requisito General:</strong> Un alumno no puede solicitar un préstamo si ya tiene uno activo.</li>
+                            <li><strong>Paquete Rescate:</strong> Es universal. Está disponible para cualquier alumno (con saldo positivo, cero o negativo), siempre que no tenga un préstamo activo.
+                                <br><span class="text-xs text-gray-500">(Excepción: No se puede solicitar si la deuda actual es mayor al monto del rescate).</span>
                             </li>
-                            <li>**Paquetes Estándar e Inversión:**
-                                <br> - Solo para alumnos con saldo positivo.
-                                <br> - El monto del préstamo no puede superar el 50% de su saldo actual.
+                            <li><strong>Paquetes Estándar e Inversión:</strong>
+                                <br> - Están reservados para alumnos con saldo positivo (saldo $\ge$ 0 ℙ).
+                                <br> - El monto del préstamo solicitado no puede superar el 50% del saldo actual del alumno.
                             </li>
                         </ul>
                     </div>
                     
-                    <!-- Sección 3: Depósitos a Plazo (V11) -->
+                    <!-- Sección 3: Depósitos a Plazo (Admin) -->
                     <div class="pt-4 border-t border-gray-100">
                         <h4 class="font-semibold text-gray-800">Depósitos a Plazo (Admin)</h4>
                         <ul class="mt-1 text-sm list-disc pl-5 space-y-1">
-                            <li>Permite a los alumnos ganar intereses fijos por depositar capital en la Tesorería (el banco usa ese capital para operar).</li>
-                            <li>**Requisito Principal:** El alumno no debe tener préstamos activos con el banco para poder invertir.</li>
-                            <li>**Requisito de Saldo:** El alumno debe tener el monto exacto que exige el paquete de depósito.</li>
-                            <li>Al vencer el plazo, la Tesorería paga el monto original MÁS el interés. Si la Tesorería está insolvente, el pago se reintenta diariamente.</li>
+                            <li>Permite a los alumnos invertir sus pinceles para ganar intereses fijos, depositando capital en la Tesorería.</li>
+                            <li><strong>Requisito Principal:</strong> El alumno no debe tener ningún préstamo activo para poder invertir.</li>
+                            <li><strong>Requisito de Saldo:</strong> El alumno debe tener en su cuenta el monto exacto que exige el paquete de depósito.</li>
+                            <li>Al vencer el plazo, la Tesorería paga al alumno el monto original MÁS el interés ganado. Si la Tesorería no tiene fondos suficientes en ese momento, el pago se reintentará automáticamente cada día.</li>
                         </ul>
                     </div>
                     
-                    <!-- Sección 4: Impuestos y Multas (V6) -->
+                    <!-- Sección 4: Transferencias P2P (Alumnos) -->
                     <div class="pt-4 border-t border-gray-100">
-                        <h4 class="font-semibold text-gray-800">Impuestos y Transferencias P2P</h4>
+                        <h4 class="font-semibold text-gray-800">Transferencias P2P (Alumno-Alumno)</h4>
                         <ul class="mt-1 text-sm list-disc pl-5 space-y-1">
-                            <li>**Impuesto Diario (Pasivo):** Se cobra un 0.05% diario a saldos $\ge$ 100 ℙ.</li>
-                            <li>**Multas (Admin):** Todo dinero retirado de un alumno por el administrador (transacción negativa) ingresa directamente a la Tesorería.</li>
-                            <li>**Comisión P2P (Activa):** Cada transferencia de alumno a alumno tiene una comisión del **10%** sobre el monto enviado.
-                                <br><span class="text-xs text-gray-500">(Ej: Para enviar 100 ℙ, el remitente paga 110 ℙ. El destinatario recibe 100 ℙ y la Tesorería 10 ℙ).</span>
+                            <li>Los alumnos pueden transferir pinceles entre ellos usando el "Portal P2P" y su clave P2P.</li>
+                            <li><strong>Comisión (Impuesto):</strong> Cada transferencia tiene una comisión fija del <strong>10%</strong> sobre el monto enviado.</li>
+                            <li><strong>Lógica de Cobro:</strong> El impuesto se suma al costo total de la transacción para el remitente. El destinatario recibe el 100% del monto enviado.
+                                <br><span class="text-xs text-gray-500">(Ej: Para enviar 1,000 ℙ, el remitente debe tener 1,100 ℙ. El destinatario recibe 1,000 ℙ y la Tesorería recibe 100 ℙ).</span>
                             </li>
                         </ul>
                     </div>
