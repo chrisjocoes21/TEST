@@ -12,13 +12,12 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏦</text></svg>">
 
     <!-- Archivo de estilos personalizados (cache buster añadido) -->
-    <!-- CAMBIO: v=0.2.7 (CSS no cambió, pero mantenemos consistencia) -->
-    <link rel="stylesheet" href="style.css?v=0.2.7">
+    <!-- CAMBIO v0.3.0: Versión actualizada -->
+    <link rel="stylesheet" href="style.css?v=0.3.0">
 </head>
 <body class="h-full">
     <div id="app-container" class="flex h-screen">
         <!-- 1. Barra Lateral de Navegación (Fija y Ocultable) -->
-        <!-- CAMBIO v0.2.6: ID 'sidebar' usado para listeners de auto-close -->
         <nav id="sidebar" class="fixed top-0 left-0 h-full z-30 flex flex-col bg-gray-50 w-64 border-r border-gray-200 flex-shrink-0 transition-transform duration-300 transform -translate-x-full">
             
             <!-- Encabezado de la Sidebar -->
@@ -35,11 +34,21 @@
             </div>
             
             <!-- Footer de la Sidebar (Botón Admin y Versión) -->
-            <div class="p-2 border-t border-gray-200 bg-white flex-shrink-0">
+            <!-- CAMBIO v0.3.0: Añadido Botón P2P -->
+            <div class="p-2 border-t border-gray-200 bg-white flex-shrink-0 space-y-2">
                 <!-- V0.2.2: Contenedor de la Versión -->
                 <div id="app-version-container" class="text-center py-1 text-xs text-gray-400">
                     <!-- Versión se inyecta aquí -->
                 </div>
+                
+                <!-- NUEVO Botón P2P -->
+                <button id="p2p-portal-btn" class="p2p-btn flex items-center justify-center w-full px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                    </svg>
+                    <span>Portal P2P</span>
+                </button>
+                
                 <!-- Botón de Gestión -->
                 <button id="gestion-btn" class="flex items-center justify-center w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-md">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
@@ -64,7 +73,7 @@
                     Cargando...
                 </h1>
 
-                <!-- CAMBIO V0.2.2: Indicador de Estado (Punto sin texto) -->
+                <!-- Indicador de Estado (Punto sin texto) -->
                 <div id="status-indicator" class="ml-auto flex items-center pr-2" title="Estado de la conexión">
                     <div id="status-dot" class="w-3 h-3 rounded-full"></div>
                 </div>
@@ -83,47 +92,44 @@
                 </div>
 
                 <!-- Contenedor de Resumen Compacto (Solo en Home) -->
+                <!-- CAMBIO v0.2.6: Reestructurado con Flexbox para alineación perfecta y eliminar scroll -->
                 <div id="home-stats-container" class="mb-6 hidden">
                     
-                    <!-- CAMBIO V0.2.6: Reestructurado a Flexbox para alineación y compactación -->
                     <div class="flex flex-col lg:flex-row gap-6 lg:items-start"> 
                         
                         <!-- Columna 1: Resumen del Banco (Bóveda + Tesorería) -->
-                        <!-- CAMBIO V0.2.6: Ancho 1/4 -->
-                        <div class="lg:w-1/4">
-                            <!-- CAMBIO V0.2.6: Reducido margen de mb-4 a mb-2 -->
+                        <div class="lg:w-1/4 flex-shrink-0">
                             <h3 class="text-lg font-semibold text-gray-800 mb-2">Resumen del Banco</h3>
-                            <div id="boveda-card-container" class="">
-                                <!-- Tarjeta Bóveda y Tarjeta Tesorería (compactadas) se inyectarán aquí -->
+                            <div id="boveda-card-container" class="bg-white rounded-lg shadow-md p-3">
+                                <!-- Tarjeta Bóveda y Tarjeta Tesorería (Compactas) se inyectarán aquí -->
                             </div>
                         </div>
                         
-                        <!-- Columna 2-4: Alumnos Destacados Y CONTADOR -->
-                        <!-- CAMBIO V0.2.6: Ancho 3/4 -->
+                        <!-- Columna 2: Alumnos Destacados Y CONTADOR -->
                         <div class="lg:w-3/4">
-                            <!-- CAMBIO V0.2.6: Reducido margen de mb-4 a mb-2 -->
                             <h3 class="text-lg font-semibold text-gray-800 mb-2">Alumnos Destacados</h3>
                             <div id="top-3-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                <!-- Las 3 tarjetas de alumnos se insertarán here -->
+                                <!-- Las 3 tarjetas de alumnos (Compactas) se insertarán here -->
                             </div>
-
-                            <!-- CAMBIO V0.2.6: Contador ahora más compacto (p-3 mt-4) -->
-                            <div id="acceso-rapido-container" class="hidden bg-white rounded-lg shadow-md p-3 mt-4"> 
-                                <div class="flex flex-nowrap items-center justify-between gap-4">
+                            
+                            <!-- CAMBIO v0.2.5: Contador movido aquí -->
+                            <div id="acceso-rapido-container" class="bg-white rounded-lg shadow-md p-3 mt-4">
+                                <div class="flex flex-wrap items-center justify-between gap-4">
                                     
                                     <!-- Timer Horizontal Compacto -->
                                     <div id="countdown-timer" class="flex-shrink-0 text-sm font-medium text-gray-700 flex items-baseline gap-2">
+                                        <!-- CAMBIO v0.2.4: Ancho fijo (w-8) y alineación (text-right) para evitar "baile" -->
                                         <span id="days" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
-                                        <span class="text-xs text-gray-500 uppercase">Días</span>
+                                        <span class="text-xs text-gray-500 uppercase -ml-1">Días</span>
                                         
                                         <span id="hours" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
-                                        <span class="text-xs text-gray-500 uppercase">Horas</span>
+                                        <span class="text-xs text-gray-500 uppercase -ml-1">Horas</span>
                                         
                                         <span id="minutes" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
-                                        <span class="text-xs text-gray-500 uppercase">Minutos</span>
+                                        <span class="text-xs text-gray-500 uppercase -ml-1">Minutos</span>
                                         
                                         <span id="seconds" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
-                                        <span class="text-xs text-gray-500 uppercase">Segundos</span>
+                                        <span class="text-xs text-gray-500 uppercase -ml-1">Segundos</span>
                                     </div>
 
                                     <!-- Mensaje de Subasta -->
@@ -142,16 +148,14 @@
                                 </div>
                             </div>
                         </div>
-
                     </div>
                 </div>
                 
-                <!-- MÓDULOS DE HOME (grid-cols-4) -->
-                <!-- CAMBIO v0.2.7: Cambiado de lg:grid-cols-4 a lg:grid-cols-5 -->
+                <!-- MÓDULOS DE HOME -->
+                <!-- CAMBIO v0.2.8: Cambiado a 5 columnas (2-1-2) -->
                 <div id="home-modules-grid" class="hidden grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
                     
-                    <!-- Panel de "Alumnos en Riesgo" (col-span-1) -->
-                    <!-- CAMBIO v0.2.7: Cambiado de lg:col-span-1 a lg:col-span-2 -->
+                    <!-- Panel de "Alumnos en Riesgo" (col-span-2) -->
                     <div id="riesgo-container" class="bg-white rounded-lg shadow-md lg:col-span-2">
                         <h3 class="text-lg font-semibold text-gray-800 p-4 border-b border-gray-200">Alumnos en Riesgo</h3>
                         
@@ -175,7 +179,6 @@
                     </div>
 
                     <!-- Panel de "Estadísticas Rápidas" (col-span-1) -->
-                    <!-- CAMBIO v0.2.7: Se mantiene en lg:col-span-1 (ahora es 1/5) -->
                     <div id="quick-stats-container" class="bg-white rounded-lg shadow-md lg:col-span-1">
                         <h3 class="text-lg font-semibold text-gray-800 p-4 border-b border-gray-200">Estadísticas</h3>
                         <div id="quick-stats-list" class="p-4 space-y-3">
@@ -185,7 +188,6 @@
                     </div>
 
                     <!-- Tablón de Anuncios (col-span-2) -->
-                    <!-- CAMBIO v0.2.7: Se mantiene en lg:col-span-2 (ahora es 2/5) -->
                     <div id="anuncios-container" class="bg-white rounded-lg shadow-md lg:col-span-2">
                         <div class="flex justify-between items-center p-4 border-b border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-800">Tablón de Anuncios</h3>
@@ -245,10 +247,10 @@
     </div>
     
     <!-- =================================================================== -->
-    <!-- CAMBIO V0.2.2: MODAL DE ADMINISTRACIÓN COMPLETO CON PESTAÑAS -->
+    <!-- MODAL DE ADMINISTRACIÓN (TAMAÑO v0.2.4: max-w-4xl) -->
     <!-- =================================================================== -->
     <div id="transaccion-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- CAMBIO v0.2.4: Aumentado el ancho de max-w-lg a max-w-4xl -->
+        <!-- CAMBIO v0.2.4: Ancho aumentado a max-w-4xl -->
         <div id="transaccion-modal-dialog" class="bg-white rounded-lg shadow-xl w-full max-w-4xl transform scale-95 transition-transform duration-300 overflow-hidden"> 
             
             <!-- Encabezado con TABS -->
@@ -275,11 +277,10 @@
             </div>
 
             <!-- CONTENEDORES DE CONTENIDO (Tab-Content) -->
-            <!-- CAMBIO v0.2.4: Aumentada la altura de max-h-[70vh] a max-h-[80vh] -->
+            <!-- CAMBIO v0.2.4: Altura aumentada a max-h-[80vh] -->
             <div class="p-6 max-h-[80vh] overflow-y-auto">
                 
                 <!-- 1. CONTENIDO DE TRANSACCIÓN MÚLTIPLE (Default) -->
-                <!-- CAMBIO v0.2.3: La altura min se controla por CSS .tab-content -->
                 <div id="tab-transaccion" class="tab-content active"> 
                     
                     <div class="grid grid-cols-2 gap-4 mb-4">
@@ -287,7 +288,7 @@
                         <!-- Columna de Grupos -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Grupos</label>
-                            <!-- CAMBIO v0.2.4: Aumentada altura de h-48 a h-72 -->
+                            <!-- CAMBIO v0.2.4: Altura aumentada a h-72 -->
                             <div id="transaccion-lista-grupos-container" class="w-full h-72 overflow-y-auto bg-gray-50 border border-gray-300 rounded-lg p-2 space-y-1">
                                 <span class="text-sm text-gray-500 p-2">Cargando grupos...</span>
                             </div>
@@ -296,7 +297,7 @@
                         <!-- Columna de Usuarios -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Usuarios</label>
-                            <!-- CAMBIO v0.2.4: Aumentada altura de h-48 a h-72 -->
+                             <!-- CAMBIO v0.2.4: Altura aumentada a h-72 -->
                             <div id="transaccion-lista-usuarios-container" class="w-full h-72 overflow-y-auto bg-gray-50 border border-gray-300 rounded-lg p-2 space-y-1">
                                 <span class="text-sm text-gray-500 p-2">Seleccione un grupo...</span>
                             </div>
@@ -324,18 +325,18 @@
                 </div>
 
                 <!-- 2. CONTENIDO DE PRÉSTAMOS -->
-                <!-- CAMBIO v0.2.3: La altura min se controla por CSS .tab-content -->
                 <div id="tab-prestamos" class="tab-content hidden">
                     
-                    <!-- CAMBIO v0.2.4: Reemplazado <select> por <input> de búsqueda (autocomplete) -->
+                    <!-- CAMBIO v0.2.4: Reemplazado <select> por <input> de búsqueda -->
                     <div class="mb-4 relative">
                         <label for="prestamo-alumno-search" class="block text-sm font-medium text-gray-700 mb-1">
                             Buscar Alumno
                             <span id="prestamo-alumno-saldo" class="text-xs text-gray-500 ml-2 font-normal"></span>
                         </label>
-                        <input type="text" id="prestamo-alumno-search" placeholder="Escriba un nombre..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <div id="prestamo-search-results" class="autocomplete-results hidden absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 shadow-lg max-h-48 overflow-y-auto">
-                            <!-- Los resultados de la búsqueda aparecerán aquí -->
+                        <input type="text" id="prestamo-alumno-search" placeholder="Escriba el nombre del alumno..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <!-- Contenedor de resultados de búsqueda -->
+                        <div id="prestamo-search-results" class="search-results-container hidden absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                            <!-- Los resultados se inyectarán aquí -->
                         </div>
                     </div>
 
@@ -358,18 +359,18 @@
                 </div>
 
                 <!-- 3. CONTENIDO DE DEPÓSITOS -->
-                <!-- CAMBIO v0.2.3: La altura min se controla por CSS .tab-content -->
                 <div id="tab-depositos" class="tab-content hidden">
                     
-                    <!-- CAMBIO v0.2.4: Reemplazado <select> por <input> de búsqueda (autocomplete) -->
+                     <!-- CAMBIO v0.2.4: Reemplazado <select> por <input> de búsqueda -->
                     <div class="mb-4 relative">
                         <label for="deposito-alumno-search" class="block text-sm font-medium text-gray-700 mb-1">
                             Buscar Alumno
                             <span id="deposito-alumno-saldo" class="text-xs text-gray-500 ml-2 font-normal"></span>
                         </label>
-                        <input type="text" id="deposito-alumno-search" placeholder="Escriba un nombre..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <div id="deposito-search-results" class="autocomplete-results hidden absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 shadow-lg max-h-48 overflow-y-auto">
-                            <!-- Los resultados de la búsqueda aparecerán aquí -->
+                        <input type="text" id="deposito-alumno-search" placeholder="Escriba el nombre del alumno..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <!-- Contenedor de resultados de búsqueda -->
+                        <div id="deposito-search-results" class="search-results-container hidden absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                            <!-- Los resultados se inyectarán aquí -->
                         </div>
                     </div>
                     
@@ -413,55 +414,137 @@
     </div>
     <!-- =================================================================== -->
     
+    <!-- =================================================================== -->
+    <!-- NUEVO MODAL (v0.3.0): PORTAL DE TRANSFERENCIAS P2P -->
+    <!-- =================================================================== -->
+    <div id="p2p-transfer-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg transform scale-95 transition-transform duration-300 overflow-hidden"> 
+            
+            <!-- Encabezado -->
+            <div class="bg-gray-50 border-b border-gray-200">
+                <div class="flex justify-between items-center p-4">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        Portal de Transferencias P2P
+                    </h2>
+                    <button id="p2p-modal-close-btn" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+            </div>
+
+            <!-- Contenido del Modal P2P -->
+            <div class="p-6 space-y-4">
+                
+                <!-- 1. Campo Origen (Tu Nombre) -->
+                <div class="relative">
+                    <label for="p2p-search-origen" class="block text-sm font-medium text-gray-700 mb-1">Tu Nombre (Remitente)</label>
+                    <input type="text" id="p2p-search-origen" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    <div id="p2p-origen-results" class="search-results-container hidden absolute z-20 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                        <!-- Resultados de búsqueda de origen -->
+                    </div>
+                </div>
+
+                <!-- 2. Campo Clave P2P -->
+                <div>
+                    <label for="p2p-clave" class="block text-sm font-medium text-gray-700 mb-1">Tu Clave P2P</label>
+                    <input type="password" id="p2p-clave" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                </div>
+                
+                <!-- 3. Campo Destino (Enviar A) -->
+                <div class="relative">
+                    <label for="p2p-search-destino" class="block text-sm font-medium text-gray-700 mb-1">Enviar a (Destinatario)</label>
+                    <input type="text" id="p2p-search-destino" placeholder="Busca el nombre del destinatario..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    <div id="p2p-destino-results" class="search-results-container hidden absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                        <!-- Resultados de búsqueda de destino -->
+                    </div>
+                </div>
+                
+                <!-- 4. Campo Cantidad -->
+                <div>
+                    <label for="p2p-cantidad" class="block text-sm font-medium text-gray-700 mb-1">Cantidad a Enviar</label>
+                    <input type="number" id="p2p-cantidad" placeholder="Ej: 1000" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                </div>
+
+                <!-- 5. Cálculo de Impuesto -->
+                <div id="p2p-calculo-impuesto" class="text-sm text-center text-gray-600 h-5">
+                    <!-- El cálculo del 10% de impuesto aparecerá aquí -->
+                </div>
+                
+                <!-- 6. Mensaje de Estado P2P -->
+                <div id="p2p-status-msg" class="text-sm text-center font-medium px-6 pt-2 h-auto min-h-[1rem]">
+                    <!-- Mensajes de éxito o error P2P irán aquí -->
+                </div>
+
+            </div>
+
+            <!-- Footer con Botones P2P -->
+            <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-end gap-3 flex-shrink-0">
+                <button id="p2p-cancel-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">Cerrar</button>
+                <button id="p2p-submit-btn" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                    <span id="p2p-btn-text">Realizar Transferencia</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- =================================================================== -->
+
+
     <!-- Modal de Reglas (Estética mejorada) -->
+    <!-- CAMBIO v0.2.5: Ancho aumentado a max-w-3xl -->
     <div id="reglas-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- CAMBIO v0.2.5: Aumentado ancho a max-w-3xl -->
         <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl transform scale-95 transition-transform duration-300">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold text-gray-900">Reglas y Economía del Banco</h2>
                     <button id="reglas-modal-close" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
                 </div>
-                <!-- CAMBIO v0.2.5: Contenido de reglas reescrito, sin asteriscos y más claro -->
+                <!-- CAMBIO v0.2.5: Contenido reescrito, sin asteriscos y más claro -->
                 <div class="space-y-6 max-h-[70vh] overflow-y-auto pr-2 text-gray-600">
                     
                     <!-- Sección 1: Tesorería y Anti-Inflación -->
-                    <div class="p-3 bg-blue-50 border-l-4 border-blue-400 rounded-lg">
-                        <h4 class="font-bold text-blue-800">Tesorería y Economía Cerrada</h4>
+                    <div class="p-3 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
+                        <h4 class="font-bold text-blue-800">Economía Cerrada y Tesorería</h4>
                         <ul class="mt-1 text-sm list-disc pl-5 space-y-1 text-gray-700">
-                            <li>El Banco (Tesorería) es la única entidad que puede crear nuevos pinceles para depósitos a alumnos.</li>
-                            <li>Las acciones del administrador (dar pinceles, préstamos) están estrictamente limitadas al saldo disponible en la Tesorería (Regla Anti-Inflación).</li>
-                            <li>La Tesorería genera ingresos a través de Impuestos, Multas y un Ingreso Pasivo Diario automático.</li>
+                            <li>El Banco (Tesorería) es la única fuente de creación de Pinceles.</li>
+                            <li>Las acciones del administrador (otorgar préstamos o depósitos a grupos) están **limitadas** por el saldo total de la Tesorería.</li>
+                            <li>La Tesorería obtiene ingresos de Impuestos Diarios, Comisiones P2P, Cobro de Préstamos y un Ingreso Pasivo Diario (para simular crecimiento económico).</li>
                         </ul>
                     </div>
 
                     <!-- Sección 2: Préstamos (V9) -->
                     <div>
-                        <h4 class="font-semibold text-gray-800">Préstamos Bancarios</h4>
+                        <h4 class="font-semibold text-gray-800">Préstamos Bancarios (Admin)</h4>
                         <ul class="mt-1 text-sm list-disc pl-5 space-y-1">
-                            <li>El plazo de pago para todos los préstamos es de 7 días.</li>
-                            <li>Elegibilidad: Solo se puede solicitar un préstamo si no se tiene otro activo.</li>
-                            <li>Alumnos con saldo positivo: Son elegibles para préstamos de hasta un 50% de su saldo actual.</li>
-                            <li>Alumnos en Cicla: Solo pueden solicitar el préstamo 'Rescate' y únicamente si el monto es suficiente para cubrir su deuda y salir de saldo negativo.</li>
+                            <li>El plazo de pago es fijo: **7 días** para todos los préstamos.</li>
+                            <li>**Elegibilidad (General):** Un alumno solo puede solicitar un préstamo si no tiene uno activo.</li>
+                            <li>**Paquete Rescate:** Es universal. Está disponible para cualquier alumno (con saldo positivo, cero, o negativo) siempre que no tenga un préstamo activo.
+                                <br><span class="text-xs text-gray-500">(Excepción: Si la deuda es mayor al monto del rescate, no se puede solicitar).</span>
+                            </li>
+                            <li>**Paquetes Estándar e Inversión:**
+                                <br> - Solo para alumnos con saldo positivo.
+                                <br> - El monto del préstamo no puede superar el 50% de su saldo actual.
+                            </li>
                         </ul>
                     </div>
                     
                     <!-- Sección 3: Depósitos a Plazo (V11) -->
                     <div class="pt-4 border-t border-gray-100">
-                        <h4 class="font-semibold text-gray-800">Depósitos a Plazo (Inversión)</h4>
+                        <h4 class="font-semibold text-gray-800">Depósitos a Plazo (Admin)</h4>
                         <ul class="mt-1 text-sm list-disc pl-5 space-y-1">
-                            <li>Permite a los alumnos ganar intereses fijos al depositar capital en la Tesorería (el banco usa ese capital).</li>
-                            <li>Requisito: Para crear un depósito, el alumno no debe tener préstamos activos.</li>
-                            <li>Al vencer el plazo, la Tesorería paga el capital más el interés. Si la Tesorería no tiene fondos, el pago se reintentará diariamente hasta completarse.</li>
+                            <li>Permite a los alumnos ganar intereses fijos por depositar capital en la Tesorería (el banco usa ese capital para operar).</li>
+                            <li>**Requisito Principal:** El alumno no debe tener préstamos activos con el banco para poder invertir.</li>
+                            <li>**Requisito de Saldo:** El alumno debe tener el monto exacto que exige el paquete de depósito.</li>
+                            <li>Al vencer el plazo, la Tesorería paga el monto original MÁS el interés. Si la Tesorería está insolvente, el pago se reintenta diariamente.</li>
                         </ul>
                     </div>
                     
                     <!-- Sección 4: Impuestos y Multas (V6) -->
                     <div class="pt-4 border-t border-gray-100">
-                        <h4 class="font-semibold text-gray-800">Impuestos y Multas (Ingreso a Tesorería)</h4>
+                        <h4 class="font-semibold text-gray-800">Impuestos y Transferencias P2P</h4>
                         <ul class="mt-1 text-sm list-disc pl-5 space-y-1">
-                            <li>Impuesto Diario: Se cobra un 0.05% diario a todos los saldos iguales o superiores a 100 ℙ.</li>
-                            <li>Multas: Cualquier pincel retirado de un alumno por un administrador (transacción negativa) ingresa directamente a la Tesorería.</li>
+                            <li>**Impuesto Diario (Pasivo):** Se cobra un 0.05% diario a saldos $\ge$ 100 ℙ.</li>
+                            <li>**Multas (Admin):** Todo dinero retirado de un alumno por el administrador (transacción negativa) ingresa directamente a la Tesorería.</li>
+                            <li>**Comisión P2P (Activa):** Cada transferencia de alumno a alumno tiene una comisión del **10%** sobre el monto enviado.
+                                <br><span class="text-xs text-gray-500">(Ej: Para enviar 100 ℙ, el remitente paga 110 ℙ. El destinatario recibe 100 ℙ y la Tesorería 10 ℙ).</span>
+                            </li>
                         </ul>
                     </div>
                     
@@ -495,8 +578,8 @@
 
 
     <!-- Lógica de la Aplicación -->
-    <!-- CAMBIO: v=0.2.7 -->
-    <script src="script.js?v=0.2.7" type="module" defer></script>
+    <!-- CAMBIO v0.3.0: Versión actualizada -->
+    <script src="script.js?v=0.3.0" type="module" defer></script>
 </body>
 </html>
 
