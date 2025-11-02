@@ -12,13 +12,12 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏦</text></svg>">
 
     <!-- Archivo de estilos personalizados (cache buster añadido) -->
-    <!-- CAMBIO: v=0.2.4 -->
-    <link rel="stylesheet" href="style.css?v=0.2.4">
+    <!-- CAMBIO: v=0.2.5 -->
+    <link rel="stylesheet" href="style.css?v=0.2.5">
 </head>
 <body class="h-full">
     <div id="app-container" class="flex h-screen">
         <!-- 1. Barra Lateral de Navegación (Fija y Ocultable) -->
-        <!-- CAMBIO V0.2.2: Rediseño visual -->
         <nav id="sidebar" class="fixed top-0 left-0 h-full z-30 flex flex-col bg-gray-50 w-64 border-r border-gray-200 flex-shrink-0 transition-transform duration-300 transform -translate-x-full">
             
             <!-- Encabezado de la Sidebar -->
@@ -97,52 +96,54 @@
                             </div>
                         </div>
                         
-                        <!-- Columna 2-4: Alumnos Destacados -->
+                        <!-- Columna 2-4: Alumnos Destacados Y CONTADOR -->
                         <div class="lg:col-span-3">
                             <h3 class="text-lg font-semibold text-gray-800 mb-4">Alumnos Destacados</h3>
                             <div id="top-3-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <!-- Las 3 tarjetas de alumnos se insertarán here -->
                             </div>
+
+                            <!-- CAMBIO v0.2.5: Mover el "Acceso Rápido" (Contador) aquí dentro de la col-span-3 -->
+                            <div id="acceso-rapido-container" class="hidden bg-white rounded-lg shadow-md p-4 mt-6"> <!-- Añadido mt-6 -->
+                                <div class="flex flex-nowrap items-center justify-between gap-4">
+                                    
+                                    <!-- Timer Horizontal Compacto -->
+                                    <!-- CAMBIO v0.2.4: Añadido w-8 y text-right para estabilizar el contador -->
+                                    <div id="countdown-timer" class="flex-shrink-0 text-sm font-medium text-gray-700 flex items-baseline gap-2">
+                                        <span id="days" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
+                                        <span class="text-xs text-gray-500 uppercase">Días</span>
+                                        
+                                        <span id="hours" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
+                                        <span class="text-xs text-gray-500 uppercase">Horas</span>
+                                        
+                                        <span id="minutes" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
+                                        <span class="text-xs text-gray-500 uppercase">Minutos</span>
+                                        
+                                        <span id="seconds" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
+                                        <span class="text-xs text-gray-500 uppercase">Segundos</span>
+                                    </div>
+
+                                    <!-- Mensaje de Subasta -->
+                                    <div id="auction-message" class="hidden w-full text-center text-green-600 font-semibold">
+                                        ¡Hoy es el día de la Subasta!
+                                    </div>
+                                    <!-- Botones de Acceso -->
+                                    <div class="flex gap-3 flex-shrink-0">
+                                        <button id="reglas-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                                            Ver Reglas
+                                        </button>
+                                        <a href="https://pinceladaschristopher-cloud.github.io/BPD-SUBASTAS/" target="_blank" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                                            Subasta
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                     </div>
                 </div>
-
-                <!-- CAMBIO v0.2.4: Mover el "Acceso Rápido" (Contador) aquí -->
-                <div id="acceso-rapido-container" class="hidden bg-white rounded-lg shadow-md p-4 mb-6">
-                    <div class="flex flex-nowrap items-center justify-between gap-4">
-                        
-                        <!-- Timer Horizontal Compacto -->
-                        <!-- CAMBIO v0.2.4: Añadido w-8 y text-right para estabilizar el contador -->
-                        <div id="countdown-timer" class="flex-shrink-0 text-sm font-medium text-gray-700 flex items-baseline gap-2">
-                            <span id="days" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
-                            <span class="text-xs text-gray-500 uppercase">Días</span>
-                            
-                            <span id="hours" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
-                            <span class="text-xs text-gray-500 uppercase">Horas</span>
-                            
-                            <span id="minutes" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
-                            <span class="text-xs text-gray-500 uppercase">Minutos</span>
-                            
-                            <span id="seconds" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
-                            <span class="text-xs text-gray-500 uppercase">Segundos</span>
-                        </div>
-
-                        <!-- Mensaje de Subasta -->
-                        <div id="auction-message" class="hidden w-full text-center text-green-600 font-semibold">
-                            ¡Hoy es el día de la Subasta!
-                        </div>
-                        <!-- Botones de Acceso -->
-                        <div class="flex gap-3 flex-shrink-0">
-                            <button id="reglas-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
-                                Ver Reglas
-                            </button>
-                            <a href="https://pinceladaschristopher-cloud.github.io/BPD-SUBASTAS/" target="_blank" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                                Subasta
-                            </a>
-                        </div>
-                    </div>
-                </div>
+                
+                <!-- CAMBIO v0.2.5: El "Acceso Rápido" (Contador) se ha movido más arriba -->
                 
                 <!-- MÓDULOS DE HOME (grid-cols-4) -->
                 <div id="home-modules-grid" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
@@ -190,8 +191,6 @@
                         </ul>
                     </div>
                 </div>
-                
-                <!-- CAMBIO v0.2.4: El "Acceso Rápido" (Contador) se ha movido más arriba -->
 
             </main>
 
@@ -411,22 +410,23 @@
     
     <!-- Modal de Reglas (Estética mejorada) -->
     <div id="reglas-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg transform scale-95 transition-transform duration-300">
+        <!-- CAMBIO v0.2.5: Aumentado ancho a max-w-3xl -->
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl transform scale-95 transition-transform duration-300">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold text-gray-900">Reglas y Economía del Banco</h2>
                     <button id="reglas-modal-close" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
                 </div>
-                <!-- Contenido rediseñado con nuevas reglas económicas -->
+                <!-- CAMBIO v0.2.5: Contenido de reglas reescrito, sin asteriscos y más claro -->
                 <div class="space-y-6 max-h-[70vh] overflow-y-auto pr-2 text-gray-600">
                     
                     <!-- Sección 1: Tesorería y Anti-Inflación -->
                     <div class="p-3 bg-blue-50 border-l-4 border-blue-400 rounded-lg">
                         <h4 class="font-bold text-blue-800">Tesorería y Economía Cerrada</h4>
                         <ul class="mt-1 text-sm list-disc pl-5 space-y-1 text-gray-700">
-                            <li>El Banco (Tesorería) es la única fuente de dinero para depósitos a alumnos.</li>
-                            <li>Las acciones del administrador (dar pinceles, préstamos) están limitadas al saldo de la Tesorería (regla anti-inflación).</li>
-                            <li>La Tesorería obtiene ingresos de Impuestos, Multas y un Ingreso Pasivo Diario.</li>
+                            <li>El Banco (Tesorería) es la única entidad que puede crear nuevos pinceles para depósitos a alumnos.</li>
+                            <li>Las acciones del administrador (dar pinceles, préstamos) están estrictamente limitadas al saldo disponible en la Tesorería (Regla Anti-Inflación).</li>
+                            <li>La Tesorería genera ingresos a través de Impuestos, Multas y un Ingreso Pasivo Diario automático.</li>
                         </ul>
                     </div>
 
@@ -434,10 +434,10 @@
                     <div>
                         <h4 class="font-semibold text-gray-800">Préstamos Bancarios</h4>
                         <ul class="mt-1 text-sm list-disc pl-5 space-y-1">
-                            <li>El plazo de pago es fijo: **7 días** para todos los préstamos.</li>
-                            <li>**Elegibilidad:** Un alumno solo puede solicitar un préstamo si no tiene uno activo.</li>
-                            <li>**Alumnos con Saldo Positivo:** Solo son elegibles para préstamos cuyo monto sea $\le$ 50% de su saldo actual.</li>
-                            <li>**Alumnos en Cicla:** Solo son elegibles para el préstamo 'Rescate' si el monto les permite salir del saldo negativo.</li>
+                            <li>El plazo de pago para todos los préstamos es de 7 días.</li>
+                            <li>Elegibilidad: Solo se puede solicitar un préstamo si no se tiene otro activo.</li>
+                            <li>Alumnos con saldo positivo: Son elegibles para préstamos de hasta un 50% de su saldo actual.</li>
+                            <li>Alumnos en Cicla: Solo pueden solicitar el préstamo 'Rescate' y únicamente si el monto es suficiente para cubrir su deuda y salir de saldo negativo.</li>
                         </ul>
                     </div>
                     
@@ -445,9 +445,9 @@
                     <div class="pt-4 border-t border-gray-100">
                         <h4 class="font-semibold text-gray-800">Depósitos a Plazo (Inversión)</h4>
                         <ul class="mt-1 text-sm list-disc pl-5 space-y-1">
-                            <li>Permite a los alumnos ganar intereses fijos por depositar capital en la Tesorería (el banco lo usa como préstamo).</li>
-                            <li>**Requisito:** No debe tener préstamos activos con el banco para poder invertir.</li>
-                            <li>Al vencer el plazo, la Tesorería paga el monto original MÁS el interés. Si la Tesorería está insolvente, el pago se reintenta diariamente.</li>
+                            <li>Permite a los alumnos ganar intereses fijos al depositar capital en la Tesorería (el banco usa ese capital).</li>
+                            <li>Requisito: Para crear un depósito, el alumno no debe tener préstamos activos.</li>
+                            <li>Al vencer el plazo, la Tesorería paga el capital más el interés. Si la Tesorería no tiene fondos, el pago se reintentará diariamente hasta completarse.</li>
                         </ul>
                     </div>
                     
@@ -455,8 +455,8 @@
                     <div class="pt-4 border-t border-gray-100">
                         <h4 class="font-semibold text-gray-800">Impuestos y Multas (Ingreso a Tesorería)</h4>
                         <ul class="mt-1 text-sm list-disc pl-5 space-y-1">
-                            <li>**Impuesto Diario:** Se cobra un 0.05% diario a saldos $\ge$ 100 ℙ.</li>
-                            <li>**Multas:** Todo dinero retirado de un alumno por el administrador (transacción negativa) ingresa directamente a la Tesorería.</li>
+                            <li>Impuesto Diario: Se cobra un 0.05% diario a todos los saldos iguales o superiores a 100 ℙ.</li>
+                            <li>Multas: Cualquier pincel retirado de un alumno por un administrador (transacción negativa) ingresa directamente a la Tesorería.</li>
                         </ul>
                     </div>
                     
@@ -490,8 +490,8 @@
 
 
     <!-- Lógica de la Aplicación -->
-    <!-- CAMBIO: v=0.2.4 -->
-    <script src="script.js?v=0.2.4" type="module" defer></script>
+    <!-- CAMBIO: v=0.2.5 -->
+    <script src="script.js?v=0.2.5" type="module" defer></script>
 </body>
 </html>
 
