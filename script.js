@@ -10,9 +10,9 @@ const AppConfig = {
     MAX_RETRIES: 5,
     CACHE_DURATION: 300000,
     
-    // CAMBIO V0.2.2: Versión y Estado de la Aplicación
+    // CAMBIO V0.2.3: Actualización de versión
     APP_STATUS: 'Pre-Alfa', 
-    APP_VERSION: 'v0.2.2', 
+    APP_VERSION: 'v0.2.3', 
 };
 
 // --- ESTADO DE LA APLICACIÓN ---
@@ -421,7 +421,8 @@ const AppUI = {
         grupoContainer.innerHTML = ''; 
 
         AppState.datosActuales.forEach(grupo => {
-            if (grupo.nombre === 'Cicla') return; // No mostrar 'Cicla' para transacciones múltiples
+            // CAMBIO v0.2.3: No mostrar 'Cicla' NI grupos con total 0
+            if (grupo.nombre === 'Cicla' || grupo.total === 0) return; 
 
             const div = document.createElement('div');
             div.className = "flex items-center p-1 rounded hover:bg-gray-200";
@@ -820,23 +821,28 @@ const AppUI = {
         // CAMBIO V0.2.2: Tarjeta de Tesorería (NUEVA)
         const tesoreriaSaldo = AppState.datosAdicionales.saldoTesoreria;
         
+        // CAMBIO v0.2.3: Tarjetas de Bóveda y Tesorería compactadas en una sola
         bovedaHtml = `
-            <div class="bg-white rounded-lg shadow-md p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-medium text-gray-500 truncate">Total en Cuentas</span>
-                    <span class="text-xs font-bold bg-green-100 text-green-700 rounded-full px-2 py-0.5">BÓVEDA</span>
+            <div class="bg-white rounded-lg shadow-md divide-y divide-gray-200">
+                <!-- Sección Bóveda -->
+                <div class="p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-500 truncate">Total en Cuentas</span>
+                        <span class="text-xs font-bold bg-green-100 text-green-700 rounded-full px-2 py-0.5">BÓVEDA</span>
+                    </div>
+                    <p class="text-lg font-semibold text-gray-900 truncate">Pinceles Totales</p>
+                    <p class="text-2xl font-bold text-green-600 text-right">${AppFormat.formatNumber(totalGeneral)} ℙ</p>
                 </div>
-                <p class="text-lg font-semibold text-gray-900 truncate">Pinceles Totales</p>
-                <p class="text-xl font-bold text-green-600 text-right">${AppFormat.formatNumber(totalGeneral)} ℙ</p>
-            </div>
-            
-            <div class="bg-white rounded-lg shadow-md p-4">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-sm font-medium text-gray-500 truncate">Capital Operativo</span>
-                    <span class="text-xs font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">TESORERÍA</span>
+                
+                <!-- Sección Tesorería -->
+                <div class="p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-500 truncate">Capital Operativo</span>
+                        <span class="text-xs font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">TESORERÍA</span>
+                    </div>
+                    <p class="text-lg font-semibold text-gray-900 truncate">Fondo del Banco</p>
+                    <p class="text-2xl font-bold text-blue-600 text-right">${AppFormat.formatNumber(tesoreriaSaldo)} ℙ</p>
                 </div>
-                <p class="text-lg font-semibold text-gray-900 truncate">Fondo del Banco</p>
-                <p class="text-xl font-bold text-blue-600 text-right">${AppFormat.formatNumber(tesoreriaSaldo)} ℙ</p>
             </div>
         `;
         
@@ -1407,4 +1413,3 @@ window.onload = function() {
     console.log("window.onload disparado. Iniciando AppUI...");
     AppUI.init();
 };
-
