@@ -12,12 +12,13 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏦</text></svg>">
 
     <!-- Archivo de estilos personalizados (cache buster añadido) -->
-    <!-- CAMBIO: v=0.2.5 -->
-    <link rel="stylesheet" href="style.css?v=0.2.5">
+    <!-- CAMBIO: v=0.2.6 -->
+    <link rel="stylesheet" href="style.css?v=0.2.6">
 </head>
 <body class="h-full">
     <div id="app-container" class="flex h-screen">
         <!-- 1. Barra Lateral de Navegación (Fija y Ocultable) -->
+        <!-- CAMBIO v0.2.6: ID 'sidebar' usado para listeners de auto-close -->
         <nav id="sidebar" class="fixed top-0 left-0 h-full z-30 flex flex-col bg-gray-50 w-64 border-r border-gray-200 flex-shrink-0 transition-transform duration-300 transform -translate-x-full">
             
             <!-- Encabezado de la Sidebar -->
@@ -84,31 +85,33 @@
                 <!-- Contenedor de Resumen Compacto (Solo en Home) -->
                 <div id="home-stats-container" class="mb-6 hidden">
                     
-                    <!-- CAMBIO V0.2.2: Reestructurado para 4 columnas con Tesorería -->
-                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6"> 
+                    <!-- CAMBIO V0.2.6: Reestructurado a Flexbox para alineación y compactación -->
+                    <div class="flex flex-col lg:flex-row gap-6 lg:items-start"> 
                         
                         <!-- Columna 1: Resumen del Banco (Bóveda + Tesorería) -->
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Resumen del Banco</h3>
-                            <!-- CAMBIO v0.2.3: Se quita 'space-y-4' para la tarjeta compacta -->
+                        <!-- CAMBIO V0.2.6: Ancho 1/4 -->
+                        <div class="lg:w-1/4">
+                            <!-- CAMBIO V0.2.6: Reducido margen de mb-4 a mb-2 -->
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Resumen del Banco</h3>
                             <div id="boveda-card-container" class="">
                                 <!-- Tarjeta Bóveda y Tarjeta Tesorería (compactadas) se inyectarán aquí -->
                             </div>
                         </div>
                         
                         <!-- Columna 2-4: Alumnos Destacados Y CONTADOR -->
-                        <div class="lg:col-span-3">
-                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Alumnos Destacados</h3>
+                        <!-- CAMBIO V0.2.6: Ancho 3/4 -->
+                        <div class="lg:w-3/4">
+                            <!-- CAMBIO V0.2.6: Reducido margen de mb-4 a mb-2 -->
+                            <h3 class="text-lg font-semibold text-gray-800 mb-2">Alumnos Destacados</h3>
                             <div id="top-3-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 <!-- Las 3 tarjetas de alumnos se insertarán here -->
                             </div>
 
-                            <!-- CAMBIO v0.2.5: Mover el "Acceso Rápido" (Contador) aquí dentro de la col-span-3 -->
-                            <div id="acceso-rapido-container" class="hidden bg-white rounded-lg shadow-md p-4 mt-6"> <!-- Añadido mt-6 -->
+                            <!-- CAMBIO V0.2.6: Contador ahora más compacto (p-3 mt-4) -->
+                            <div id="acceso-rapido-container" class="hidden bg-white rounded-lg shadow-md p-3 mt-4"> 
                                 <div class="flex flex-nowrap items-center justify-between gap-4">
                                     
                                     <!-- Timer Horizontal Compacto -->
-                                    <!-- CAMBIO v0.2.4: Añadido w-8 y text-right para estabilizar el contador -->
                                     <div id="countdown-timer" class="flex-shrink-0 text-sm font-medium text-gray-700 flex items-baseline gap-2">
                                         <span id="days" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
                                         <span class="text-xs text-gray-500 uppercase">Días</span>
@@ -142,8 +145,6 @@
 
                     </div>
                 </div>
-                
-                <!-- CAMBIO v0.2.5: El "Acceso Rápido" (Contador) se ha movido más arriba -->
                 
                 <!-- MÓDULOS DE HOME (grid-cols-4) -->
                 <div id="home-modules-grid" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
@@ -490,8 +491,8 @@
 
 
     <!-- Lógica de la Aplicación -->
-    <!-- CAMBIO: v=0.2.5 -->
-    <script src="script.js?v=0.2.5" type="module" defer></script>
+    <!-- CAMBIO: v=0.2.6 -->
+    <script src="script.js?v=0.2.6" type="module" defer></script>
 </body>
 </html>
 
