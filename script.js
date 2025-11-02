@@ -1,6 +1,6 @@
 // --- CONFIGURACIÓN ---
 const AppConfig = {
-    // CAMBIO V0.2.2: URL de tu nueva API unificada (implementada con Tesorería/Préstamos/Depósitos)
+    // CAMBIO v0.3.0: URL de API actualizada
     API_URL: 'https://script.google.com/macros/s/AKfycbyhPHZuRmC7_t9z20W4h-VPqVFk0z6qKFG_W-YXMgnth4BMRgi8ibAfjeOtIeR5OrFPXw/exec',
     TRANSACCION_API_URL: 'https://script.google.com/macros/s/AKfycbyhPHZuRmC7_t9z20W4h-VPqVFk0z6qKFG_W-YXMgnth4BMRgi8ibAfjeOtIeR5OrFPXw/exec',
     CLAVE_MAESTRA: 'PinceladasM25-26',
@@ -10,9 +10,12 @@ const AppConfig = {
     MAX_RETRIES: 5,
     CACHE_DURATION: 300000,
     
-    // CAMBIO V0.2.7: Actualización de versión
+    // CAMBIO v0.3.0: Versión y Estado de la Aplicación (Nueva función P2P)
     APP_STATUS: 'Pre-Alfa', 
-    APP_VERSION: 'v0.2.7', 
+    APP_VERSION: 'v0.3.0', 
+    
+    // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
+    IMPUESTO_P2P_TASA: 0.10, // 10%
 };
 
 // --- ESTADO DE LA APLICACIÓN ---
@@ -34,7 +37,7 @@ const AppState = {
     selectedGrupo: null, 
     isSidebarOpen: false, 
     transaccionSelectAll: {}, 
-    sidebarTimer: null, // CAMBIO v0.2.6: Temporizador para auto-cierre
+    sidebarTimer: null, // CAMBIO v0.2.6: Timer para auto-cierre
 };
 
 // --- AUTENTICACIÓN ---
@@ -64,30 +67,32 @@ const AppFormat = {
 };
 
 // --- BASE DE DATOS DE ANUNCIOS ---
-// CAMBIO v0.2.4: Textos acortados para evitar saltos de línea
+// CAMBIO v0.2.5: Textos acortados para evitar saltos de línea
 const AnunciosDB = {
     'AVISO': [
-        "Subasta: Último Jueves de cada mes. ¡Preparen sus pinceles!",
-        "Revisen saldos antes del cierre. No se aceptan negativos en la subasta.",
-        "Recuerden: 'Ver Reglas' tiene info clave sobre la subasta y la 'Cicla'."
+        "La subasta es el último Jueves de cada mes. ¡Preparen sus pinceles!",
+        "Revisen sus saldos antes del cierre de mes. No se aceptan saldos negativos.",
+        "Recuerden: 'Ver Reglas' tiene información importante sobre la Cicla."
     ],
     'NUEVO': [
         "¡Nuevo Sistema Económico! Depósitos de admin limitados por la Tesorería.",
-        "Nuevas secciones 'Préstamos' y 'Depósitos' en el Panel de Administración.",
-        "Tesorería cobra 0.05% de impuesto diario y da un Ingreso Pasivo."
+        "Nueva sección 'Préstamos' y 'Depósitos' en el Panel de Administración.",
+        "La Tesorería cobra un 0.05% diario de impuesto a saldos altos (+100 ℙ).",
+        // CAMBIO v0.3.0: Nuevo anuncio P2P
+        "¡Nuevo Portal P2P! Transfiere pinceles a tus compañeros (Impuesto 10%)."
     ],
     'CONSEJO': [
-        "Usa el botón '»' en la esquina superior para abrir y cerrar la barra lateral.",
+        "Usa el botón '»' en la esquina para abrir y cerrar la barra lateral.",
         "Haz clic en el nombre de un alumno en la tabla para ver sus estadísticas.",
-        "Usa el botón 'Ver Todos' en el tablón de anuncios para no perderte ninguna."
+        "Usa 'Ver Todos' en el tablón de anuncios para no perderte ninguna novedad.",
+        "¡Invierte! Usa los Depósitos a Plazo para obtener retornos fijos y seguros."
     ],
     'ALERTA': [
         "¡Cuidado! Saldos negativos (incluso -1 ℙ) te mueven a Cicla.",
-        "Alumnos en Cicla pueden pedir préstamos de rescate (limitados por deuda).",
+        "Alumnos en Cicla pueden solicitar préstamos 'Rescate' (ver reglas).",
         "Si tienes un préstamo activo, NO puedes crear un Depósito a Plazo."
     ]
 };
-
 
 // --- MANEJO de datos ---
 const AppData = {
@@ -121,6 +126,7 @@ const AppData = {
             } else {
                 AppState.isOffline = false;
                 
+                // CAMBIO v0.3.0: Usar la URL base de la API
                 const url = `${AppConfig.API_URL}?cacheBuster=${new Date().getTime()}`;
                 const response = await fetch(url, { method: 'GET', cache: 'no-cache', redirect: 'follow' });
 
@@ -129,12 +135,12 @@ const AppData = {
                 }
                 
                 const data = await response.json();
-                console.log('DATOS RECIBIDOS DESDE APPSCRIPT:', JSON.stringify(data)); 
+                // console.log('DATOS RECIBIDOS DESDE APPSCRIPT:', JSON.stringify(data)); 
                 if (data && data.error) {
                     throw new Error(`Error de API: ${data.message}`);
                 }
                 
-                // CAMBIO V0.2.2: La API devuelve un objeto { gruposData, saldoTesoreria, prestamosActivos, depositosActivos }
+                // La API devuelve un objeto { gruposData, saldoTesoreria, prestamosActivos, depositosActivos }
                 AppState.datosActuales = AppData.procesarYMostrarDatos(data);
                 AppState.cachedData = data;
                 AppState.lastCacheTime = Date.now();
@@ -251,6 +257,15 @@ const AppUI = {
         // Listener para el botón de enviar transacción
         document.getElementById('transaccion-submit-btn').addEventListener('click', AppTransacciones.realizarTransaccionMultiple);
         
+        // CAMBIO v0.3.0: Listeners para el nuevo Modal P2P
+        document.getElementById('p2p-portal-btn').addEventListener('click', () => AppUI.showModal('p2p-transfer-modal'));
+        document.getElementById('p2p-modal-close-btn').addEventListener('click', () => AppUI.hideModal('p2p-transfer-modal'));
+        document.getElementById('p2p-cancel-btn').addEventListener('click', () => AppUI.hideModal('p2p-transfer-modal'));
+        document.getElementById('p2p-transfer-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'p2p-transfer-modal') AppUI.hideModal('p2p-transfer-modal');
+        });
+        document.getElementById('p2p-submit-btn').addEventListener('click', AppTransacciones.realizarTransferenciaP2P);
+        
         // Listener para el link de DB
         document.getElementById('db-link-btn').href = AppConfig.SPREADSHEET_URL;
 
@@ -270,6 +285,11 @@ const AppUI = {
 
         // Listener Sidebar
         document.getElementById('toggle-sidebar-btn').addEventListener('click', AppUI.toggleSidebar);
+        // CAMBIO v0.2.6: Listeners para auto-cierre de sidebar
+        const sidebar = document.getElementById('sidebar');
+        sidebar.addEventListener('mouseenter', () => clearTimeout(AppState.sidebarTimer));
+        sidebar.addEventListener('mouseleave', () => AppUI.resetSidebarTimer());
+
 
         // V0.2.2: Listeners de cambio de Pestaña
         document.querySelectorAll('.tab-btn').forEach(button => {
@@ -278,31 +298,18 @@ const AppUI = {
                 AppUI.changeAdminTab(tabId);
             });
         });
-        
-        // V0.2.4: Listeners para Búsqueda (Autocomplete)
-        document.getElementById('prestamo-alumno-search').addEventListener('input', (e) => AppUI.handleStudentSearch(e, 'prestamo'));
-        document.getElementById('deposito-alumno-search').addEventListener('input', (e) => AppUI.handleStudentSearch(e, 'deposito'));
-        
-        // Ocultar resultados si se hace clic fuera
-        document.addEventListener('click', (e) => {
-            // Asegurarse de que el clic no sea en el input o en los resultados
-            if (!e.target.closest('.relative')) {
-                AppUI.hideSearchResults('prestamo');
-                AppUI.hideSearchResults('deposito');
-            }
-        });
 
-        // CAMBIO v0.2.6: Listeners para auto-cierre de sidebar
-        const sidebar = document.getElementById('sidebar');
-        sidebar.addEventListener('mouseenter', () => {
-            if (AppState.sidebarTimer) {
-                clearTimeout(AppState.sidebarTimer);
-            }
-        });
-        sidebar.addEventListener('mouseleave', () => {
-            AppUI.resetSidebarTimer();
-        });
-        // --- FIN CAMBIO v0.2.6 ---
+        // CAMBIO v0.2.4: Listeners para Búsqueda (Autocomplete) en Admin
+        document.getElementById('prestamo-alumno-search').addEventListener('input', (e) => AppUI.handleStudentSearch(e, 'prestamo-search-results', 'prestamo-alumno-search'));
+        document.getElementById('deposito-alumno-search').addEventListener('input', (e) => AppUI.handleStudentSearch(e, 'deposito-search-results', 'deposito-alumno-search'));
+
+        // CAMBIO v0.3.0: Listeners para Búsqueda (Autocomplete) en P2P
+        document.getElementById('p2p-search-origen').addEventListener('input', (e) => AppUI.handleStudentSearch(e, 'p2p-origen-results', 'p2p-search-origen'));
+        document.getElementById('p2p-search-destino').addEventListener('input', (e) => AppUI.handleStudentSearch(e, 'p2p-destino-results', 'p2p-search-destino'));
+        
+        // CAMBIO v0.3.0: Listener para cálculo de impuesto P2P
+        document.getElementById('p2p-cantidad').addEventListener('input', AppUI.updateP2PTax);
+
 
         // V0.2.2: Mostrar versión de la App
         AppUI.mostrarVersionApp();
@@ -320,15 +327,12 @@ const AppUI = {
     showLoading: function() {
         const overlay = document.getElementById('loading-overlay');
         if (!overlay) return;
-        // La capa de carga está visible por defecto, 
-        // pero si se oculta, esto la volvería a mostrar.
         overlay.classList.remove('opacity-0', 'pointer-events-none');
     },
 
     hideLoading: function() {
         const overlay = document.getElementById('loading-overlay');
         if (!overlay) return;
-        // Oculta la capa de carga
         overlay.classList.add('opacity-0', 'pointer-events-none');
     },
     // --- FIN DE LA CORRECCIÓN ---
@@ -357,18 +361,14 @@ const AppUI = {
             document.getElementById('transaccion-lista-grupos-container').innerHTML = '';
             document.getElementById('transaccion-lista-usuarios-container').innerHTML = '';
             document.getElementById('transaccion-cantidad-input').value = "";
-            document.getElementById('transaccion-status-msg').textContent = "";
             
-            // CAMBIO v0.2.4: Limpiar campos de búsqueda (autocomplete)
+            // CAMBIO v0.2.4: Limpiar campos de búsqueda
             document.getElementById('prestamo-alumno-search').value = "";
             document.getElementById('deposito-alumno-search').value = "";
-            document.getElementById('prestamo-search-results').innerHTML = "";
-            document.getElementById('deposito-search-results').innerHTML = "";
-            AppUI.hideSearchResults('prestamo');
-            AppUI.hideSearchResults('deposito');
-            
             document.getElementById('prestamo-paquetes-container').innerHTML = '<div class="text-sm text-gray-500">Seleccione un alumno para ver las opciones de préstamo.</div>';
             document.getElementById('deposito-paquetes-container').innerHTML = '<div class="text-sm text-gray-500">Seleccione un alumno para ver las opciones de depósito.</div>';
+            document.getElementById('prestamo-alumno-saldo').textContent = '';
+            document.getElementById('deposito-alumno-saldo').textContent = '';
             
             AppState.transaccionSelectAll = {}; 
             
@@ -376,10 +376,26 @@ const AppUI = {
             document.getElementById('transaccion-btn-text').textContent = 'Realizar Transacción'; 
         }
         
+        // CAMBIO v0.3.0: Limpiar campos de modal P2P
+        if (modalId === 'p2p-transfer-modal') {
+            document.getElementById('p2p-search-origen').value = "";
+            document.getElementById('p2p-clave').value = "";
+            document.getElementById('p2p-search-destino').value = "";
+            document.getElementById('p2p-cantidad').value = "";
+            document.getElementById('p2p-calculo-impuesto').innerHTML = "";
+            document.getElementById('p2p-status-msg').innerHTML = "";
+            document.getElementById('p2p-submit-btn').disabled = false;
+            document.getElementById('p2p-btn-text').textContent = 'Realizar Transferencia';
+        }
+        
         if (modalId === 'gestion-modal') {
              document.getElementById('clave-input').value = "";
              document.getElementById('clave-input').classList.remove('shake', 'border-red-500');
         }
+        
+        // Limpiar estado general
+        const statusMsg = document.getElementById('transaccion-status-msg');
+        if(statusMsg) statusMsg.textContent = "";
     },
     
     // V0.2.2: Función para cambiar entre pestañas del modal de administración
@@ -401,11 +417,11 @@ const AppUI = {
         if (tabId === 'transaccion') {
             AppUI.populateGruposTransaccion();
         } else if (tabId === 'prestamos') {
-            // CAMBIO v0.2.4: Ya no se usa populateAlumnosSelect
-            AppUI.loadPrestamoPaquetes(null); // Inicializar sin alumno
+            // CAMBIO v0.2.4: Ya no se pobla el select, se inicializa el paquete
+            AppUI.loadPrestamoPaquetes(null); 
         } else if (tabId === 'depositos') {
-            // CAMBIO v0.2.4: Ya no se usa populateAlumnosSelect
-            AppUI.loadDepositoPaquetes(null); // Inicializar sin alumno
+             // CAMBIO v0.2.4: Ya no se pobla el select, se inicializa el paquete
+            AppUI.loadDepositoPaquetes(null);
         }
         
         // Limpiar el mensaje de estado general
@@ -413,80 +429,87 @@ const AppUI = {
     },
 
 
-    // CAMBIO v0.2.4: Se elimina la función populateAlumnosSelect
-    
-    // V0.2.4: Funciones para Búsqueda (Autocomplete)
-    handleStudentSearch: function(event, type) {
+    // --- FUNCIONES DE BÚSQUEDA (AUTOCOMPLETE) ---
+
+    // CAMBIO v0.2.4: Nueva función para manejar la búsqueda de alumnos
+    handleStudentSearch: function(event, resultsContainerId, inputId) {
         const searchTerm = event.target.value.toLowerCase();
-        const resultsContainer = document.getElementById(`${type}-search-results`);
+        const resultsContainer = document.getElementById(resultsContainerId);
         
         if (searchTerm.length < 1) {
-            AppUI.hideSearchResults(type);
-            AppUI.selectStudent(null, type); // Limpiar paquetes
+            resultsContainer.innerHTML = '';
+            resultsContainer.classList.add('hidden');
             return;
         }
 
         const filteredStudents = AppState.datosAdicionales.allStudents.filter(student => 
             student.nombre.toLowerCase().includes(searchTerm)
-        ).sort((a,b) => a.nombre.localeCompare(b.nombre)); // Ordenar alfabéticamente
-        
+        ).sort((a, b) => a.nombre.localeCompare(b.nombre));
+
         if (filteredStudents.length === 0) {
-            resultsContainer.innerHTML = `<div class="p-2 text-sm text-gray-500 text-center">No se encontraron alumnos.</div>`;
+            resultsContainer.innerHTML = `<div class="p-2 text-sm text-gray-500">No se encontraron alumnos.</div>`;
             resultsContainer.classList.remove('hidden');
             return;
         }
 
         resultsContainer.innerHTML = filteredStudents.map(student => `
-            <div class="p-2 text-sm text-gray-800 hover:bg-blue-50 cursor-pointer" data-student-name="${student.nombre}" data-type="${type}">
+            <div class="p-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer" 
+                 data-name="${student.nombre}">
                 ${student.nombre} <span class="text-xs text-gray-500">(${student.grupoNombre})</span>
             </div>
         `).join('');
-        
-        // Añadir listeners a los nuevos resultados
-        resultsContainer.querySelectorAll('div[data-student-name]').forEach(item => {
-            item.addEventListener('click', () => {
-                const studentName = item.dataset.studentName;
-                AppUI.selectStudent(studentName, type);
-            });
-        });
-
         resultsContainer.classList.remove('hidden');
+        
+        // CAMBIO v0.3.0: Añadir listeners de clic a los nuevos resultados
+        resultsContainer.querySelectorAll('div[data-name]').forEach(div => {
+            div.onclick = () => {
+                const studentName = div.dataset.name;
+                AppUI.selectStudent(studentName, inputId, resultsContainerId);
+                
+                // Cargar paquetes SÓLO si es un modal de admin
+                if (inputId === 'prestamo-alumno-search') {
+                    AppUI.loadPrestamoPaquetes(studentName);
+                } else if (inputId === 'deposito-alumno-search') {
+                    AppUI.loadDepositoPaquetes(studentName);
+                }
+            };
+        });
     },
 
-    selectStudent: function(studentName, type) {
-        if (studentName) {
-            document.getElementById(`${type}-alumno-search`).value = studentName;
-        } else {
-            // No limpiar el input aquí, permitir que el usuario borre
-            // document.getElementById(`${type}-alumno-search`).value = "";
-        }
-        
-        AppUI.hideSearchResults(type);
-        
-        if (type === 'prestamo') {
-            AppUI.loadPrestamoPaquetes(studentName);
-        } else if (type === 'deposito') {
-            AppUI.loadDepositoPaquetes(studentName);
-        }
+    // CAMBIO v0.2.4: Nueva función para seleccionar un alumno de la búsqueda
+    selectStudent: function(studentName, inputId, resultsContainerId) {
+        document.getElementById(inputId).value = studentName;
+        document.getElementById(resultsContainerId).innerHTML = '';
+        document.getElementById(resultsContainerId).classList.add('hidden');
     },
     
-    hideSearchResults: function(type) {
-        const resultsContainer = document.getElementById(`${type}-search-results`);
-        if(resultsContainer) {
-            resultsContainer.classList.add('hidden');
+    // CAMBIO v0.3.0: Nueva función para calcular el impuesto P2P
+    updateP2PTax: function() {
+        const cantidadInput = document.getElementById('p2p-cantidad');
+        const taxDiv = document.getElementById('p2p-calculo-impuesto');
+        const cantidad = parseInt(cantidadInput.value, 10) || 0;
+
+        if (cantidad <= 0) {
+            taxDiv.innerHTML = '';
+            return;
         }
+        
+        const impuesto = Math.ceil(cantidad * AppConfig.IMPUESTO_P2P_TASA);
+        const total = cantidad + impuesto;
+
+        taxDiv.innerHTML = `
+            Impuesto (${AppConfig.IMPUESTO_P2P_TASA * 100}%): <span class="font-semibold text-red-600">${AppFormat.formatNumber(impuesto)} ℙ</span> | 
+            Total a debitar: <span class="font-semibold text-gray-900">${AppFormat.formatNumber(total)} ℙ</span>
+        `;
     },
-    // --- FIN V0.2.4 ---
+
 
     // --- FUNCIÓN CENTRAL: Mostrar Modal de Administración y pestaña inicial ---
     showTransaccionModal: function(tab) {
         if (!AppState.datosActuales) {
-            // No alert(), usar el mensaje de estado si existiera, pero para esto es mejor un modal simple.
             return;
         }
-        
         AppUI.changeAdminTab(tab); 
-        
         AppUI.showModal('transaccion-modal');
     },
 
@@ -496,7 +519,7 @@ const AppUI = {
         grupoContainer.innerHTML = ''; 
 
         AppState.datosActuales.forEach(grupo => {
-            // CAMBIO v0.2.3: No mostrar 'Cicla' NI grupos con total 0
+            // CAMBIO v0.2.3: No mostrar Cicla ni grupos con 0 pinceles
             if (grupo.nombre === 'Cicla' || grupo.total === 0) return; 
 
             const div = document.createElement('div');
@@ -511,7 +534,7 @@ const AppUI = {
 
             const label = document.createElement('label');
             label.htmlFor = input.id;
-            label.textContent = grupo.nombre;
+            label.textContent = `${grupo.nombre} (${AppFormat.formatNumber(grupo.total)} ℙ)`;
             label.className = "ml-2 block text-sm text-gray-900 cursor-pointer flex-1";
 
             div.appendChild(input);
@@ -607,30 +630,24 @@ const AppUI = {
     },
 
     // --- FUNCIONES DE PRÉSTAMOS (PESTAÑA 2) ---
+    // CAMBIO v0.2.4: Acepta nombre de alumno (o null)
     loadPrestamoPaquetes: function(selectedStudentName) {
         const container = document.getElementById('prestamo-paquetes-container');
-        // CAMBIO v0.2.4: No se usa 'select'
         const saldoSpan = document.getElementById('prestamo-alumno-saldo');
         
-        // V0.2.2: Mostrar el saldo de Tesorería en la pestaña Préstamos
         document.getElementById('tesoreria-saldo-prestamo').textContent = `(Tesorería: ${AppFormat.formatNumber(AppState.datosAdicionales.saldoTesoreria)} ℙ)`;
 
         if (!selectedStudentName) {
-            container.innerHTML = '<div class="text-sm text-gray-500">Escriba el nombre de un alumno para ver sus opciones.</div>';
+            container.innerHTML = '<div class="text-sm text-gray-500">Busque y seleccione un alumno para ver sus opciones.</div>';
             saldoSpan.textContent = '';
             return;
         }
 
         const student = AppState.datosAdicionales.allStudents.find(s => s.nombre === selectedStudentName);
-        if (!student) {
-             container.innerHTML = '<div class="text-sm text-red-500">Alumno no encontrado.</div>';
-             saldoSpan.textContent = '';
-             return;
-        }
+        if (!student) return;
         
         saldoSpan.textContent = `(Saldo actual: ${AppFormat.formatNumber(student.pinceles)} ℙ)`;
 
-        // Mapeo de paquetes (debería coincidir con el backend)
         const paquetes = {
             'rescate': { monto: 15000, interes: 25, label: "Rescate" },
             'estandar': { monto: 50000, interes: 20, label: "Estándar" },
@@ -649,12 +666,21 @@ const AppUI = {
             const pkg = paquetes[tipo];
             const totalAPagar = pkg.monto * (1 + pkg.interes / 100);
             
-            // CAMBIO v0.2.6: Lógica de elegibilidad reestructurada
-            let isEligible = true; // Asumir elegible por defecto
+            // Lógica de elegibilidad del frontend
+            let isEligible = true;
             let eligibilityMessage = '';
-
-            // Aplicar lógica de capacidad (50%) y Cicla SOLO si NO es 'rescate'
-            if (tipo !== 'rescate') {
+            
+            // CAMBIO v0.2.6: Lógica de Préstamo de Rescate Universal
+            // El Rescate ignora las reglas de saldo (50%)
+            
+            // 1. Regla Universal: Verificar Fondos de Tesorería
+            if (AppState.datosAdicionales.saldoTesoreria < pkg.monto) {
+                isEligible = false;
+                eligibilityMessage = `(Tesorería sin fondos)`;
+            }
+            
+            // 2. Reglas Específicas (Solo para Estándar e Inversión)
+            else if (tipo !== 'rescate') {
                 if (student.pinceles >= 0) { // RUTA A: Positivo o Cero
                     const capacidad = student.pinceles * 0.50;
                     if (pkg.monto > capacidad) {
@@ -662,27 +688,18 @@ const AppUI = {
                         eligibilityMessage = `(Máx: ${AppFormat.formatNumber(capacidad.toFixed(0))} ℙ)`;
                     }
                 } else { // RUTA B: Cicla
-                    // 'estandar' e 'inversion' no están permitidos en Cicla
                     isEligible = false;
                     eligibilityMessage = `(Solo Rescate)`;
                 }
-            } else {
-                // Es 'rescate', pero verificamos la regla de deuda (Regla 2 de Cicla)
-                // Esta regla se mantiene solo para Cicla
-                if (student.pinceles < 0 && Math.abs(student.pinceles) >= pkg.monto) {
-                    isEligible = false;
-                    eligibilityMessage = `(Deuda muy alta: ${AppFormat.formatNumber(Math.abs(student.pinceles))} ℙ)`;
-                }
-                // Si el alumno está en 0 o positivo, 'rescate' siempre es elegible (isEligible = true)
             }
             
-            // FILTRO UNIVERSAL: Verificar si la Tesorería tiene fondos
-            if (isEligible && AppState.datosAdicionales.saldoTesoreria < pkg.monto) {
-                isEligible = false;
-                eligibilityMessage = `(Tesorería sin fondos)`;
+            // 3. Regla Específica (Solo para Rescate)
+            else if (tipo === 'rescate') {
+                if (student.pinceles < 0 && Math.abs(student.pinceles) >= pkg.monto) {
+                     isEligible = false;
+                    eligibilityMessage = `(Deuda muy alta: ${AppFormat.formatNumber(student.pinceles)} ℙ)`;
+                }
             }
-            // --- FIN CAMBIO v0.2.6 ---
-
 
             const buttonClass = isEligible ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed';
             const buttonDisabled = !isEligible ? 'disabled' : '';
@@ -705,30 +722,24 @@ const AppUI = {
     },
     
     // --- FUNCIONES DE DEPÓSITOS (PESTAÑA 3) ---
+    // CAMBIO v0.2.4: Acepta nombre de alumno (o null)
     loadDepositoPaquetes: function(selectedStudentName) {
         const container = document.getElementById('deposito-paquetes-container');
-        // CAMBIO v0.2.4: No se usa 'select'
         const saldoSpan = document.getElementById('deposito-alumno-saldo');
         
-        // V0.2.2: Mostrar info de Tesorería en Depósitos
         document.getElementById('deposito-info-tesoreria').textContent = `(Tesorería: ${AppFormat.formatNumber(AppState.datosAdicionales.saldoTesoreria)} ℙ)`;
 
         if (!selectedStudentName) {
-            container.innerHTML = '<div class="text-sm text-gray-500">Escriba el nombre de un alumno para ver sus opciones.</div>';
+            container.innerHTML = '<div class="text-sm text-gray-500">Busque y seleccione un alumno para ver sus opciones.</div>';
             saldoSpan.textContent = '';
             return;
         }
 
         const student = AppState.datosAdicionales.allStudents.find(s => s.nombre === selectedStudentName);
-        if (!student) {
-            container.innerHTML = '<div class="text-sm text-red-500">Alumno no encontrado.</div>';
-            saldoSpan.textContent = '';
-            return;
-        }
+        if (!student) return;
 
         saldoSpan.textContent = `(Saldo actual: ${AppFormat.formatNumber(student.pinceles)} ℙ)`;
 
-        // Mapeo de paquetes (debería coincidir con el backend)
         const paquetes = {
             'ahorro_express': { monto: 50000, interes: 8, plazo: 7, label: "Ahorro Express" },
             'fondo_fiduciario': { monto: 150000, interes: 15, plazo: 14, label: "Fondo Fiduciario" },
@@ -818,19 +829,17 @@ const AppUI = {
             sidebar.classList.add('-translate-x-full');
             btn.innerHTML = '»'; // Flecha de abrir
         }
-
-        // CAMBIO v0.2.6: Iniciar/detener el temporizador de auto-cierre
+        
+        // CAMBIO v0.2.6: (Re)iniciar el temporizador de cierre
         AppUI.resetSidebarTimer();
     },
-
-    // CAMBIO v0.2.6: Nueva función para manejar el temporizador de la sidebar
+    
+    // CAMBIO v0.2.6: Nueva función para el temporizador de la sidebar
     resetSidebarTimer: function() {
-        if (AppState.sidebarTimer) {
-            clearTimeout(AppState.sidebarTimer);
-        }
+        clearTimeout(AppState.sidebarTimer);
         if (AppState.isSidebarOpen) {
             AppState.sidebarTimer = setTimeout(() => {
-                if (AppState.isSidebarOpen) { // Volver a verificar por si se cerró manualmente
+                if (AppState.isSidebarOpen) {
                     AppUI.toggleSidebar();
                 }
             }, 10000); // 10 segundos
@@ -926,31 +935,29 @@ const AppUI = {
         // Tarjeta de Bóveda
         const totalGeneral = grupos.reduce((acc, g) => acc + g.total, 0);
         
-        // CAMBIO V0.2.2: Tarjeta de Tesorería (NUEVA)
+        // Tarjeta de Tesorería (NUEVA)
         const tesoreriaSaldo = AppState.datosAdicionales.saldoTesoreria;
         
-        // CAMBIO v0.2.7: Compactado con p-2, mb-1, text-base, text-xl
+        // CAMBIO v0.2.7: Compactado (p-3, mb-1, text-base, text-xl)
         bovedaHtml = `
-            <div class="bg-white rounded-lg shadow-md divide-y divide-gray-200">
-                <!-- Sección Bóveda -->
-                <div class="p-2">
-                    <div class="flex items-center justify-between mb-1">
-                        <span class="text-sm font-medium text-gray-500 truncate">Total en Cuentas</span>
-                        <span class="text-xs font-bold bg-green-100 text-green-700 rounded-full px-2 py-0.5">BÓVEDA</span>
-                    </div>
-                    <p class="text-base font-semibold text-gray-900 truncate">Pinceles Totales</p>
-                    <p class="text-xl font-bold text-green-600 text-right">${AppFormat.formatNumber(totalGeneral)} ℙ</p>
+            <!-- Total en Cuentas -->
+            <div class="p-3 border-b border-gray-100">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-sm font-medium text-gray-500 truncate">Total en Cuentas</span>
+                    <span class="text-xs font-bold bg-green-100 text-green-700 rounded-full px-2 py-0.5">BÓVEDA</span>
                 </div>
-                
-                <!-- Sección Tesorería -->
-                <div class="p-2">
-                    <div class="flex items-center justify-between mb-1">
-                        <span class="text-sm font-medium text-gray-500 truncate">Capital Operativo</span>
-                        <span class="text-xs font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">TESORERÍA</span>
-                    </div>
-                    <p class="text-base font-semibold text-gray-900 truncate">Fondo del Banco</p>
-                    <p class="text-xl font-bold text-blue-600 text-right">${AppFormat.formatNumber(tesoreriaSaldo)} ℙ</p>
+                <p class="text-base font-semibold text-gray-900 truncate">Pinceles Totales</p>
+                <p class="text-xl font-bold text-green-600 text-right">${AppFormat.formatNumber(totalGeneral)} ℙ</p>
+            </div>
+            
+            <!-- Capital Operativo -->
+            <div class="p-3">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="text-sm font-medium text-gray-500 truncate">Capital Operativo</span>
+                    <span class="text-xs font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">TESORERÍA</span>
                 </div>
+                <p class="text-base font-semibold text-gray-900 truncate">Fondo del Banco</p>
+                <p class="text-xl font-bold text-blue-600 text-right">${AppFormat.formatNumber(tesoreriaSaldo)} ℙ</p>
             </div>
         `;
         
@@ -958,7 +965,7 @@ const AppUI = {
         const top3 = AppState.datosAdicionales.allStudents.sort((a, b) => b.pinceles - a.pinceles).slice(0, 3);
 
         if (top3.length > 0) {
-            // CAMBIO v0.2.6: Compactado con p-3
+            // CAMBIO v0.2.6: Compactado (p-3)
             top3Html = top3.map((student, index) => {
                 let rankColor = 'bg-blue-100 text-blue-700';
                 if (index === 0) rankColor = 'bg-yellow-100 text-yellow-700';
@@ -979,7 +986,6 @@ const AppUI = {
             }).join('');
         }
         for (let i = top3.length; i < 3; i++) {
-            // CAMBIO v0.2.6: Compactado con p-3
             top3Html += `
                 <div class="bg-white rounded-lg shadow-md p-3 opacity-50">
                     <div class="flex items-center justify-between mb-2"><span class="text-sm font-medium text-gray-400">-</span><span class="text-xs font-bold bg-gray-100 text-gray-400 rounded-full px-2 py-0.5">${i + 1}º</span></div>
@@ -1000,8 +1006,7 @@ const AppUI = {
         AppUI.actualizarAnuncios(); 
         AppUI.actualizarEstadisticasRapidas(grupos);
         
-        // 3. MOSTRAR ACCESO RÁPIDO (Idea 3)
-        // CAMBIO v0.2.4: Se quita 'hidden' porque ya no está al final
+        // 3. MOSTRAR ACCESO RÁPIDO (Idea 3) - CAMBIO v0.2.5: Se muestra dentro del bloque de stats
         document.getElementById('acceso-rapido-container').classList.remove('hidden');
     },
 
@@ -1072,7 +1077,6 @@ const AppUI = {
         // 4. OCULTAR MÓDULOS DE HOME
         document.getElementById('home-stats-container').classList.add('hidden');
         document.getElementById('home-modules-grid').classList.add('hidden');
-        // CAMBIO v0.2.4: Ocultar también el contador
         document.getElementById('acceso-rapido-container').classList.add('hidden');
     },
 
@@ -1141,51 +1145,29 @@ const AppUI = {
         `;
     },
 
-    // CAMBIO v0.2.5: Lógica de anuncios modificada para aleatoriedad total
     actualizarAnuncios: function() {
         const lista = document.getElementById('anuncios-lista');
         
-        // 1. Crear un pool de todos los anuncios
-        const allAnuncios = [];
-        const tipos = [
-            { id: 'AVISO', bg: 'bg-gray-100', text: 'text-gray-700' },
-            { id: 'NUEVO', bg: 'bg-blue-100', text: 'text-blue-700' },
-            { id: 'CONSEJO', bg: 'bg-green-100', text: 'text-green-700' },
-            { id: 'ALERTA', bg: 'bg-red-100', text: 'text-red-700' }
+        // CAMBIO v0.2.5: Lógica de aleatoriedad modificada
+        const todosLosAnuncios = [
+            ...AnunciosDB['AVISO'].map(texto => ({ tipo: 'AVISO', texto, bg: 'bg-gray-100', text: 'text-gray-700' })),
+            ...AnunciosDB['NUEVO'].map(texto => ({ tipo: 'NUEVO', texto, bg: 'bg-blue-100', text: 'text-blue-700' })),
+            ...AnunciosDB['CONSEJO'].map(texto => ({ tipo: 'CONSEJO', texto, bg: 'bg-green-100', text: 'text-green-700' })),
+            ...AnunciosDB['ALERTA'].map(texto => ({ tipo: 'ALERTA', texto, bg: 'bg-red-100', text: 'text-red-700' }))
         ];
-
-        tipos.forEach(tipoInfo => {
-            AnunciosDB[tipoInfo.id].forEach(texto => {
-                allAnuncios.push({
-                    tipo: tipoInfo.id,
-                    texto: texto,
-                    bg: tipoInfo.bg,
-                    text: tipoInfo.text
-                });
-            });
-        });
-
-        // 2. Función para obtener N items únicos
-        const getUniqueRandomItems = (arr, num) => {
-            const shuffled = [...arr].sort(() => 0.5 - Math.random());
-            return shuffled.slice(0, num);
-        };
-
-        // 3. Obtener 6 anuncios aleatorios de TODO el pool
-        const anuncios = getUniqueRandomItems(allAnuncios, 6);
+        
+        // Barajar todos los anuncios
+        const anunciosBarajados = [...todosLosAnuncios].sort(() => 0.5 - Math.random());
+        // Seleccionar los primeros 6
+        const anuncios = anunciosBarajados.slice(0, 6);
 
 
-        // 4. Renderizar
-        if (anuncios.length > 0) {
-            lista.innerHTML = anuncios.map(anuncio => `
-                <li class="flex items-start p-2 hover:bg-gray-50 rounded-lg transition-colors"> 
-                    <span class="text-xs font-bold ${anuncio.bg} ${anuncio.text} rounded-full w-20 text-center py-0.5 mr-3 flex-shrink-0 mt-1">${anuncio.tipo}</span>
-                    <span class="text-sm text-gray-700 flex-1">${anuncio.texto}</span>
-                </li>
-            `).join('');
-        } else {
-            lista.innerHTML = `<li class="text-sm text-gray-500 text-center p-2">No hay anuncios disponibles.</li>`;
-        }
+        lista.innerHTML = anuncios.map(anuncio => `
+            <li class="flex items-start p-2 hover:bg-gray-50 rounded-lg transition-colors"> 
+                <span class="text-xs font-bold ${anuncio.bg} ${anuncio.text} rounded-full w-20 text-center py-0.5 mr-3 flex-shrink-0 mt-1">${anuncio.tipo}</span>
+                <span class="text-sm text-gray-700 flex-1">${anuncio.texto}</span>
+            </li>
+        `).join('');
     },
 
     poblarModalAnuncios: function() {
@@ -1322,7 +1304,7 @@ const AppUI = {
     }
 };
 
-// --- OBJETO TRANSACCIONES (Préstamos y Depósitos) ---
+// --- OBJETO TRANSACCIONES (Admin y P2P) ---
 const AppTransacciones = {
 
     realizarTransaccionMultiple: async function() {
@@ -1359,8 +1341,7 @@ const AppTransacciones = {
         });
 
         if (errorValidacion) {
-            statusMsg.textContent = errorValidacion;
-            statusMsg.className = "text-sm text-center font-medium text-red-600 h-auto min-h-[1rem]";
+            AppTransacciones.setError(statusMsg, errorValidacion);
             return;
         }
 
@@ -1369,7 +1350,7 @@ const AppTransacciones = {
         
         try {
             const payload = {
-                accion: 'transaccion_multiple', // NUEVA ACCIÓN
+                accion: 'transaccion_multiple', 
                 clave: AppConfig.CLAVE_MAESTRA,
                 cantidad: pinceles, 
                 transacciones: transacciones 
@@ -1389,12 +1370,10 @@ const AppTransacciones = {
                 cantidadInput.value = "";
                 AppData.cargarDatos(false); 
 
-                // CAMBIO v0.2.4: Se elimina el cierre automático del modal
-                /*
-                setTimeout(() => {
-                    AppUI.hideModal('transaccion-modal');
-                }, 2000); 
-                */
+                // CAMBIO v0.2.4: Ya no se cierra automáticamente
+                // setTimeout(() => {
+                //     AppUI.hideModal('transaccion-modal');
+                // }, 2000); 
 
             } else {
                 throw new Error(result.message || "Error desconocido de la API.");
@@ -1404,7 +1383,6 @@ const AppTransacciones = {
             AppTransacciones.setError(statusMsg, error.message);
         } finally {
             AppTransacciones.setLoadingState(submitBtn, btnText, false);
-            AppUI.populateGruposTransaccion(); // Recargar listas
         }
     },
     
@@ -1417,7 +1395,7 @@ const AppTransacciones = {
         
         try {
             const payload = {
-                accion: 'otorgar_prestamo', // NUEVA ACCIÓN
+                accion: 'otorgar_prestamo', 
                 clave: AppConfig.CLAVE_MAESTRA,
                 alumnoNombre: alumnoNombre,
                 tipoPrestamo: tipoPrestamo 
@@ -1433,13 +1411,11 @@ const AppTransacciones = {
             if (result.success === true) {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Préstamo otorgado con éxito!");
                 AppData.cargarDatos(false); 
-
-                // CAMBIO v0.2.4: Se elimina el cierre automático del modal
-                /*
-                setTimeout(() => {
-                    AppUI.hideModal('transaccion-modal');
-                }, 2000);
-                */ 
+                
+                // CAMBIO v0.2.4: Ya no se cierra automáticamente
+                // setTimeout(() => {
+                //     AppUI.hideModal('transaccion-modal');
+                // }, 2000); 
 
             } else {
                 throw new Error(result.message || "Error al otorgar el préstamo.");
@@ -1449,7 +1425,6 @@ const AppTransacciones = {
             AppTransacciones.setError(statusMsg, error.message);
         } finally {
             AppTransacciones.setLoadingState(submitBtn, null, false);
-            AppUI.loadPrestamoPaquetes(alumnoNombre); // Recargar paquetes para este alumno
         }
     },
     
@@ -1462,7 +1437,7 @@ const AppTransacciones = {
         
         try {
             const payload = {
-                accion: 'crear_deposito', // NUEVA ACCIÓN
+                accion: 'crear_deposito', 
                 clave: AppConfig.CLAVE_MAESTRA,
                 alumnoNombre: alumnoNombre,
                 tipoDeposito: tipoDeposito 
@@ -1479,12 +1454,10 @@ const AppTransacciones = {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Depósito creado con éxito!");
                 AppData.cargarDatos(false); 
 
-                // CAMBIO v0.2.4: Se elimina el cierre automático del modal
-                /*
-                setTimeout(() => {
-                    AppUI.hideModal('transaccion-modal');
-                }, 2000);
-                */ 
+                // CAMBIO v0.2.4: Ya no se cierra automáticamente
+                // setTimeout(() => {
+                //     AppUI.hideModal('transaccion-modal');
+                // }, 2000); 
 
             } else {
                 throw new Error(result.message || "Error al crear el depósito.");
@@ -1494,9 +1467,81 @@ const AppTransacciones = {
             AppTransacciones.setError(statusMsg, error.message);
         } finally {
             AppTransacciones.setLoadingState(submitBtn, null, false);
-            AppUI.loadDepositoPaquetes(alumnoNombre); // Recargar paquetes para este alumno
         }
     },
+    
+    // --- NUEVA FUNCIÓN P2P (v0.3.0) ---
+    realizarTransferenciaP2P: async function() {
+        const statusMsg = document.getElementById('p2p-status-msg');
+        const submitBtn = document.getElementById('p2p-submit-btn');
+        const btnText = document.getElementById('p2p-btn-text');
+        
+        const nombre_origen = document.getElementById('p2p-search-origen').value;
+        const clave_p2p_origen = document.getElementById('p2p-clave').value;
+        const nombre_destino = document.getElementById('p2p-search-destino').value;
+        const cantidadInput = document.getElementById('p2p-cantidad').value;
+        
+        let errorValidacion = "";
+        
+        if (!nombre_origen) errorValidacion = "Debe seleccionar su nombre (Remitente).";
+        else if (!clave_p2p_origen) errorValidacion = "Debe ingresar su Clave P2P.";
+        else if (!nombre_destino) errorValidacion = "Debe seleccionar un Destinatario.";
+        else if (nombre_origen === nombre_destino) errorValidacion = "No puede enviarse pinceles a sí mismo.";
+
+        const cantidad = parseInt(cantidadInput, 10);
+        if (isNaN(cantidad) || cantidad <= 0) {
+            errorValidacion = "La cantidad debe ser un número positivo.";
+        }
+
+        if (errorValidacion) {
+            AppTransacciones.setError(statusMsg, errorValidacion, 'p2p-status-msg');
+            return;
+        }
+
+        // --- Pasa validación, iniciar transacción P2P ---
+        AppTransacciones.setLoadingState(submitBtn, btnText, true, statusMsg, `Procesando transferencia...`, 'p2p-btn-text', 'Realizar Transferencia');
+        
+        try {
+            const payload = {
+                accion: 'transferir_p2p',
+                nombre_origen: nombre_origen,
+                clave_p2p_origen: clave_p2p_origen,
+                nombre_destino: nombre_destino,
+                cantidad: cantidad
+            };
+
+            // Usar la URL base de TRANSACCION
+            const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.TRANSACCION_API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload), 
+            });
+
+            const result = await response.json();
+
+            if (result.success === true) {
+                const successMsg = result.message || "¡Transferencia exitosa!";
+                AppTransacciones.setSuccess(statusMsg, successMsg, 'p2p-status-msg');
+                
+                // Limpiar campos sensibles
+                document.getElementById('p2p-clave').value = "";
+                document.getElementById('p2p-search-destino').value = "";
+                document.getElementById('p2p-cantidad').value = "";
+                document.getElementById('p2p-calculo-impuesto').innerHTML = "";
+                
+                // Recargar datos
+                AppData.cargarDatos(false); 
+
+            } else {
+                throw new Error(result.message || "Error desconocido de la API P2P.");
+            }
+
+        } catch (error) {
+            AppTransacciones.setError(statusMsg, error.message, 'p2p-status-msg');
+        } finally {
+            AppTransacciones.setLoadingState(submitBtn, btnText, false, null, null, 'p2p-btn-text', 'Realizar Transferencia');
+        }
+    },
+    
     
     // --- Utilidades de Fetch y Estado ---
 
@@ -1504,33 +1549,32 @@ const AppTransacciones = {
         for (let attempt = 0; attempt < maxRetries; attempt++) {
             try {
                 const response = await fetch(url, options);
-                // Si la respuesta no es 429 (Too Many Requests), devuélvela
                 if (response.status !== 429) {
                     return response;
                 }
-                // Es 429, loggear y reintentar
                 console.warn(`Attempt ${attempt + 1}: Rate limit exceeded (429). Retrying...`);
             } catch (error) {
-                // Para errores de red, reintentar (a menos que sea el último intento)
                 if (attempt === maxRetries - 1) throw error;
             }
-            // Espera exponencial
             const delay = initialDelay * Math.pow(2, attempt) + Math.random() * 1000;
             await new Promise(resolve => setTimeout(resolve, delay));
         }
         throw new Error('Failed to fetch after multiple retries.');
     },
 
-    setLoadingState: function(btn, btnTextEl, isLoading, statusMsgEl, message) {
+    setLoadingState: function(btn, btnTextEl, isLoading, statusMsgEl, message, btnTextId = 'transaccion-btn-text', btnTextDefault = 'Realizar Transacción') {
+        // CAMBIO v0.3.0: Adaptado para múltiples botones/textos
+        if (!btnTextEl) btnTextEl = document.getElementById(btnTextId);
+
         if (isLoading) {
             if (btnTextEl) btnTextEl.textContent = 'Procesando...';
             if (btn) btn.disabled = true;
-            if (statusMsgEl) {
+            if (statusMsgEl && message) {
                 statusMsgEl.textContent = message;
                 statusMsgEl.className = "text-sm text-center font-medium text-blue-600 h-auto min-h-[1rem]";
             }
         } else {
-            if (btnTextEl) btnTextEl.textContent = 'Realizar Transacción';
+            if (btnTextEl) btnTextEl.textContent = btnTextDefault;
             if (btn) btn.disabled = false;
         }
     },
