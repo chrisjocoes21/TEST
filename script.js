@@ -82,7 +82,8 @@ const AppTransacciones = {
             const payload = {
                 grupo: grupo,
                 alumno: alumno,
-                pinceles: pinceles
+                pinceles: pinceles,
+                clave: AppConfig.CLAVE_MAESTRA // <-- CAMBIO: Añadida la clave maestra al payload
             };
 
             const response = await fetch(AppConfig.TRANSACCION_API_URL, {
@@ -122,8 +123,8 @@ const AppTransacciones = {
 
         } catch (error) {
             console.error("Error en la transacción:", error);
-            // El error "Failed to fetch" a menudo se muestra aquí
-            statusMsg.textContent = `Error: ${error.message}. Verifique CORS en Google Script.`;
+            // CAMBIO: Mensaje de error simplificado. El error de la API (ej. "Clave incorrecta") se mostrará.
+            statusMsg.textContent = `Error: ${error.message}`;
             statusMsg.className = "text-sm text-center font-medium text-red-600 h-4";
         } finally {
             submitBtn.disabled = false;
