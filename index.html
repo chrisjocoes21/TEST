@@ -15,6 +15,21 @@
 
     <!-- Archivo de estilos personalizados (cache buster añadido) -->
     <link rel="stylesheet" href="style.css?v=2">
+
+    <!-- FIX: Añadida la animación de los puntos de carga que faltaba -->
+    <style>
+        @keyframes pulse-dot-animation {
+          0%, 100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.5;
+          }
+        }
+        .animate-pulse-dot {
+          animation: pulse-dot-animation 1.4s infinite ease-in-out;
+        }
+    </style>
 </head>
 <body class="h-full">
     <div id="app-container" class="flex h-screen">
