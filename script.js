@@ -1,9 +1,9 @@
 // --- CONFIGURACIÓN ---
 const AppConfig = {
-    API_URL: 'https://script.google.com/macros/s/AKfycbzFNGHqiOlKDq5AAGhuDEDweEGgqNoJZFsGrkD3r4aGetrMYLOJtieNK1tVz9iqjvHHNg/exec',
+    // CAMBIO: ¡Nueva URL de la API!
+    API_URL: 'https://script.google.com/macros/s/AKfycbyhPHZuRmC7_t9z20W4h-VPqVFk0z6qKFG_W-YXMgnth4BMRgi8ibAfjeOtIeR5OrFPXw/exec',
     CLAVE_MAESTRA: 'PinceladasM25-26',
     SPREADSHEET_URL: 'https://docs.google.com/spreadsheets/d/1GArB7I19uGum6awiRN6qK8HtmTWGcaPGWhOzGCdhbcs/edit',
-    // CAMBIO: Eliminada la lógica de "trending" (fuego)
     INITIAL_RETRY_DELAY: 1000,
     MAX_RETRY_DELAY: 30000,
     MAX_RETRIES: 5,
@@ -13,24 +13,48 @@ const AppConfig = {
 // --- ESTADO DE LA APLICACIÓN ---
 const AppState = {
     datosActuales: null,
-    historialUsuarios: {}, // CAMBIO: Ya no almacena cambios recientes
+    historialUsuarios: {}, 
     actualizacionEnProceso: false,
     retryCount: 0,
     retryDelay: AppConfig.INITIAL_RETRY_DELAY,
     cachedData: null,
     lastCacheTime: null,
     isOffline: false,
-    selectedGrupo: null, // Para rastrear el grupo seleccionado
-    isSidebarOpen: false, // Inicia oculta por defecto
+    selectedGrupo: null,
+    isSidebarOpen: false,
+    // NUEVO: Estado para el bloqueo de transacciones
+    isTxUnlocked: false, 
+    claveTxCache: '', // Cachear la clave maestra después de verificar
 };
 
 // --- AUTENTICACIÓN ---
 const AppAuth = {
-    verificarClave: function() {
+    // Para el modal de Administración (ir a Google Sheets)
+    verificarClaveAdmin: function() {
         const claveInput = document.getElementById('clave-input');
         if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
             window.open(AppConfig.SPREADSHEET_URL, '_blank');
             AppUI.hideModal('gestion-modal');
+            claveInput.value = '';
+            claveInput.classList.remove('shake', 'border-red-500');
+        } else {
+            claveInput.classList.add('shake', 'border-red-500');
+            claveInput.focus();
+            setTimeout(() => {
+                claveInput.classList.remove('shake');
+            }, 500);
+        }
+    },
+
+    // NUEVO: Para el modal de Transacción
+    verificarClaveTx: function() {
+        const claveInput = document.getElementById('tx-clave-input');
+        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
+            AppState.isTxUnlocked = true;
+            AppState.claveTxCache = claveInput.value; // Guardar clave
+            AppUI.hideModal('tx-clave-modal');
+            AppUI.showModal('tx-main-modal'); // Mostrar modal principal
+            AppUI.poblarSelectGruposTx(); // Poblar dropdowns
             claveInput.value = '';
             claveInput.classList.remove('shake', 'border-red-500');
         } else {
@@ -69,6 +93,66 @@ const AnunciosDB = {
     ]
 };
 
+// --- MANEJO de TRANSACCIONES (NUEVO) ---
+const AppTx = {
+    // Enviar la transacción a la API
+    enviarTransaccion: async function() {
+        const grupoSelect = document.getElementById('tx-grupo-select');
+        const alumnoSelect = document.getElementById('tx-alumno-select');
+        const cantidadInput = document.getElementById('tx-cantidad-input');
+        
+        const payload = {
+            clave: AppState.claveTxCache, // Usar la clave cacheada
+            grupo: grupoSelect.value,
+            nombre: alumnoSelect.value,
+            cantidad: Number(cantidadInput.value) || 0
+        };
+
+        // Validaciones frontend
+        if (!payload.grupo || !payload.nombre || payload.cantidad === 0) {
+            AppUI.mostrarMensajeTx('Por favor, complete todos los campos y una cantidad diferente de cero.', 'error');
+            return;
+        }
+
+        AppUI.setEstadoBotonTx(true); // Mostrar spinner
+
+        try {
+            const response = await fetch(AppConfig.API_URL, {
+                method: 'POST',
+                mode: 'cors', // Necesario para Google Apps Script
+                redirect: 'follow',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8', // Google Apps Script a veces prefiere text/plain
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (result.error) {
+                throw new Error(result.message);
+            }
+
+            // ¡Éxito!
+            AppUI.mostrarMensajeTx(result.message, 'success');
+            
+            // Resetear formulario y recargar datos
+            setTimeout(() => {
+                AppUI.hideModal('tx-main-modal');
+                AppUI.resetFormularioTx();
+                AppData.cargarDatos(false); // Forzar recarga de datos
+            }, 2000); // Esperar 2 segundos para que el usuario lea el mensaje
+
+        } catch (error) {
+            console.error("Error en la transacción:", error);
+            AppUI.mostrarMensajeTx(`Error: ${error.message}`, 'error');
+        } finally {
+            AppUI.setEstadoBotonTx(false); // Ocultar spinner
+        }
+    }
+};
+
+
 // --- MANEJO DE DATOS ---
 const AppData = {
     
@@ -104,8 +188,8 @@ const AppData = {
                 }
             } else {
                 AppState.isOffline = false;
-                // AppUI.setConnectionStatus('loading'); // Ya se puso arriba
                 
+                // CAMBIO: Usar la API_URL para el GET
                 const url = `${AppConfig.API_URL}?cacheBuster=${new Date().getTime()}`;
                 const response = await fetch(url, { method: 'GET', cache: 'no-cache', redirect: 'follow' });
 
@@ -217,48 +301,59 @@ const AppUI = {
         console.log("AppUI.init() comenzando.");
         
         // Listeners Modales
-        console.log("Buscando 'gestion-btn'...");
-        const gestionBtn = document.getElementById('gestion-btn');
-        console.log("Buscando 'gestion-btn':", gestionBtn);
-        // El error ocurría aquí si gestionBtn era null
-        gestionBtn.addEventListener('click', () => AppUI.showModal('gestion-modal'));
-
-        console.log("Buscando 'modal-cancel'...");
+        document.getElementById('gestion-btn').addEventListener('click', () => AppUI.showModal('gestion-modal'));
         document.getElementById('modal-cancel').addEventListener('click', () => AppUI.hideModal('gestion-modal'));
-        console.log("Buscando 'modal-submit'...");
-        document.getElementById('modal-submit').addEventListener('click', AppAuth.verificarClave);
-        console.log("Buscando 'gestion-modal' (para cierre)...");
+        document.getElementById('modal-submit').addEventListener('click', AppAuth.verificarClaveAdmin); // CAMBIO: Nombre de función
+        
         document.getElementById('gestion-modal').addEventListener('click', (e) => {
             if (e.target.id === 'gestion-modal') AppUI.hideModal('gestion-modal');
         });
-        console.log("Buscando 'student-modal' (para cierre)...");
         document.getElementById('student-modal').addEventListener('click', (e) => {
             if (e.target.id === 'student-modal') AppUI.hideModal('student-modal');
         });
 
         // Listeners Modal Reglas
-        console.log("Buscando 'reglas-btn'...");
         document.getElementById('reglas-btn').addEventListener('click', () => AppUI.showModal('reglas-modal'));
-        console.log("Buscando 'reglas-modal-close'...");
         document.getElementById('reglas-modal-close').addEventListener('click', () => AppUI.hideModal('reglas-modal'));
-        console.log("Buscando 'reglas-modal' (para cierre)...");
         document.getElementById('reglas-modal').addEventListener('click', (e) => {
             if (e.target.id === 'reglas-modal') AppUI.hideModal('reglas-modal');
         });
 
         // NUEVO: Listeners Modal Anuncios
-        console.log("Buscando 'anuncios-modal-btn'...");
         document.getElementById('anuncios-modal-btn').addEventListener('click', () => AppUI.showModal('anuncios-modal'));
-        console.log("Buscando 'anuncios-modal-close'...");
         document.getElementById('anuncios-modal-close').addEventListener('click', () => AppUI.hideModal('anuncios-modal'));
-        console.log("Buscando 'anuncios-modal' (para cierre)...");
         document.getElementById('anuncios-modal').addEventListener('click', (e) => {
             if (e.target.id === 'anuncios-modal') AppUI.hideModal('anuncios-modal');
         });
 
         // Listener Sidebar
-        console.log("Buscando 'toggle-sidebar-btn'...");
         document.getElementById('toggle-sidebar-btn').addEventListener('click', AppUI.toggleSidebar);
+
+        // NUEVO: Listeners para el flujo de Transacción
+        document.getElementById('transaccion-btn').addEventListener('click', () => {
+            AppUI.showModal('tx-clave-modal'); // Mostrar modal de clave primero
+        });
+        // Modal de Clave TX
+        document.getElementById('tx-clave-cancel').addEventListener('click', () => AppUI.hideModal('tx-clave-modal'));
+        document.getElementById('tx-clave-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'tx-clave-modal') AppUI.hideModal('tx-clave-modal');
+        });
+        document.getElementById('tx-clave-submit').addEventListener('click', AppAuth.verificarClaveTx);
+        
+        // Modal Principal TX
+        document.getElementById('tx-main-close').addEventListener('click', () => AppUI.hideModal('tx-main-modal'));
+        document.getElementById('tx-main-cancel').addEventListener('click', () => AppUI.hideModal('tx-main-modal'));
+        document.getElementById('tx-main-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'tx-main-modal') AppUI.hideModal('tx-main-modal');
+        });
+        // Listeners para los dropdowns
+        document.getElementById('tx-grupo-select').addEventListener('change', AppUI.poblarSelectAlumnosTx);
+        // Listener del formulario
+        document.getElementById('tx-form').addEventListener('submit', (e) => {
+            e.preventDefault(); // Evitar envío normal
+            AppTx.enviarTransaccion();
+        });
+
 
         // Carga inicial
         console.log("Llamando a AppData.cargarDatos() y AppUI.updateCountdown()");
@@ -277,6 +372,12 @@ const AppUI = {
         if (!modal) return;
         modal.classList.remove('opacity-0', 'pointer-events-none');
         modal.querySelector('[class*="transform"]').classList.remove('scale-95');
+        
+        // Auto-focus en el primer input si existe
+        const input = modal.querySelector('input[type="password"]');
+        if (input) {
+            input.focus();
+        }
     },
 
     hideModal: function(modalId) {
@@ -284,6 +385,15 @@ const AppUI = {
         if (!modal) return;
         modal.classList.add('opacity-0', 'pointer-events-none');
         modal.querySelector('[class*="transform"]').classList.add('scale-95');
+        
+        // Limpiar inputs de clave al cerrar
+        if (modalId === 'gestion-modal') document.getElementById('clave-input').value = '';
+        if (modalId === 'tx-clave-modal') document.getElementById('tx-clave-input').value = '';
+        
+        // Limpiar formulario de transacción al cerrar
+        if (modalId === 'tx-main-modal') {
+            AppUI.resetFormularioTx();
+        }
     },
 
     showLoading: function() {
@@ -691,6 +801,90 @@ const AppUI = {
         listaModal.innerHTML = html;
     },
 
+    // --- NUEVAS FUNCIONES PARA EL MODAL DE TRANSACCIÓN ---
+    poblarSelectGruposTx: function() {
+        const select = document.getElementById('tx-grupo-select');
+        select.innerHTML = '<option value="" disabled selected>Seleccione un grupo...</option>'; // Reset
+        
+        if (!AppState.datosActuales) return;
+
+        // Poblar solo con grupos que tienen alumnos (excluir Cicla para transacciones)
+        AppState.datosActuales.forEach(grupo => {
+            if (grupo.nombre !== 'Cicla' && grupo.usuarios.length > 0) {
+                const option = document.createElement('option');
+                option.value = grupo.nombre;
+                option.textContent = grupo.nombre;
+                select.appendChild(option);
+            }
+        });
+    },
+
+    poblarSelectAlumnosTx: function() {
+        const grupoSelect = document.getElementById('tx-grupo-select');
+        const alumnoSelect = document.getElementById('tx-alumno-select');
+        const grupoNombre = grupoSelect.value;
+
+        // Resetear y deshabilitar
+        alumnoSelect.innerHTML = '<option value="" disabled selected>Seleccione un alumno...</option>';
+        alumnoSelect.disabled = true;
+
+        if (!grupoNombre || !AppState.datosActuales) return;
+
+        const grupo = AppState.datosActuales.find(g => g.nombre === grupoNombre);
+        if (grupo && grupo.usuarios.length > 0) {
+            // Ordenar alfabéticamente
+            const alumnosOrdenados = [...grupo.usuarios].sort((a, b) => a.nombre.localeCompare(b.nombre));
+            
+            alumnosOrdenados.forEach(alumno => {
+                const option = document.createElement('option');
+                option.value = alumno.nombre;
+                option.textContent = alumno.nombre;
+                alumnoSelect.appendChild(option);
+            });
+            alumnoSelect.disabled = false; // Habilitar
+        }
+    },
+
+    resetFormularioTx: function() {
+        document.getElementById('tx-form').reset(); // Resetea el formulario
+        document.getElementById('tx-alumno-select').disabled = true; // Deshabilitar alumnos
+        document.getElementById('tx-alumno-select').innerHTML = '<option value="" disabled selected>Seleccione un alumno...</option>';
+        AppUI.mostrarMensajeTx('', 'hidden'); // Ocultar mensajes
+        AppUI.setEstadoBotonTx(false); // Resetear botón
+    },
+
+    mostrarMensajeTx: function(mensaje, tipo = 'hidden') {
+        const msgEl = document.getElementById('tx-message');
+        msgEl.textContent = mensaje;
+        
+        // Resetear clases
+        msgEl.classList.remove('hidden', 'bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+        
+        if (tipo === 'success') {
+            msgEl.classList.add('bg-green-100', 'text-green-700');
+        } else if (tipo === 'error') {
+            msgEl.classList.add('bg-red-100', 'text-red-700');
+        } else {
+            msgEl.classList.add('hidden');
+        }
+    },
+
+    setEstadoBotonTx: function(isLoading) {
+        const submitBtn = document.getElementById('tx-main-submit');
+        const submitText = document.getElementById('tx-submit-text');
+        const submitSpinner = document.getElementById('tx-submit-spinner');
+        
+        if (isLoading) {
+            submitBtn.disabled = true;
+            submitText.classList.add('hidden');
+            submitSpinner.classList.remove('hidden');
+        } else {
+            submitBtn.disabled = false;
+            submitText.classList.remove('hidden');
+            submitSpinner.classList.add('hidden');
+        }
+    },
+    // --- FIN DE NUEVAS FUNCIONES ---
 
 
     // --- MODAL DE ALUMNO ---
