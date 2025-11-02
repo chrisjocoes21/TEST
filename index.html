@@ -11,11 +11,10 @@
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖌️</text></svg>">
 
-    <!-- Archivo de estilos personalizados (cache buster añadido) -->
-    <!-- CAMBIO: v=7.2 para reflejar los cambios de JS -->
-    <link rel="stylesheet" href="style.css?v=7.2">
+    <!-- Archivo de estilos personalizados -->
+    <!-- CAMBIO: v=7.3 para reflejar los cambios de JS -->
+    <link rel="stylesheet" href="style.css?v=7.3">
 
-    <!-- CAMBIO: La animación de los puntos de carga se movió a style.css -->
 </head>
 <body class="h-full">
     <div id="app-container" class="flex h-screen">
@@ -32,11 +31,16 @@
             </div>
             
             <!-- CAMBIO: El footer de la Sidebar (Botón Admin) se elimina de aquí -->
-            <!-- Ahora se añade dinámicamente desde script.js al final de #sidebar-nav -->
             
+            <!-- NUEVO: Contenedor de Versión (Fijo al fondo) -->
+            <div id="app-version-container" class="p-3 border-t border-gray-200">
+                <p class="text-xs text-gray-500 text-center">
+                    Cargando versión...
+                </p>
+            </div>
         </nav>
 
-        <!-- 2. Área de Contenido Principal (CAMBIO: Eliminado transition-all) -->
+        <!-- 2. Área de Contenido Principal -->
         <div id="main-content-container" class="flex-1 flex flex-col overflow-hidden ml-0">
             
             <!-- Barra Superior (para Toggle y Título) -->
@@ -74,8 +78,8 @@
                 <!-- Contenedor de Resumen Compacto (Solo en Home) -->
                 <div id="home-stats-container" class="mb-6 hidden">
                     
-                    <!-- CAMBIO: Reestructurado para permitir títulos separados -->
-                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6"> <!-- Aumenté el gap a 6 -->
+                    <!-- Reestructurado para permitir títulos separados -->
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6"> 
                         
                         <!-- Columna 1: Bóveda -->
                         <div>
@@ -96,20 +100,19 @@
                     </div>
                 </div>
                 
-                <!-- CAMBIO: MÓDULOS DE HOME (grid-cols-4) -->
+                <!-- MÓDULOS DE HOME (grid-cols-4) -->
                 <div id="home-modules-grid" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
                     
                     <!-- Panel de "Alumnos en Riesgo" (col-span-1) -->
                     <div id="riesgo-container" class="bg-white rounded-lg shadow-md lg:col-span-1">
                         <h3 class="text-lg font-semibold text-gray-800 p-4 border-b border-gray-200">Alumnos en Riesgo</h3>
                         
-                        <!-- CAMBIO: Convertido de lista a tabla para organización lineal -->
+                        <!-- Convertido de lista a tabla para organización lineal -->
                         <div class="overflow-x-auto">
                             <table class="min-w-full">
                                 <thead class="bg-gray-50">
                                     <tr>
                                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                                        <!-- CAMBIO: Añadido whitespace-nowrap y w-1/4 -->
                                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-1/4">Grupo</th>
                                         <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap w-1/4">Pinceles</th>
                                     </tr>
@@ -137,7 +140,7 @@
 
                     <!-- Tablón de Anuncios (col-span-2) -->
                     <div id="anuncios-container" class="bg-white rounded-lg shadow-md lg:col-span-2">
-                        <!-- CAMBIO: Añadido botón de modal -->
+                        <!-- Añadido botón de modal -->
                         <div class="flex justify-between items-center p-4 border-b border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-800">Tablón de Anuncios</h3>
                             <button id="anuncios-modal-btn" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Ver Todos</button>
@@ -231,11 +234,10 @@
     </div>
     
     <!-- =================================================================== -->
-    <!-- NUEVO: Modal de Transacciones (Oculto) -->
-    <!-- CAMBIO: Ahora hay dos listas de checkboxes -->
+    <!-- Modal de Transacciones -->
     <!-- =================================================================== -->
     <div id="transaccion-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- CAMBIO: Aumentado el ancho a max-w-lg -->
+        <!-- Aumentado el ancho a max-w-lg -->
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg transform scale-95 transition-transform duration-300 overflow-hidden"> 
             
             <!-- Encabezado Mejorado -->
@@ -249,13 +251,13 @@
             <!-- Contenido del formulario (con padding) -->
             <div class="p-6"> 
                 <!-- Formulario -->
-                <!-- CAMBIO: layout de 2 columnas para grupos y usuarios -->
+                <!-- layout de 2 columnas para grupos y usuarios -->
                 <div class="grid grid-cols-2 gap-4">
                     
                     <!-- Columna de Grupos -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Grupos</label>
-                        <!-- CAMBIO: <select> reemplazado por <div> de checkboxes -->
+                        <!-- <select> reemplazado por <div> de checkboxes -->
                         <div id="transaccion-lista-grupos-container" class="w-full h-48 overflow-y-auto bg-gray-50 border border-gray-300 rounded-lg p-2 space-y-1">
                             <!-- Los checkboxes de GRUPO se insertarán aquí -->
                             <span class="text-sm text-gray-500 p-2">Cargando grupos...</span>
@@ -265,7 +267,7 @@
                     <!-- Columna de Usuarios -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Usuarios</label>
-                        <!-- CAMBIO: Eliminado el botón "Seleccionar Todos" global. -->
+                        <!-- Eliminado el botón "Seleccionar Todos" global. -->
                         <div id="transaccion-lista-usuarios-container" class="w-full h-48 overflow-y-auto bg-gray-50 border border-gray-300 rounded-lg p-2 space-y-1">
                             <!-- Los checkboxes de usuario se insertarán aquí -->
                             <span class="text-sm text-gray-500 p-2">Seleccione un grupo...</span>
@@ -368,7 +370,8 @@
 
 
     <!-- Lógica de la Aplicación -->
-    <!-- CAMBIO: Añadido ?v=7.2 para forzar la recarga de caché del script -->
-    <script src="script.js?v=7.2" type="module" defer></script>
+    <!-- CAMBIO: Añadido ?v=7.3 para forzar la recarga de caché del script -->
+    <script src="script.js?v=7.3" type="module" defer></script>
 </body>
 </html>
+
