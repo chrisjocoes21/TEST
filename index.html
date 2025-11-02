@@ -100,8 +100,9 @@
                         <!-- Columna 1: Resumen del Banco (Bóveda + Tesorería) -->
                         <div class="lg:w-1/4 flex-shrink-0">
                             <h3 class="text-lg font-semibold text-gray-800 mb-2">Resumen del Banco</h3>
-                            <div id="boveda-card-container" class="bg-white rounded-lg shadow-md p-3">
-                                <!-- Tarjeta Bóveda y Tarjeta Tesorería (Compactas) se inyectarán aquí -->
+                            <!-- CAMBIO v0.3.1: Se quita el fondo blanco. Ahora es un CONTENEDOR de 2 tarjetas. -->
+                            <div id="boveda-card-container" class="space-y-4">
+                                <!-- Tarjetas Bóveda y Tesorería (Compactas) se inyectarán aquí -->
                             </div>
                         </div>
                         
@@ -152,8 +153,8 @@
                 </div>
                 
                 <!-- MÓDULOS DE HOME -->
-                <!-- CAMBIO v0.2.8: Cambiado a 5 columnas (2-1-2) -->
-                <div id="home-modules-grid" class="hidden grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
+                <!-- CAMBIO v0.3.1: Cambiado a 6 columnas (2-1-3) -->
+                <div id="home-modules-grid" class="hidden grid grid-cols-1 lg:grid-cols-6 gap-6 mb-6">
                     
                     <!-- Panel de "Alumnos en Riesgo" (col-span-2) -->
                     <div id="riesgo-container" class="bg-white rounded-lg shadow-md lg:col-span-2">
@@ -187,8 +188,9 @@
                         </div>
                     </div>
 
-                    <!-- Tablón de Anuncios (col-span-2) -->
-                    <div id="anuncios-container" class="bg-white rounded-lg shadow-md lg:col-span-2">
+                    <!-- Tablón de Anuncios (col-span-3) -->
+                    <!-- CAMBIO v0.3.1: Aumentado a col-span-3 -->
+                    <div id="anuncios-container" class="bg-white rounded-lg shadow-md lg:col-span-3">
                         <div class="flex justify-between items-center p-4 border-b border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-800">Tablón de Anuncios</h3>
                             <button id="anuncios-modal-btn" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Ver Todos</button>
@@ -582,4 +584,3 @@
     <script src="script.js?v=0.3.0" type="module" defer></script>
 </body>
 </html>
-
