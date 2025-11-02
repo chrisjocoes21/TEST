@@ -12,8 +12,8 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏦</text></svg>">
 
     <!-- Archivo de estilos personalizados (cache buster añadido) -->
-    <!-- CAMBIO: v=0.2.3 -->
-    <link rel="stylesheet" href="style.css?v=0.2.3">
+    <!-- CAMBIO: v=0.2.4 -->
+    <link rel="stylesheet" href="style.css?v=0.2.4">
 </head>
 <body class="h-full">
     <div id="app-container" class="flex h-screen">
@@ -107,6 +107,42 @@
 
                     </div>
                 </div>
+
+                <!-- CAMBIO v0.2.4: Mover el "Acceso Rápido" (Contador) aquí -->
+                <div id="acceso-rapido-container" class="hidden bg-white rounded-lg shadow-md p-4 mb-6">
+                    <div class="flex flex-nowrap items-center justify-between gap-4">
+                        
+                        <!-- Timer Horizontal Compacto -->
+                        <!-- CAMBIO v0.2.4: Añadido w-8 y text-right para estabilizar el contador -->
+                        <div id="countdown-timer" class="flex-shrink-0 text-sm font-medium text-gray-700 flex items-baseline gap-2">
+                            <span id="days" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
+                            <span class="text-xs text-gray-500 uppercase">Días</span>
+                            
+                            <span id="hours" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
+                            <span class="text-xs text-gray-500 uppercase">Horas</span>
+                            
+                            <span id="minutes" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
+                            <span class="text-xs text-gray-500 uppercase">Minutos</span>
+                            
+                            <span id="seconds" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
+                            <span class="text-xs text-gray-500 uppercase">Segundos</span>
+                        </div>
+
+                        <!-- Mensaje de Subasta -->
+                        <div id="auction-message" class="hidden w-full text-center text-green-600 font-semibold">
+                            ¡Hoy es el día de la Subasta!
+                        </div>
+                        <!-- Botones de Acceso -->
+                        <div class="flex gap-3 flex-shrink-0">
+                            <button id="reglas-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                                Ver Reglas
+                            </button>
+                            <a href="https://pinceladaschristopher-cloud.github.io/BPD-SUBASTAS/" target="_blank" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                                Subasta
+                            </a>
+                        </div>
+                    </div>
+                </div>
                 
                 <!-- MÓDULOS DE HOME (grid-cols-4) -->
                 <div id="home-modules-grid" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
@@ -155,40 +191,7 @@
                     </div>
                 </div>
                 
-                <!-- Centro de Acceso Rápido -->
-                <div id="acceso-rapido-container" class="hidden bg-white rounded-lg shadow-md p-4">
-                    <div class="flex flex-nowrap items-center justify-between gap-4">
-                        
-                        <!-- Timer Horizontal Compacto -->
-                        <div id="countdown-timer" class="flex-shrink-0 text-sm font-medium text-gray-700 flex items-baseline gap-2">
-                            <span id="days" class="text-xl font-bold text-blue-600">00</span>
-                            <span class="text-xs text-gray-500 uppercase">Días</span>
-                            
-                            <span id="hours" class="text-xl font-bold text-blue-600">00</span>
-                            <span class="text-xs text-gray-500 uppercase">Horas</span>
-                            
-                            <span id="minutes" class="text-xl font-bold text-blue-600">00</span>
-                            <span class="text-xs text-gray-500 uppercase">Minutos</span>
-                            
-                            <span id="seconds" class="text-xl font-bold text-blue-600">00</span>
-                            <span class="text-xs text-gray-500 uppercase">Segundos</span>
-                        </div>
-
-                        <!-- Mensaje de Subasta -->
-                        <div id="auction-message" class="hidden w-full text-center text-green-600 font-semibold">
-                            ¡Hoy es el día de la Subasta!
-                        </div>
-                        <!-- Botones de Acceso -->
-                        <div class="flex gap-3 flex-shrink-0">
-                            <button id="reglas-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
-                                Ver Reglas
-                            </button>
-                            <a href="https://pinceladaschristopher-cloud.github.io/BPD-SUBASTAS/" target="_blank" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                                Subasta
-                            </a>
-                        </div>
-                    </div>
-                </div>
+                <!-- CAMBIO v0.2.4: El "Acceso Rápido" (Contador) se ha movido más arriba -->
 
             </main>
 
@@ -241,7 +244,8 @@
     <!-- CAMBIO V0.2.2: MODAL DE ADMINISTRACIÓN COMPLETO CON PESTAÑAS -->
     <!-- =================================================================== -->
     <div id="transaccion-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <div id="transaccion-modal-dialog" class="bg-white rounded-lg shadow-xl w-full max-w-lg transform scale-95 transition-transform duration-300 overflow-hidden"> 
+        <!-- CAMBIO v0.2.4: Aumentado el ancho de max-w-lg a max-w-4xl -->
+        <div id="transaccion-modal-dialog" class="bg-white rounded-lg shadow-xl w-full max-w-4xl transform scale-95 transition-transform duration-300 overflow-hidden"> 
             
             <!-- Encabezado con TABS -->
             <div class="bg-gray-50 border-b border-gray-200">
@@ -267,8 +271,8 @@
             </div>
 
             <!-- CONTENEDORES DE CONTENIDO (Tab-Content) -->
-            <!-- CAMBIO v0.2.3: Se quita 'max-h-[70vh]' y se pone 'h-[60vh]' para tamaño fijo, aunque se gestionará por CSS -->
-            <div class="p-6 max-h-[70vh] overflow-y-auto">
+            <!-- CAMBIO v0.2.4: Aumentada la altura de max-h-[70vh] a max-h-[80vh] -->
+            <div class="p-6 max-h-[80vh] overflow-y-auto">
                 
                 <!-- 1. CONTENIDO DE TRANSACCIÓN MÚLTIPLE (Default) -->
                 <!-- CAMBIO v0.2.3: La altura min se controla por CSS .tab-content -->
@@ -279,7 +283,8 @@
                         <!-- Columna de Grupos -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Grupos</label>
-                            <div id="transaccion-lista-grupos-container" class="w-full h-48 overflow-y-auto bg-gray-50 border border-gray-300 rounded-lg p-2 space-y-1">
+                            <!-- CAMBIO v0.2.4: Aumentada altura de h-48 a h-72 -->
+                            <div id="transaccion-lista-grupos-container" class="w-full h-72 overflow-y-auto bg-gray-50 border border-gray-300 rounded-lg p-2 space-y-1">
                                 <span class="text-sm text-gray-500 p-2">Cargando grupos...</span>
                             </div>
                         </div>
@@ -287,7 +292,8 @@
                         <!-- Columna de Usuarios -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Usuarios</label>
-                            <div id="transaccion-lista-usuarios-container" class="w-full h-48 overflow-y-auto bg-gray-50 border border-gray-300 rounded-lg p-2 space-y-1">
+                            <!-- CAMBIO v0.2.4: Aumentada altura de h-48 a h-72 -->
+                            <div id="transaccion-lista-usuarios-container" class="w-full h-72 overflow-y-auto bg-gray-50 border border-gray-300 rounded-lg p-2 space-y-1">
                                 <span class="text-sm text-gray-500 p-2">Seleccione un grupo...</span>
                             </div>
                         </div>
@@ -317,15 +323,16 @@
                 <!-- CAMBIO v0.2.3: La altura min se controla por CSS .tab-content -->
                 <div id="tab-prestamos" class="tab-content hidden">
                     
-                    <div class="mb-4">
-                        <label for="prestamo-alumno-select" class="block text-sm font-medium text-gray-700 mb-1">
-                            Seleccionar Alumno
+                    <!-- CAMBIO v0.2.4: Reemplazado <select> por <input> de búsqueda (autocomplete) -->
+                    <div class="mb-4 relative">
+                        <label for="prestamo-alumno-search" class="block text-sm font-medium text-gray-700 mb-1">
+                            Buscar Alumno
                             <span id="prestamo-alumno-saldo" class="text-xs text-gray-500 ml-2 font-normal"></span>
                         </label>
-                        <select id="prestamo-alumno-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="" disabled selected>Seleccione un alumno...</option>
-                            <!-- Opciones se insertan aquí -->
-                        </select>
+                        <input type="text" id="prestamo-alumno-search" placeholder="Escriba un nombre..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <div id="prestamo-search-results" class="autocomplete-results hidden absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 shadow-lg max-h-48 overflow-y-auto">
+                            <!-- Los resultados de la búsqueda aparecerán aquí -->
+                        </div>
                     </div>
 
                     <div class="mt-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
@@ -350,15 +357,16 @@
                 <!-- CAMBIO v0.2.3: La altura min se controla por CSS .tab-content -->
                 <div id="tab-depositos" class="tab-content hidden">
                     
-                    <div class="mb-4">
-                        <label for="deposito-alumno-select" class="block text-sm font-medium text-gray-700 mb-1">
-                            Seleccionar Alumno
+                    <!-- CAMBIO v0.2.4: Reemplazado <select> por <input> de búsqueda (autocomplete) -->
+                    <div class="mb-4 relative">
+                        <label for="deposito-alumno-search" class="block text-sm font-medium text-gray-700 mb-1">
+                            Buscar Alumno
                             <span id="deposito-alumno-saldo" class="text-xs text-gray-500 ml-2 font-normal"></span>
                         </label>
-                        <select id="deposito-alumno-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="" disabled selected>Seleccione un alumno...</option>
-                            <!-- Opciones se insertan aquí -->
-                        </select>
+                        <input type="text" id="deposito-alumno-search" placeholder="Escriba un nombre..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <div id="deposito-search-results" class="autocomplete-results hidden absolute z-10 w-full bg-white border border-gray-300 rounded-lg mt-1 shadow-lg max-h-48 overflow-y-auto">
+                            <!-- Los resultados de la búsqueda aparecerán aquí -->
+                        </div>
                     </div>
                     
                     <div class="mt-4 p-4 border border-green-200 rounded-lg bg-green-50">
@@ -482,7 +490,8 @@
 
 
     <!-- Lógica de la Aplicación -->
-    <!-- CAMBIO: v=0.2.3 -->
-    <script src="script.js?v=0.2.3" type="module" defer></script>
+    <!-- CAMBIO: v=0.2.4 -->
+    <script src="script.js?v=0.2.4" type="module" defer></script>
 </body>
 </html>
+
