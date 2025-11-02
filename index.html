@@ -12,15 +12,16 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖌️</text></svg>">
 
     <!-- Archivo de estilos personalizados (cache buster añadido) -->
-    <!-- CAMBIO: v=7.1 para reflejar los cambios de JS -->
-    <link rel="stylesheet" href="style.css?v=7.1">
+    <!-- CAMBIO: v=7.2 para reflejar los cambios de JS -->
+    <link rel="stylesheet" href="style.css?v=7.2">
 
     <!-- CAMBIO: La animación de los puntos de carga se movió a style.css -->
 </head>
 <body class="h-full">
     <div id="app-container" class="flex h-screen">
         <!-- 1. Barra Lateral de Navegación (Fija y Ocultable) -->
-        <nav id="sidebar" class="fixed top-0 left-0 h-full z-30 flex flex-col bg-white w-64 border-r border-gray-200 flex-shrink-0 transition-transform duration-300 transform -translate-x-full">
+        <!-- CAMBIO: Color de fondo cambiado a bg-gray-50 -->
+        <nav id="sidebar" class="fixed top-0 left-0 h-full z-30 flex flex-col bg-gray-50 w-64 border-r border-gray-200 flex-shrink-0 transition-transform duration-300 transform -translate-x-full">
             
             <!-- Contenedor de Grupos (se llenará dinámicamente) -->
             <div id="sidebar-nav" class="flex-1 overflow-y-auto p-2 space-y-1 pt-4">
@@ -29,13 +30,10 @@
                     Cargando grupos...
                 </div>
             </div>
-            <!-- Footer de la Sidebar (Botón Admin movido aquí) -->
-            <div class="p-2 border-t border-gray-200">
-                <!-- Botón de Gestión (ICONO ELIMINADO) -->
-                <button id="gestion-btn" class="flex items-center justify-center w-full px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
-                    <span>Administración</span>
-                </button>
-            </div>
+            
+            <!-- CAMBIO: El footer de la Sidebar (Botón Admin) se elimina de aquí -->
+            <!-- Ahora se añade dinámicamente desde script.js al final de #sidebar-nav -->
+            
         </nav>
 
         <!-- 2. Área de Contenido Principal (CAMBIO: Eliminado transition-all) -->
@@ -52,9 +50,12 @@
                     Cargando...
                 </h1>
 
-                <!-- CAMBIO: Iconos eliminados, reemplazados por texto -->
-                <div id="status-indicator" class="ml-auto flex items-center pr-2" title="Estado de la conexión">
-                    <span id="status-text" class="text-sm font-medium text-blue-600">Cargando...</span>
+                <!-- CAMBIO: Indicador de estado modernizado (solo punto) -->
+                <div id="status-indicator" class="ml-auto flex items-center pr-2" title="Estado: Cargando...">
+                    <!-- NUEVO: Indicador de punto -->
+                    <span id="status-dot" class="w-3 h-3 rounded-full bg-blue-500 animate-pulse-dot"></span>
+                    <!-- CAMBIO: Ocultado el texto -->
+                    <span id="status-text" class="hidden">Cargando...</span> 
                 </div>
             </header>
             
@@ -116,7 +117,8 @@
                                 <tbody id="riesgo-lista" class="bg-white divide-y divide-gray-200">
                                     <!-- Items de alumnos en riesgo se insertarán aquí -->
                                     <tr>
-                                        <td colspan="3" class="p-4 text-sm text-gray-500 text-center">Calculando...</td>
+                                        <!-- CAMBIO: Mensaje de carga inicial actualizado -->
+                                        <td colspan="3" class="p-4 text-sm text-gray-500 text-center">Cargando datos...</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -128,7 +130,8 @@
                         <h3 class="text-lg font-semibold text-gray-800 p-4 border-b border-gray-200">Estadísticas</h3>
                         <div id="quick-stats-list" class="p-4 space-y-3">
                             <!-- Stats will be injected here -->
-                            <div class="text-center p-4 text-sm text-gray-500">Calculando...</div>
+                            <!-- CAMBIO: Mensaje de carga inicial actualizado -->
+                            <div class="text-center p-4 text-sm text-gray-500">Cargando datos...</div>
                         </div>
                     </div>
 
@@ -284,11 +287,20 @@
             </div>
 
             <!-- Footer con Botones -->
-            <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-end gap-3">
-                <button id="transaccion-cancel-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">Cancelar</button>
-                <button id="transaccion-submit-btn" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm w-40 text-center">
-                    <span id="transaccion-btn-text">Realizar Transacción</span>
-                </button>
+            <!-- CAMBIO: Añadido justify-between y el nuevo botón de "Ver Base de Datos" -->
+            <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-between items-center gap-3">
+                <!-- NUEVO: Botón de Base de Datos (alineado a la izquierda) -->
+                <a href="https://docs.google.com/spreadsheets/d/1GArB7I19uGum6awiRN6qK8HtmTWGcaPGWhOzGCdhbcs/edit?usp=sharing" target="_blank" rel="noopener noreferrer" class="px-4 py-2 bg-green-100 text-green-700 text-sm font-medium rounded-lg hover:bg-green-200 transition-colors">
+                    Ver Base de Datos
+                </a>
+                
+                <!-- Botones existentes (alineados a la derecha) -->
+                <div class="flex gap-3"> <!-- Wrapper div -->
+                    <button id="transaccion-cancel-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">Cancelar</button>
+                    <button id="transaccion-submit-btn" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm w-40 text-center">
+                        <span id="transaccion-btn-text">Realizar Transacción</span>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -356,7 +368,7 @@
 
 
     <!-- Lógica de la Aplicación -->
-    <!-- CAMBIO: Añadido ?v=7.1 para forzar la recarga de caché del script -->
-    <script src="script.js?v=7.1" type="module" defer></script>
+    <!-- CAMBIO: Añadido ?v=7.2 para forzar la recarga de caché del script -->
+    <script src="script.js?v=7.2" type="module" defer></script>
 </body>
 </html>
