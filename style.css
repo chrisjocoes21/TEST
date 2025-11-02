@@ -63,5 +63,6 @@ scrollbar-width: none;  /* Firefox */
 .tab-content {
     /* Estilos para el contenido de las pestañas */
     padding-top: 0.5rem; 
+    /* CAMBIO v0.2.3: Altura mínima para estabilizar el modal */
+    min-height: 420px;
 }
-
