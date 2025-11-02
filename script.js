@@ -44,27 +44,27 @@ const AppAuth = {
     }
 };
 
-// --- CAMBIO: Base de Datos de Anuncios (Texto actualizado, nueva categoría) ---
+// --- CAMBIO: Base de Datos de Anuncios (Textos más largos) ---
 const AnunciosDB = {
     'AVISO': [
-        "La subasta de fin de mes es el último Jueves.",
-        "Revisen sus saldos antes del cierre de mes.",
-        "Recuerden: 'Ver Reglas' tiene info importante."
+        "La gran subasta de fin de mes se celebrará, como siempre, el último Jueves. ¡Preparen sus pinceles!",
+        "Revisen sus saldos con anticipación antes del cierre de mes para evitar sorpresas de último minuto.",
+        "Recuerden que la sección 'Ver Reglas' contiene toda la información importante sobre la Cicla y las subastas."
     ],
     'NUEVO': [
-        "El 'Total en Bóveda' ahora se muestra en Inicio.",
-        "Nueva sección 'Alumnos en Riesgo' en la homepage.",
-        "El Top 3 Alumnos ahora es visible en el resumen."
+        "El 'Total en Bóveda' ahora se muestra en la pantalla de Inicio para una mayor transparencia de los fondos del banco.",
+        "¡Nueva sección 'Alumnos en Riesgo' en la página principal! Revisa quiénes están cerca de la Cicla.",
+        "El Top 3 Alumnos con más pinceles ahora es visible en el resumen general de la página de Inicio."
     ],
     'CONSEJO': [
-        "Usa el botón '»' para abrir/cerrar la barra lateral.",
-        "Haz clic en un alumno en la tabla para ver detalles.",
-        "Mantén un saldo positivo para participar en subastas."
+        "Puedes usar el botón '»' en la esquina superior para abrir y cerrar la barra lateral de grupos fácilmente.",
+        "Haz clic en el nombre de cualquier alumno en la tabla para ver sus estadísticas y detalles de grupo.",
+        "Es fundamental mantener un saldo positivo de pinceles para poder participar en las subastas mensuales."
     ],
     'ALERTA': [
-        "¡Cuidado! Saldos negativos (< 0 ℙ) te mueven a Cicla.",
-        "Alumnos en Cicla no pueden participar en la subasta.",
-        "Para salir de Cicla se requiere un desafío de recuperación."
+        "¡Mucho cuidado! Acumular saldos negativos (menos de 0 ℙ) te moverá automáticamente a la Cicla.",
+        "Los alumnos que se encuentran actualmente en Cicla no tienen permitido participar en la subasta activa.",
+        "Para poder salir de la Cicla, cada alumno debe completar exitosamente un desafío de recuperación asignado."
     ]
 };
 
@@ -493,7 +493,7 @@ const AppUI = {
         document.getElementById('acceso-rapido-container').classList.add('hidden');
     },
 
-    // --- INICIO CAMBIO DE LÓGICA: Función de Alumnos en Riesgo (Incluye cero pinceles y ahora muestra Top 6) ---
+    // --- INICIO CAMBIO DE LÓGICA: Función de Alumnos en Riesgo (Ahora muestra Top 6) ---
     actualizarAlumnosEnRiesgo: function() {
         const lista = document.getElementById('riesgo-lista');
         if (!lista) return;
@@ -528,7 +528,7 @@ const AppUI = {
     },
     // --- FIN CAMBIO DE LÓGICA ---
     
-    // --- INICIO CAMBIO: Función para Anuncios Dinámicos (Uso de flexbox para mejor distribución horizontal) ---
+    // --- INICIO CAMBIO: Función para Anuncios Dinámicos (Padding aumentado a p-3) ---
     actualizarAnuncios: function() {
         const lista = document.getElementById('anuncios-lista');
         
@@ -544,7 +544,7 @@ const AppUI = {
 
         // Usamos una estructura más clara y compacta para el elemento de lista
         lista.innerHTML = anuncios.map(anuncio => `
-            <li class="flex items-start p-2 hover:bg-gray-50 rounded-lg transition-colors"> 
+            <li class="flex items-start p-3 hover:bg-gray-50 rounded-lg transition-colors"> 
                 <span class="text-xs font-bold ${anuncio.bg} ${anuncio.text} rounded-full w-20 text-center py-0.5 mr-3 flex-shrink-0 mt-1">${anuncio.tipo}</span>
                 <span class="text-sm text-gray-700 flex-1">${anuncio.texto}</span>
             </li>
