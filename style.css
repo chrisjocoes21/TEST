@@ -63,8 +63,8 @@ scrollbar-width: none;  /* Firefox */
 .tab-content {
     /* Estilos para el contenido de las pestañas */
     padding-top: 0.5rem; 
-    /* CAMBIO v0.2.5: Altura mínima aumentada para estabilizar el modal más grande */
-    min-height: 520px;
+    /* CAMBIO v0.2.6: Altura mínima aumentada para estabilizar el modal (eliminar jiggle) */
+    min-height: 540px;
 }
 
 /* V0.2.4: Estilos para el contenedor de resultados de búsqueda (autocomplete) */
