@@ -92,7 +92,6 @@
                 </div>
 
                 <!-- Contenedor de Resumen Compacto (Solo en Home) -->
-                <!-- CAMBIO v0.3.5: Reestructurado a un grid 2x2 para alineación -->
                 <div id="home-stats-container" class="mb-6 hidden">
     
                     <!-- Títulos -->
@@ -102,57 +101,54 @@
                     </div>
                     
                     <!-- 
-                      Grid 2x2. 
-                      En 'lg', las 2 columnas se alinean.
-                      El 'gap-6' principal maneja el espacio de columnas.
-                      El 'gap-6' anidado maneja el espacio de filas.
+                      CAMBIO: Reestructurado a un grid 2x2 "plano" para forzar alturas de fila iguales.
+                      Se eliminaron los divs de "flex-col" que envolvían las columnas.
+                      El grid-cols-2 ahora aplica directamente a las 4 tarjetas/contenedores.
+                      El comportamiento de "stretch" por defecto de Tailwind Grid forzará
+                      que los items de la misma fila (1 y 2, 3 y 4) tengan la misma altura.
                     -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     
-                        <!-- Columna 1: Banco -->
-                        <div class="flex flex-col gap-6">
-                            <!-- Fila 1, Col 1: Bóveda -->
-                            <div id="boveda-card-container">
-                                <!-- Bóveda Card Injected here -->
-                            </div>
-                            <!-- Fila 2, Col 1: Tesorería -->
-                            <div id="tesoreria-card-container">
-                                <!-- Tesorería Card Injected here -->
-                            </div>
+                        <!-- Fila 1, Col 1: Bóveda -->
+                        <div id="boveda-card-container">
+                            <!-- Bóveda Card Injected here. El JS (script.js) ya le añade h-full. -->
                         </div>
                         
-                        <!-- Columna 2: Alumnos + Timer -->
-                        <div class="flex flex-col gap-6">
-                            
-                            <!-- Fila 1, Col 2: Top 3 Grid -->
-                            <!-- h-full (en JS) hará que las tarjetas coincidan con la altura de Bóveda -->
-                            <div id="top-3-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4 h-full">
-                                <!-- Top 3 cards Injected here -->
+                        <!-- Fila 1, Col 2: Top 3 Grid -->
+                        <div id="top-3-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <!-- Top 3 cards Injected here. El JS (script.js) ya les añade h-full. -->
+                        </div>
+                        
+                        <!-- Fila 2, Col 1: Tesorería -->
+                        <div id="tesoreria-card-container">
+                            <!-- Tesorería Card Injected here. El JS (script.js) ya le añade h-full. -->
+                        </div>
+                        
+                        <!-- Fila 2, Col 2: Contador/Botones -->
+                        <!-- 
+                            Añadimos h-full a esta tarjeta para que ocupe toda la altura 
+                            de su celda de grid, igualando a la tarjeta de Tesorería.
+                        -->
+                        <div class="flex flex-wrap items-center justify-between gap-4 px-3 bg-white rounded-lg shadow-md p-3 h-full">
+                            <!-- Timer -->
+                            <div id="countdown-timer" class="flex-shrink-0 text-sm font-medium text-gray-700 flex items-baseline gap-2">
+                                <span id="days" class="text-xl font-bold text-blue-600 w-8 text-right">00</span><span class="text-xs text-gray-500 uppercase -ml-1">Días</span>
+                                <span id="hours" class="text-xl font-bold text-blue-600 w-8 text-right">00</span><span class="text-xs text-gray-500 uppercase -ml-1">Horas</span>
+                                <span id="minutes" class="text-xl font-bold text-blue-600 w-8 text-right">00</span><span class="text-xs text-gray-500 uppercase -ml-1">Minutos</span>
+                                <span id="seconds" class="text-xl font-bold text-blue-600 w-8 text-right">00</span><span class="text-xs text-gray-500 uppercase -ml-1">Segundos</span>
                             </div>
-                            
-                            <!-- Fila 2, Col 2: Contador/Botones -->
-                            <!-- h-full hará que esta tarjeta coincida con la altura de Tesorería -->
-                            <div class="flex flex-wrap items-center justify-between gap-4 px-3 bg-white rounded-lg shadow-md p-3 h-full">
-                                <!-- Timer -->
-                                <div id="countdown-timer" class="flex-shrink-0 text-sm font-medium text-gray-700 flex items-baseline gap-2">
-                                    <span id="days" class="text-xl font-bold text-blue-600 w-8 text-right">00</span><span class="text-xs text-gray-500 uppercase -ml-1">Días</span>
-                                    <span id="hours" class="text-xl font-bold text-blue-600 w-8 text-right">00</span><span class="text-xs text-gray-500 uppercase -ml-1">Horas</span>
-                                    <span id="minutes" class="text-xl font-bold text-blue-600 w-8 text-right">00</span><span class="text-xs text-gray-500 uppercase -ml-1">Minutos</span>
-                                    <span id="seconds" class="text-xl font-bold text-blue-600 w-8 text-right">00</span><span class="text-xs text-gray-500 uppercase -ml-1">Segundos</span>
-                                </div>
-                                <!-- Mensaje -->
-                                <div id="auction-message" class="hidden w-full text-center text-green-600 font-semibold">
-                                    ¡Hoy es el día de la Subasta!
-                                </div>
-                                <!-- Botones -->
-                                <div class="flex gap-3 flex-shrink-0">
-                                    <button id="reglas-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
-                                        Ver Reglas
-                                    </button>
-                                    <button id="tienda-btn" disabled class="px-4 py-2 bg-gray-400 text-white text-sm font-medium rounded-lg transition-colors shadow-sm cursor-not-allowed">
-                                        Tienda
-                                    </button>
-                                </div>
+                            <!-- Mensaje -->
+                            <div id="auction-message" class="hidden w-full text-center text-green-600 font-semibold">
+                                ¡Hoy es el día de la Subasta!
+                            </div>
+                            <!-- Botones -->
+                            <div class="flex gap-3 flex-shrink-0">
+                                <button id="reglas-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                                    Ver Reglas
+                                </button>
+                                <button id="tienda-btn" disabled class="px-4 py-2 bg-gray-400 text-white text-sm font-medium rounded-lg transition-colors shadow-sm cursor-not-allowed">
+                                    Tienda
+                                </button>
                             </div>
                         </div>
                     
