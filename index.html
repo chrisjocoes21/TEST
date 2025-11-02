@@ -51,10 +51,12 @@
                     Cargando...
                 </h1>
 
-                <!-- NUEVO: Indicador de Estado (Nube) en el extremo derecho -->
+                <!-- CAMBIO: Iconos de Nube actualizados -->
                 <div id="status-indicator" class="ml-auto flex items-center pr-2" title="Estado de la conexión">
                     <!-- Estado 1: Conectado (Nube normal) -->
-                    <svg id="status-ok" class="w-6 h-6 text-gray-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15C3 12.2386 5.23858 10 8 10C9.69577 10 11.2033 10.8953 12 12.247M15 15.5C15.2959 15.1841 15.5 14.793 15.5 14.3636C15.5 13.3985 14.7015 12.6 13.7364 12.6C13.5269 12.6 13.3264 12.633 13.1384 12.6946M12 21C16.4183 21 20 17.4183 20 13C20 9.04381 17.1524 5.92289 13.4188 5.54181C12.3686 3.09074 9.87038 1.5 7 1.5C3.68629 1.5 1 4.18629 1 7.5C1 10.4907 3.12423 12.936 5.99896 13.3719"></path></svg>
+                    <svg id="status-ok" class="w-6 h-6 text-gray-400 hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4C9.11 4 6.6 5.64 5.35 8.04C2.34 8.36 0 10.91 0 14C0 17.31 2.69 20 6 20H19C21.76 20 24 17.76 24 15C24 12.36 21.95 10.22 19.35 10.04Z"/>
+                    </svg>
                     
                     <!-- Estado 2: Cargando (Spinner) -->
                     <svg id="status-loading" class="w-6 h-6 text-blue-500 animate-spin hidden" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -63,7 +65,10 @@
                     </svg>
                     
                     <!-- Estado 3: Error/Sin Conexión (Nube tachada) -->
-                    <svg id="status-error" class="w-6 h-6 text-gray-400 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-12.728 12.728M12 21C16.4183 21 20 17.4183 20 13C20 9.04381 17.1524 5.92289 13.4188 5.54181C12.3686 3.09074 9.87038 1.5 7 1.5C3.68629 1.5 1 4.18629 1 7.5C1 10.4907 3.12423 12.936 5.99896 13.3719"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15C3 12.2386 5.23858 10 8 10C9.69577 10 11.2033 10.8953 12 12.247M15 15.5C15.2959 15.1841 15.5 14.793 15.5 14.3636C15.5 13.3985 14.7015 12.6 13.7364 12.6C13.5269 12.6 13.3264 12.633 13.1384 12.6946"></path></svg>
+                    <svg id="status-error" class="w-6 h-6 text-gray-400 hidden" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4C9.11 4 6.6 5.64 5.35 8.04C2.34 8.36 0 10.91 0 14C0 17.31 2.69 20 6 20H19C21.76 20 24 17.76 24 15C24 12.36 21.95 10.22 19.35 10.04ZM19 18H6C3.79 18 2 16.21 2 14C2 11.95 3.53 10.24 5.56 10.03L6.63 9.92L7.13 8.97C8.08 7.14 9.94 6 12 6C14.62 6 16.88 7.86 17.39 10.43L17.69 11.93L19.22 12.01C20.78 12.09 22 13.4 22 15C22 16.65 20.65 18 19 18Z"/>
+                        <path d="M4.7 4.7L19.3 19.3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
                 </div>
             </header>
             
@@ -81,9 +86,26 @@
 
                 <!-- Contenedor de Resumen Compacto (Solo en Home) -->
                 <div id="home-stats-container" class="mb-6 hidden">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Resumen del Banco</h3>
-                    <div id="home-stats-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <!-- Las 4 tarjetas (Bóveda + Top 3) se insertarán aquí -->
+                    
+                    <!-- CAMBIO: Reestructurado para permitir títulos separados -->
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6"> <!-- Aumenté el gap a 6 -->
+                        
+                        <!-- Columna 1: Bóveda -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Resumen del Banco</h3>
+                            <div id="boveda-card-container">
+                                <!-- Tarjeta Bóveda se inyectará aquí -->
+                            </div>
+                        </div>
+                        
+                        <!-- Columna 2-4: Alumnos Destacados -->
+                        <div class="lg:col-span-3">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-4">Alumnos Destacados</h3>
+                            <div id="top-3-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                <!-- Las 3 tarjetas de alumnos se insertarán here -->
+                            </div>
+                        </div>
+
                     </div>
                 </div>
                 
