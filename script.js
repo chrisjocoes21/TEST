@@ -3,12 +3,8 @@ const AppConfig = {
     API_URL: 'https://script.google.com/macros/s/AKfycbzFNGHqiOlKDq5AAGhuDEDweEGgqNoJZFsGrkD3r4aGetrMYLOJtieNK1tVz9iqjvHHNg/exec',
     CLAVE_MAESTRA: 'PinceladasM25-26',
     SPREADSHEET_URL: 'https://docs.google.com/spreadsheets/d/1GArB7I19uGum6awiRN6qK8HtmTWGcaPGWhOzGCdhbcs/edit',
-    ALERT_THRESHOLD: 1800000,
-    MIN_CHANGES_FOR_ALERT: 5,
-    MAX_ALERT_DURATION: 30000,
     RAPID_CHANGE_THRESHOLD: 300000,
     RAPID_CHANGE_COUNT: 3,
-    CHANGE_NOTIFICATION_DURATION: 8000,
     INITIAL_RETRY_DELAY: 1000,
     MAX_RETRY_DELAY: 30000,
     MAX_RETRIES: 5,
@@ -19,15 +15,14 @@ const AppConfig = {
 const AppState = {
     datosActuales: null,
     historialUsuarios: {},
-    cambiosPersistentes: {},
-    cambiosRapidos: {},
     actualizacionEnProceso: false,
     retryCount: 0,
     retryDelay: AppConfig.INITIAL_RETRY_DELAY,
     cachedData: null,
     lastCacheTime: null,
     isOffline: false,
-    notificationCounter: 0,
+    selectedGrupo: null, // Para rastrear el grupo seleccionado
+    isSidebarOpen: false, // Inicia oculta por defecto
 };
 
 // --- AUTENTICACIÓN ---
@@ -36,630 +31,604 @@ const AppAuth = {
         const claveInput = document.getElementById('clave-input');
         if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
             window.open(AppConfig.SPREADSHEET_URL, '_blank');
-            document.getElementById('gestion-modal').classList.remove('active');
+            AppUI.hideModal('gestion-modal');
             claveInput.value = '';
-            claveInput.style.borderColor = '';
-        } else { 
-            claveInput.style.borderColor = 'red';
-            claveInput.style.animation = 'shake 0.5s';
+            claveInput.classList.remove('shake', 'border-red-500');
+        } else {
+            claveInput.classList.add('shake', 'border-red-500');
+            claveInput.focus();
             setTimeout(() => {
-                claveInput.style.animation = '';
+                claveInput.classList.remove('shake');
             }, 500);
-         }
+        }
+    }
+};
+
+// --- CAMBIO: Base de Datos de Anuncios (Texto actualizado, nueva categoría) ---
+const AnunciosDB = {
+    'AVISO': [
+        "La subasta de fin de mes es el último Jueves.",
+        "Revisen sus saldos antes del cierre de mes.",
+        "Recuerden: 'Ver Reglas' tiene info importante."
+    ],
+    'NUEVO': [
+        "El 'Total en Bóveda' ahora se muestra en Inicio.",
+        "Nueva sección 'Alumnos en Riesgo' en la homepage.",
+        "El Top 3 Alumnos ahora es visible en el resumen."
+    ],
+    'CONSEJO': [
+        "Usa el botón '»' para abrir/cerrar la barra lateral.",
+        "Haz clic en un alumno en la tabla para ver detalles.",
+        "Mantén un saldo positivo para participar en subastas."
+    ],
+    'ALERTA': [
+        "¡Cuidado! Saldos negativos (< 0 ℙ) te mueven a Cicla.",
+        "Alumnos en Cicla no pueden participar en la subasta.",
+        "Para salir de Cicla se requiere un desafío de recuperación."
+    ]
+};
+
+// --- MANEJO DE DATOS ---
+const AppData = {
+    
+    formatNumber: (num) => new Intl.NumberFormat('es-DO').format(num),
+
+    isCacheValid: () => AppState.cachedData && AppState.lastCacheTime && (Date.now() - AppState.lastCacheTime < AppConfig.CACHE_DURATION),
+
+    cargarDatos: async function(isRetry = false) {
+        if (AppState.actualizacionEnProceso) return;
+        AppState.actualizacionEnProceso = true;
+
+        if (!isRetry) {
+            AppState.retryCount = 0;
+            AppState.retryDelay = AppConfig.INITIAL_RETRY_DELAY;
+        }
+
+        if (!AppState.datosActuales) {
+            AppUI.showLoading();
+        }
+
+        try {
+            if (!navigator.onLine) {
+                AppState.isOffline = true;
+                if (AppData.isCacheValid()) {
+                    await AppData.procesarYMostrarDatos(AppState.cachedData);
+                } else {
+                    throw new Error("Sin conexión y sin datos en caché.");
+                }
+            } else {
+                AppState.isOffline = false;
+                const url = `${AppConfig.API_URL}?cacheBuster=${new Date().getTime()}`;
+                const response = await fetch(url, { method: 'GET', cache: 'no-cache', redirect: 'follow' });
+
+                if (!response.ok) {
+                    throw new Error(`Error de red: ${response.status} ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                if (data && data.error) {
+                    throw new Error(`Error de API: ${data.message}`);
+                }
+                
+                AppState.datosActuales = AppData.procesarYMostrarDatos(data);
+                AppState.cachedData = AppState.datosActuales;
+                AppState.lastCacheTime = Date.now();
+                AppState.retryCount = 0; // Éxito, reiniciar contador
+            }
+
+        } catch (error) {
+            console.error("Error al cargar datos:", error.message);
+            if (AppState.retryCount < AppConfig.MAX_RETRIES) {
+                AppState.retryCount++;
+                setTimeout(() => AppData.cargarDatos(true), AppState.retryDelay);
+                AppState.retryDelay = Math.min(AppState.retryDelay * 2, AppConfig.MAX_RETRY_DELAY);
+            } else if (AppData.isCacheValid()) {
+                console.warn("Fallaron los reintentos. Mostrando datos de caché.");
+                AppState.datosActuales = AppData.procesarYMostrarDatos(AppState.cachedData);
+            } else {
+                console.error("Fallaron todos los reintentos y no hay caché.");
+            }
+        } finally {
+            AppState.actualizacionEnProceso = false;
+            AppUI.hideLoading();
+        }
+    },
+
+    detectarCambios: function(nuevosDatos) {
+        if (!AppState.datosActuales) return; 
+
+        const ahora = Date.now();
+        nuevosDatos.forEach(grupo => {
+            (grupo.usuarios || []).forEach(usuario => {
+                const claveUsuario = `${grupo.nombre}-${usuario.nombre}`;
+                const historial = AppState.historialUsuarios[claveUsuario] || { pinceles: 0, cambiosRecientes: [] };
+
+                if (usuario.pinceles !== historial.pinceles) {
+                    const cambio = { tiempo: ahora, anterior: historial.pinceles, nuevo: usuario.pinceles };
+                    historial.pinceles = usuario.pinceles;
+                    
+                    historial.cambiosRecientes.push(cambio);
+                    historial.cambiosRecientes = historial.cambiosRecientes.filter(c => ahora - c.tiempo <= AppConfig.RAPID_CHANGE_THRESHOLD);
+
+                }
+                AppState.historialUsuarios[claveUsuario] = historial;
+            });
+        });
+    },
+    
+    procesarYMostrarDatos: function(data) {
+        let gruposOrdenados = Object.entries(data).map(([nombre, info]) => ({ nombre, total: info.total || 0, usuarios: info.usuarios || [] }));
+        const negativeUsers = [];
+
+        gruposOrdenados.forEach(grupo => {
+            grupo.usuarios = (grupo.usuarios || []).filter(usuario => {
+                if (usuario.pinceles < 0) {
+                    negativeUsers.push({ ...usuario, grupoOriginal: grupo.nombre });
+                    return false;
+                }
+                usuario.grupoNombre = grupo.nombre; 
+                return true;
+            });
+            grupo.total = grupo.usuarios.reduce((sum, user) => sum + user.pinceles, 0);
+        });
+
+        if (negativeUsers.length > 0) {
+            gruposOrdenados.push({ nombre: "Cicla", total: negativeUsers.reduce((sum, user) => sum + user.pinceles, 0), usuarios: negativeUsers });
+        }
+
+        gruposOrdenados = gruposOrdenados.filter(g => g.total !== 0 || (g.nombre === "Cicla" && g.usuarios.length > 0));
+        gruposOrdenados.sort((a, b) => b.total - a.total);
+        
+        // Detectar cambios antes de actualizar el estado
+        AppData.detectarCambios(gruposOrdenados);
+
+        // Actualizar UI
+        AppUI.actualizarSidebar(gruposOrdenados);
+        
+        if (AppState.selectedGrupo) {
+            const grupoActualizado = gruposOrdenados.find(g => g.nombre === AppState.selectedGrupo);
+            if (grupoActualizado) {
+                AppUI.mostrarDatosGrupo(grupoActualizado);
+            } else {
+                AppState.selectedGrupo = null;
+                AppUI.mostrarPantallaNeutral(gruposOrdenados);
+            }
+        } else {
+            AppUI.mostrarPantallaNeutral(gruposOrdenados);
+        }
+        
+        AppUI.actualizarSidebarActivo();
+        return gruposOrdenados;
     }
 };
 
 // --- MANEJO DE LA INTERFAZ (UI) ---
 const AppUI = {
-    /**
-     * Actualiza el estado de la conexión (actualmente solo log en consola).
-     */
-    updateConnectionStatus: function(status, message = '', isOffline = false) {
-        console.log('Estado del sistema:', status, message);
-    },
-
-    /**
-     * Obtiene el HTML del indicador de ranking.
-     */
-    getRankIndicator: function(posicion, isNegative = false) {
-        if (isNegative) return `<div class="rank-indicator rank-negative">-</div>`;
-        return `<div class="rank-indicator rank-${posicion}">${posicion}</div>`;
-    },
-
-    /**
-     * Crea un elemento HTML para un usuario.
-     */
-    crearUsuarioItem: function(usuario, uIndex, grupo, posGrupo) {
-        const usuarioItem = document.createElement('div');
-        const isCiclaSpecial = grupo.nombre === "Cicla" && usuario.pinceles < -5000;
-        usuarioItem.className = `usuario-item${isCiclaSpecial ? ' cicla-special-condition' : ''}`;
-        usuarioItem.dataset.userName = usuario.nombre; 
-        usuarioItem.style.order = uIndex;
-
-        const trendingIcon = usuario.trending ? `<span class="trending-icon" title="En racha">🔥</span>` : '';
-        const isCiclaHighlight = grupo.nombre === "Cicla" && usuario.pinceles > 5000;
-        const pincelesClasses = `pinceles-count${usuario.pinceles < 0 ? ' negative' : ''}${isCiclaHighlight ? ' cicla-highlight' : ''}`;
-        
-        usuarioItem.innerHTML = `
-            ${AppUI.getRankIndicator(uIndex + 1, usuario.pinceles < 0)}
-            <span class="usuario-nombre" data-usuario='${JSON.stringify(usuario)}' data-grupo='${JSON.stringify(grupo)}' data-posicion-grupo='${posGrupo}' data-posicion-individual='${uIndex + 1}'>
-                ${usuario.nombre}${trendingIcon}
-            </span>
-            <span class="${pincelesClasses}">${AppData.formatNumber(usuario.pinceles)}</span>`;
-        
-        return usuarioItem;
-    },
-
-    /**
-     * Actualiza un elemento HTML de usuario existente.
-     */
-    actualizarUsuarioItem: function(usuarioItem, usuario, uIndex, grupo, posGrupo) {
-        usuarioItem.style.order = uIndex;
-        
-        const isCiclaSpecial = grupo.nombre === "Cicla" && usuario.pinceles < -5000;
-        usuarioItem.classList.toggle('cicla-special-condition', isCiclaSpecial);
-
-        const trendingIcon = usuario.trending ? `<span class="trending-icon" title="En racha">🔥</span>` : '';
-        const isCiclaHighlight = grupo.nombre === "Cicla" && usuario.pinceles > 5000;
-        const pincelesClasses = `pinceles-count${usuario.pinceles < 0 ? ' negative' : ''}${isCiclaHighlight ? ' cicla-highlight' : ''}`;
-
-        const rankIndicator = usuarioItem.querySelector('.rank-indicator');
-        if (rankIndicator) {
-            rankIndicator.outerHTML = AppUI.getRankIndicator(uIndex + 1, usuario.pinceles < 0);
-        }
-
-        const nombreSpan = usuarioItem.querySelector('.usuario-nombre');
-        if (nombreSpan) {
-            nombreSpan.innerHTML = `${usuario.nombre}${trendingIcon}`;
-            nombreSpan.dataset.usuario = JSON.stringify(usuario);
-            nombreSpan.dataset.grupo = JSON.stringify(grupo);
-            nombreSpan.dataset.posicionGrupo = posGrupo;
-            nombreSpan.dataset.posicionIndividual = uIndex + 1;
-        }
-
-        const pincelesSpan = usuarioItem.querySelector('.pinceles-count');
-        if (pincelesSpan) {
-            pincelesSpan.className = pincelesClasses;
-            pincelesSpan.textContent = AppData.formatNumber(usuario.pinceles);
-        }
-    },
-
-    /**
-     * Reconcilia la lista de usuarios dentro de un grupo.
-     */
-    actualizarUsuariosLista: function(usuariosListaEl, usuariosNuevos, grupo, posGrupo) {
-        const usuariosOrdenados = [...usuariosNuevos].sort((a, b) => b.pinceles - a.pinceles);
-        
-        const existingUsersMap = new Map();
-        usuariosListaEl.querySelectorAll('.usuario-item').forEach(item => {
-            existingUsersMap.set(item.dataset.userName, item);
+    
+    init: function() {
+        // Listeners Modales
+        document.getElementById('gestion-btn').addEventListener('click', () => AppUI.showModal('gestion-modal'));
+        document.getElementById('modal-cancel').addEventListener('click', () => AppUI.hideModal('gestion-modal'));
+        document.getElementById('modal-submit').addEventListener('click', AppAuth.verificarClave);
+        document.getElementById('gestion-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'gestion-modal') AppUI.hideModal('gestion-modal');
+        });
+        document.getElementById('student-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'student-modal') AppUI.hideModal('student-modal');
         });
 
-        const newUsersSet = new Set(usuariosOrdenados.map(u => u.nombre));
-
-        for (const [userName, item] of existingUsersMap.entries()) {
-            if (!newUsersSet.has(userName)) {
-                item.remove();
-                existingUsersMap.delete(userName);
-            }
-        }
-
-        usuariosOrdenados.forEach((usuario, uIndex) => {
-            const existingItem = existingUsersMap.get(usuario.nombre);
-            if (existingItem) {
-                AppUI.actualizarUsuarioItem(existingItem, usuario, uIndex, grupo, posGrupo);
-            } else {
-                const newItem = AppUI.crearUsuarioItem(usuario, uIndex, grupo, posGrupo);
-                usuariosListaEl.appendChild(newItem);
-            }
+        // Listeners Modal Reglas
+        document.getElementById('reglas-btn').addEventListener('click', () => AppUI.showModal('reglas-modal'));
+        document.getElementById('reglas-modal-close').addEventListener('click', () => AppUI.hideModal('reglas-modal'));
+        document.getElementById('reglas-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'reglas-modal') AppUI.hideModal('reglas-modal');
         });
 
-        if (usuariosOrdenados.length === 0 && usuariosListaEl.children.length === 0) {
-            usuariosListaEl.innerHTML = `<div class="usuario-item"><span class="usuario-nombre">Sin registros</span></div>`;
-        } else if (usuariosOrdenados.length > 0) {
-            const noRegistros = usuariosListaEl.querySelector('.usuario-item:only-child .usuario-nombre');
-            if (noRegistros && noRegistros.textContent === 'Sin registros') {
-                noRegistros.parentElement.remove();
-            }
+        // Listener Sidebar
+        document.getElementById('toggle-sidebar-btn').addEventListener('click', AppUI.toggleSidebar);
+
+        // Carga inicial
+        AppData.cargarDatos(false);
+        setInterval(() => AppData.cargarDatos(false), 10000); 
+        AppUI.updateCountdown();
+        setInterval(AppUI.updateCountdown, 1000);
+    },
+
+    showModal: function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.querySelector('[class*="transform"]').classList.remove('scale-95');
+    },
+
+    hideModal: function(modalId) {
+        const modal = document.getElementById(modalId);
+        if (!modal) return;
+        modal.classList.add('opacity-0', 'pointer-events-none');
+        modal.querySelector('[class*="transform"]').classList.add('scale-95');
+    },
+
+    showLoading: function() {
+        document.getElementById('loading-overlay').classList.remove('opacity-0', 'pointer-events-none');
+    },
+
+    hideLoading: function() {
+        document.getElementById('loading-overlay').classList.add('opacity-0', 'pointer-events-none');
+    },
+
+    // --- INICIO CAMBIO: Nueva función hideSidebar ---
+    hideSidebar: function() {
+        if (AppState.isSidebarOpen) {
+            AppUI.toggleSidebar(); // Llama a toggle para cerrar
+        }
+    },
+    // --- FIN CAMBIO ---
+
+    toggleSidebar: function() {
+        const sidebar = document.getElementById('sidebar');
+        const btn = document.getElementById('toggle-sidebar-btn');
+        
+        AppState.isSidebarOpen = !AppState.isSidebarOpen; 
+
+        if (AppState.isSidebarOpen) {
+            sidebar.classList.remove('-translate-x-full');
+            btn.innerHTML = '<span class="font-bold text-lg">«</span>';
+        } else {
+            sidebar.classList.add('-translate-x-full');
+            btn.innerHTML = '<span class="font-bold text-lg">»</span>';
         }
     },
 
-    /**
-     * Crea un elemento de grupo completo.
-     */
-    crearGrupoElement: function(grupo, index) {
-        const isNegativeGroup = grupo.nombre === "Cicla";
-        let topClass = !isNegativeGroup && index < 6 ? ` top-${index + 1}` : '';
+    actualizarSidebar: function(grupos) {
+        const nav = document.getElementById('sidebar-nav');
+        nav.innerHTML = ''; 
         
-        const grupoElement = document.createElement('div');
-        grupoElement.className = `grupo-container${topClass}${isNegativeGroup ? ' negative' : ''}`;
-        grupoElement.dataset.groupName = grupo.nombre;
-        grupoElement.style.order = index;
-
-        const grupoHeader = document.createElement('div');
-        grupoHeader.className = 'grupo-header';
-        grupoHeader.innerHTML = `
-            <div class="grupo-nombre">
-                <span>${grupo.nombre}</span>
-                ${AppUI.getRankIndicator(index + 1, isNegativeGroup)}
-            </div>
-            <div class="grupo-total">
-                ${AppData.formatNumber(grupo.total)}<span>pinceles</span>
-            </div>`;
-
-        const usuariosLista = document.createElement('div');
-        usuariosLista.className = 'usuarios-lista';
-
-        AppUI.actualizarUsuariosLista(usuariosLista, grupo.usuarios || [], grupo, index + 1);
-
-        grupoElement.appendChild(grupoHeader);
-        grupoElement.appendChild(usuariosLista);
-        grupoHeader.addEventListener('click', () => AppUI.toggleGrupo(grupoElement));
-        
-        return grupoElement;
-    },
-
-    /**
-     * Actualiza el encabezado de un grupo existente.
-     */
-    actualizarGrupoHeader: function(grupoElement, grupo, index) {
-        const isNegativeGroup = grupo.nombre === "Cicla";
-        
-        let topClass = !isNegativeGroup && index < 6 ? ` top-${index + 1}` : '';
-        // Preserva las clases 'expandido' y 'oculto' si existen
-        const extraClasses = ['expandido', 'oculto'].filter(c => grupoElement.classList.contains(c)).join(' ');
-        grupoElement.className = `grupo-container${topClass}${isNegativeGroup ? ' negative' : ''} ${extraClasses}`.trim();
-        
-        grupoElement.style.order = index;
-
-        const nombreEl = grupoElement.querySelector('.grupo-nombre');
-        if (nombreEl) {
-            nombreEl.innerHTML = `<span>${grupo.nombre}</span>${AppUI.getRankIndicator(index + 1, isNegativeGroup)}`;
-        }
-        
-        const totalEl = grupoElement.querySelector('.grupo-total');
-        if (totalEl) {
-            totalEl.innerHTML = `${AppData.formatNumber(grupo.total)}<span>pinceles</span>`;
-        }
-    },
-
-    /**
-     * Muestra y reconcilia los datos de los grupos en el DOM.
-     */
-    mostrarDatos: async function(gruposOrdenados) {
-        const container = document.getElementById('grupos-container');
-
-        const ciclaIndex = gruposOrdenados.findIndex(g => g.nombre === "Cicla");
-        let ciclaGroup = ciclaIndex !== -1 ? gruposOrdenados.splice(ciclaIndex, 1)[0] : null;
-        
-        const setInicial = ['Cuarto', 'Quinto', 'Sexto', 'Primero', 'Segundo', 'Tercero'];
-        setInicial.forEach(nombre => {
-            if (!gruposOrdenados.some(g => g.nombre.trim().toLowerCase() === nombre.toLowerCase())) {
-                gruposOrdenados.push({ nombre, total: 0, usuarios: [] });
-            }
-        });
-        
-        const principales = gruposOrdenados.filter(g => setInicial.some(n => n.toLowerCase() === g.nombre.trim().toLowerCase()));
-        const extras = gruposOrdenados.filter(g => !setInicial.some(n => n.toLowerCase() === g.nombre.trim().toLowerCase()));
-        
-        let principalesOrdenados = principales.some(g => g.total > 0) 
-            ? [...principales].sort((a, b) => b.total - a.total) 
-            : setInicial.map(nombre => principales.find(g => g.nombre.trim().toLowerCase() === nombre.toLowerCase()));
-        
-        extras.sort((a, b) => b.total - a.total);
-        
-        const gruposParaMostrar = [...principalesOrdenados, ...extras];
-        if (ciclaGroup && ciclaGroup.usuarios && ciclaGroup.usuarios.length > 0) {
-            gruposParaMostrar.push(ciclaGroup);
-        }
-
-        const gruposActivos = gruposParaMostrar.filter(g => g.total !== 0 || g.nombre === "Cicla" || setInicial.includes(g.nombre));
-
-        const openCardEl = container.querySelector('.grupo-container.expandido .grupo-nombre span');
-        const openGroupName = openCardEl ? openCardEl.textContent.trim() : null;
-
-        const existingGroupsMap = new Map();
-        container.querySelectorAll('.grupo-container').forEach(el => {
-            existingGroupsMap.set(el.dataset.groupName, el);
-        });
-
-        const newGroupsSet = new Set(gruposActivos.map(g => g.nombre));
-
-        for (const [groupName, element] of existingGroupsMap.entries()) {
-            if (!newGroupsSet.has(groupName)) {
-                element.remove();
-                existingGroupsMap.delete(groupName);
-            }
-        }
-
-        gruposActivos.forEach((grupo, index) => {
-            if (grupo.nombre === "Cicla" && (!grupo.usuarios || grupo.usuarios.length === 0)) {
-                const ciclaEl = existingGroupsMap.get("Cicla");
-                if (ciclaEl) ciclaEl.remove();
+        const homeLink = document.createElement('a');
+        homeLink.href = '#';
+        homeLink.dataset.groupName = "home"; 
+        homeLink.className = "flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link";
+        homeLink.innerHTML = `<span class="truncate">Inicio</span>`;
+        homeLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (AppState.selectedGrupo === null) {
+                AppUI.hideSidebar(); // Ocultar aunque ya esté
                 return;
             }
+            AppState.selectedGrupo = null;
+            AppUI.mostrarPantallaNeutral(AppState.datosActuales || []);
+            AppUI.actualizarSidebarActivo();
+            AppUI.hideSidebar(); // (CAMBIO: Ocultar al hacer clic)
+        });
+        nav.appendChild(homeLink);
 
-            const existingElement = existingGroupsMap.get(grupo.nombre);
+        (grupos || []).forEach(grupo => {
+            const link = document.createElement('a');
+            link.href = '#';
+            link.dataset.groupName = grupo.nombre;
+            link.className = "flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link";
+            
+            let totalColor = "text-gray-600";
+            if (grupo.total < 0) totalColor = "text-red-600";
+            if (grupo.total > 0) totalColor = "text-green-600";
 
-            if (existingElement) {
-                AppUI.actualizarGrupoHeader(existingElement, grupo, index);
-                const usuariosListaEl = existingElement.querySelector('.usuarios-lista');
-                if (usuariosListaEl) {
-                    AppUI.actualizarUsuariosLista(usuariosListaEl, grupo.usuarios || [], grupo, index + 1);
+            link.innerHTML = `
+                <span class="truncate">${grupo.nombre}</span>
+                <span class="text-xs font-semibold ${totalColor}">${AppData.formatNumber(grupo.total)} ℙ</span>
+            `;
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (AppState.selectedGrupo === grupo.nombre) {
+                    AppUI.hideSidebar(); // Ocultar aunque ya esté
+                    return;
                 }
+                AppState.selectedGrupo = grupo.nombre;
+                AppUI.mostrarDatosGrupo(grupo);
+                AppUI.actualizarSidebarActivo();
+                AppUI.hideSidebar(); // (CAMBIO: Ocultar al hacer clic)
+            });
+            nav.appendChild(link);
+        });
+    },
+
+    actualizarSidebarActivo: function() {
+        const links = document.querySelectorAll('#sidebar-nav .nav-link');
+        links.forEach(link => {
+            const groupName = link.dataset.groupName;
+            const isActive = (AppState.selectedGrupo === null && groupName === 'home') || (AppState.selectedGrupo === groupName);
+
+            if (isActive) {
+                link.classList.add('bg-blue-50', 'text-blue-600');
+                link.classList.remove('text-gray-700', 'hover:bg-gray-100');
             } else {
-                const newGrupoElement = AppUI.crearGrupoElement(grupo, index);
-                container.appendChild(newGrupoElement);
+                link.classList.remove('bg-blue-50', 'text-blue-600');
+                link.classList.add('text-gray-700', 'hover:bg-gray-100');
             }
         });
-
-        if (openGroupName) {
-            const groupToReopen = Array.from(container.querySelectorAll('.grupo-container')).find(g => g.dataset.groupName === openGroupName);
-            if (groupToReopen && !groupToReopen.classList.contains('expandido')) {
-                AppUI.toggleGrupo(groupToReopen, true); 
-            } else if (!groupToReopen) {
-                AppUI.closeExpandedGroup();
-            }
-        }
     },
 
     /**
-     * Muestra/Oculta la lista de usuarios de un grupo.
+     * Muestra la vista de "Inicio"
      */
-    toggleGrupo: function(grupoElement, forceOpen = false) {
-        const usuariosLista = grupoElement.querySelector('.usuarios-lista');
-        const isExpanded = usuariosLista.classList.contains('show');
-        const pageOverlay = document.getElementById('page-overlay');
+    mostrarPantallaNeutral: function(grupos) {
+        document.getElementById('main-header-title').textContent = "Bienvenido al Banco del Pincel Dorado";
+        document.getElementById('page-subtitle').innerHTML = ''; 
+
+        const tableContainer = document.getElementById('table-container');
+        tableContainer.innerHTML = '';
+        tableContainer.classList.add('hidden');
+
+        // 1. MOSTRAR RESUMEN COMPACTO (4 TARJETAS)
+        const homeStatsContainer = document.getElementById('home-stats-container');
+        const homeStatsGrid = document.getElementById('home-stats-grid');
+        let cardsHtml = '';
+
+        // Tarjeta de Bóveda
+        const totalGeneral = grupos.reduce((acc, g) => acc + g.total, 0);
+        cardsHtml += `
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium text-gray-500 truncate">Total en Bóveda</span>
+                    <span class="text-xs font-bold bg-green-100 text-green-700 rounded-full px-2 py-0.5">BANCO</span>
+                </div>
+                <p class="text-lg font-semibold text-gray-900 truncate">Pinceles Totales</p>
+                <p class="text-xl font-bold text-green-600 text-right">${AppData.formatNumber(totalGeneral)} ℙ</p>
+            </div>
+        `;
         
-        document.querySelectorAll('.grupo-container').forEach(g => {
-            g.classList.remove('expandido', 'oculto');
-            g.querySelector('.usuarios-lista').classList.remove('show');
-        });
+        // Tarjetas Top 3 Alumnos
+        const allStudents = (grupos || []).flatMap(g => g.usuarios);
+        const top3 = allStudents.sort((a, b) => b.pinceles - a.pinceles).slice(0, 3);
 
-        if (!isExpanded || forceOpen) {
-            document.querySelectorAll('.grupo-container').forEach(g => {
-                if (g !== grupoElement) g.classList.add('oculto');
-            });
-            grupoElement.classList.add('expandido');
-            usuariosLista.classList.add('show');
-            pageOverlay.classList.add('active');
-        } else {
-            pageOverlay.classList.remove('active');
+        if (top3.length > 0) {
+            cardsHtml += top3.map((student, index) => {
+                let rankColor = 'bg-blue-100 text-blue-700';
+                if (index === 0) rankColor = 'bg-yellow-100 text-yellow-700';
+                if (index === 1) rankColor = 'bg-gray-100 text-gray-700';
+                if (index === 2) rankColor = 'bg-orange-100 text-orange-700';
+                const grupoNombre = student.grupoOriginal || student.grupoNombre || (student.pinceles < 0 ? 'Cicla' : 'N/A');
+
+                return `
+                    <div class="bg-white rounded-lg shadow-md p-4">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-gray-500 truncate">${grupoNombre}</span>
+                            <span class="text-xs font-bold ${rankColor} rounded-full px-2 py-0.5">${index + 1}º</span>
+                        </div>
+                        <p class="text-lg font-semibold text-gray-900 truncate">${student.nombre}</p>
+                        <p class="text-xl font-bold text-blue-600 text-right">${AppData.formatNumber(student.pinceles)} ℙ</p>
+                    </div>
+                `;
+            }).join('');
         }
-    },
-
-    /**
-     * Cierra cualquier grupo que esté expandido.
-     */
-    closeExpandedGroup: function() {
-        const expandedGroup = document.querySelector('.grupo-container.expandido');
-        if (expandedGroup) {
-            AppUI.toggleGrupo(expandedGroup); 
+        // Placeholders
+        for (let i = top3.length; i < 3; i++) {
+            cardsHtml += `
+                <div class="bg-white rounded-lg shadow-md p-4 opacity-50">
+                    <div class="flex items-center justify-between mb-2"><span class="text-sm font-medium text-gray-400">-</span><span class="text-xs font-bold bg-gray-100 text-gray-400 rounded-full px-2 py-0.5">${i + 1}º</span></div>
+                    <p class="text-lg font-semibold text-gray-400 truncate">-</p>
+                    <p class="text-xl font-bold text-gray-400 text-right">- ℙ</p>
+                </div>
+            `;
         }
-    },
 
-    /**
-     * Muestra una notificación de cambio.
-     */
-    showChangeNotification: function(usuario, grupo, cambios, tipo = 'normal') {
-        const container = document.getElementById('notifications-container');
-        const existing = container.querySelectorAll('.change-notification');
-        if (existing.length >= 4) {
-            existing[0].classList.remove('show');
-            setTimeout(() => existing[0].remove(), 300);
-        }
-        const notification = document.createElement('div');
-        notification.className = `change-notification ${tipo}`;
-        let iconClass, title, message;
-        if (tipo === 'rapid') { iconClass = 'fas fa-bolt'; title = 'CAMBIOS RÁPIDOS'; message = `${usuario} (${grupo}) tuvo ${cambios} cambios en 5 min.`; }
-        else if (tipo === 'persistent') { iconClass = 'fas fa-exclamation-triangle'; title = 'CAMBIOS PERSISTENTES'; message = `${usuario} (${grupo}) tuvo ${cambios} cambios en 30 min.`; }
-        else { iconClass = 'fas fa-sync-alt'; title = 'CAMBIO DETECTADO'; message = `${usuario} (${grupo}) actualizó sus pinceles.`; }
-        notification.innerHTML = `<i class="${iconClass} change-notification-icon"></i><div class="change-notification-content"><div class="change-notification-title">${title}</div><div class="change-notification-message">${message}</div></div>`;
-        container.appendChild(notification);
-        setTimeout(() => notification.classList.add('show'), 100);
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => notification.remove(), 600);
-        }, AppConfig.CHANGE_NOTIFICATION_DURATION);
-    },
-
-    /**
-     * Configura los event listeners para los modales.
-     */
-    setupModals: function() {
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.classList.remove('active');
-            });
-        });
-        document.querySelector('#gestion-titulo').addEventListener('click', () => document.getElementById('gestion-modal').classList.add('active'));
-        document.querySelector('#modal-cancel').addEventListener('click', () => document.getElementById('gestion-modal').classList.remove('active'));
-        document.querySelector('#modal-submit').addEventListener('click', AppAuth.verificarClave);
-        document.querySelector('#clave-input').addEventListener('keypress', (e) => e.key === 'Enter' && AppAuth.verificarClave());
+        homeStatsGrid.innerHTML = cardsHtml;
+        homeStatsContainer.classList.remove('hidden');
         
-        document.querySelector('.close-student-modal').addEventListener('click', () => document.getElementById('student-modal').classList.remove('active'));
+        // 2. MOSTRAR MÓDULOS (Idea 1 & 2)
+        document.getElementById('home-modules-grid').classList.remove('hidden');
+        AppUI.actualizarAlumnosEnRiesgo(); // (CAMBIO) Llamar a la nueva función
+        AppUI.actualizarAnuncios(); // Poblar anuncios dinámicos
         
-        document.getElementById('page-overlay').addEventListener('click', AppUI.closeExpandedGroup);
+        // 3. MOSTRAR ACCESO RÁPIDO (Idea 3)
+        document.getElementById('acceso-rapido-container').classList.remove('hidden');
     },
 
     /**
-     * Muestra el modal con la información del estudiante.
+     * Muestra la tabla de un grupo específico
      */
-    showStudentInfo: function(usuario, grupo, posGrupo, posInd) {
-        const modal = document.getElementById('student-modal');
-        const infoGrid = document.getElementById('student-info-grid');
+    mostrarDatosGrupo: function(grupo) {
+        document.getElementById('main-header-title').textContent = grupo.nombre;
+        
+        let totalColor = "text-gray-700";
+        if (grupo.total < 0) totalColor = "text-red-600";
+        if (grupo.total > 0) totalColor = "text-green-600";
+        
+        document.getElementById('page-subtitle').innerHTML = `
+            <h2 class="text-xl font-semibold text-gray-800">Total del Grupo: 
+                <span class="${totalColor}">${AppData.formatNumber(grupo.total)} ℙ</span>
+            </h2>
+        `;
+        
+        const tableContainer = document.getElementById('table-container');
+        const usuariosOrdenados = [...grupo.usuarios].sort((a, b) => b.pinceles - a.pinceles);
+
+        const filas = usuariosOrdenados.map((usuario, index) => {
+            const pos = index + 1;
+            const isTrending = (AppState.historialUsuarios[`${grupo.nombre}-${usuario.nombre}`]?.cambiosRecientes.length || 0) >= 2;
+            
+            let rankBg = 'bg-gray-100 text-gray-600';
+            if (pos === 1) rankBg = 'bg-yellow-100 text-yellow-600';
+            if (pos === 2) rankBg = 'bg-gray-200 text-gray-700';
+            if (pos === 3) rankBg = 'bg-orange-100 text-orange-600';
+            if (grupo.nombre === "Cicla") rankBg = 'bg-red-100 text-red-600';
+
+            return `
+                <tr class="hover:bg-gray-50 cursor-pointer" onclick="AppUI.showStudentModal('${grupo.nombre}', '${usuario.nombre}', ${pos})">
+                    <td class="px-4 py-3 text-center">
+                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${rankBg}">
+                            ${pos}
+                        </span>
+                    </td>
+                    <td class="px-6 py-3 text-sm font-medium text-gray-900 truncate">
+                        ${usuario.nombre} ${isTrending ? '🔥' : ''}
+                    </td>
+                    <td class="px-6 py-3 text-sm font-semibold ${usuario.pinceles < 0 ? 'text-red-600' : 'text-gray-800'} text-right">
+                        ${AppData.formatNumber(usuario.pinceles)} ℙ
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        tableContainer.innerHTML = `
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Rank</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Pinceles</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        ${filas.length > 0 ? filas : '<tr><td colspan="3" class="text-center p-6 text-gray-500">No hay alumnos en este grupo.</td></tr>'}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        
+        tableContainer.classList.remove('hidden');
+
+        // 4. OCULTAR MÓDULOS DE HOME
+        document.getElementById('home-stats-container').classList.add('hidden');
+        document.getElementById('home-modules-grid').classList.add('hidden');
+        document.getElementById('acceso-rapido-container').classList.add('hidden');
+    },
+
+    // --- CAMBIO: Función de Alumnos en Riesgo (Estilo simétrico) ---
+    actualizarAlumnosEnRiesgo: function() {
+        const lista = document.getElementById('riesgo-lista');
+        if (!lista) return;
+
+        const allStudents = (AppState.datosActuales || []).flatMap(g => g.usuarios);
+        const positiveStudents = allStudents.filter(s => s.pinceles > 0);
+        const enRiesgo = positiveStudents.sort((a, b) => a.pinceles - b.pinceles);
+        const top3Riesgo = enRiesgo.slice(0, 3);
+
+        if (top3Riesgo.length === 0) {
+            lista.innerHTML = `<li class="p-4 text-sm text-gray-500 text-center">No hay alumnos en riesgo por el momento.</li>`;
+            return;
+        }
+
+        lista.innerHTML = top3Riesgo.map((student, index) => {
+            const grupoNombre = student.grupoOriginal || student.grupoNombre || 'N/A';
+            return `
+                <li class="flex items-start">
+                    <span class="text-xs font-bold bg-red-100 text-red-700 rounded-full w-20 text-center py-0.5 mr-3 mt-1 flex-shrink-0">RIESGO ${index + 1}</span>
+                    <span class="text-sm text-gray-700">
+                        ${student.nombre} (${grupoNombre}) - <strong class="font-semibold">${AppData.formatNumber(student.pinceles)} ℙ</strong>
+                    </span>
+                </li>
+            `;
+        }).join('');
+    },
+    
+    // --- CAMBIO: Función para Anuncios Dinámicos (Nuevo orden y categoría) ---
+    actualizarAnuncios: function() {
+        const lista = document.getElementById('anuncios-lista');
+        
+        const getRandomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+        const anuncios = [
+            { tipo: 'AVISO', texto: getRandomItem(AnunciosDB['AVISO']), bg: 'bg-gray-100', text: 'text-gray-700' },
+            { tipo: 'NUEVO', texto: getRandomItem(AnunciosDB['NUEVO']), bg: 'bg-blue-100', text: 'text-blue-700' },
+            { tipo: 'CONSEJO', texto: getRandomItem(AnunciosDB['CONSEJO']), bg: 'bg-green-100', text: 'text-green-700' },
+            { tipo: 'ALERTA', texto: getRandomItem(AnunciosDB['ALERTA']), bg: 'bg-red-100', text: 'text-red-700' }
+        ];
+
+        lista.innerHTML = anuncios.map(anuncio => `
+            <li class="flex items-start">
+                <span class="text-xs font-bold ${anuncio.bg} ${anuncio.text} rounded-full w-20 text-center py-0.5 mr-3 mt-1 flex-shrink-0">${anuncio.tipo}</span>
+                <span class="text-sm text-gray-700">${anuncio.texto}</span>
+            </li>
+        `).join('');
+    },
+
+    // --- MODAL DE ALUMNO ---
+    showStudentModal: function(nombreGrupo, nombreUsuario, rank) {
+        const grupo = AppState.datosActuales.find(g => g.nombre === nombreGrupo);
+        const usuario = (grupo.usuarios || []).find(u => u.nombre === nombreUsuario);
+        
+        if (!usuario || !grupo) return;
+
+        const modalContent = document.getElementById('student-modal-content');
         const totalPinceles = usuario.pinceles || 0;
-        const posIndClass = posInd >= 1 && posInd <= 6 ? `position-${posInd}` : 'accent';
-        const posGrupoClass = posGrupo >= 1 && posGrupo <= 6 ? `position-${posGrupo}` : 'accent';
+        
+        const gruposRankeados = AppState.datosActuales.filter(g => g.nombre !== 'Cicla');
+        const rankGrupo = gruposRankeados.findIndex(g => g.nombre === nombreGrupo) + 1;
 
-        infoGrid.innerHTML = `
-            <div class="student-info-card"><div class="student-info-label">Grupo</div><div class="student-info-value accent">${grupo.nombre}</div></div>
-            <div class="student-info-card"><div class="student-info-label">Posición en Grupo</div><div class="student-info-value ${posIndClass}">${posInd}°</div></div>
-            <div class="student-info-card"><div class="student-info-label">Posición del Grupo</div><div class="student-info-value ${posGrupoClass}">${posGrupo}°</div></div>
-            <div class="student-info-card"><div class="student-info-label">Total Pinceles</div><div class="student-info-value ${totalPinceles >= 0 ? 'positive' : 'negative'}">${AppData.formatNumber(totalPinceles)}</div></div>
-            <div class="student-info-card"><div class="student-info-label">Total Grupo</div><div class="student-info-value accent">${AppData.formatNumber(grupo.total)}</div></div>
-            <div class="student-info-card"><div class="student-info-label">% del Grupo</div><div class="student-info-value accent">${grupo.total !== 0 ? ((totalPinceles / grupo.total) * 100).toFixed(1) : 0}%</div></div>`;
-        modal.classList.add('active');
+        const createStat = (label, value, valueClass = 'text-gray-900') => `
+            <div class="bg-gray-50 p-4 rounded-lg text-center">
+                <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">${label}</div>
+                <div class="text-2xl font-bold ${valueClass} truncate">${value}</div>
+            </div>
+        `;
+        
+        modalContent.innerHTML = `
+            <div class="p-6">
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <h2 class="text-xl font-semibold text-gray-900">${usuario.nombre}</h2>
+                        <p class="text-sm font-medium text-gray-500">${grupo.nombre}</p>
+                    </div>
+                    <button onclick="AppUI.hideModal('student-modal')" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    ${createStat('Rank en Grupo', `${rank}º`, 'text-blue-600')}
+                    ${createStat('Rank de Grupo', `${rankGrupo > 0 ? rankGrupo + 'º' : 'N/A'}`, 'text-blue-600')}
+                    ${createStat('Total Pinceles', `${AppData.formatNumber(totalPinceles)} ℙ`, totalPinceles < 0 ? 'text-red-600' : 'text-green-600')}
+                    ${createStat('Total Grupo', `${AppData.formatNumber(grupo.total)} ℙ`)}
+                    ${createStat('% del Grupo', `${grupo.total !== 0 ? ((totalPinceles / grupo.total) * 100).toFixed(1) : 0}%`)}
+                    ${createStat('Grupo Original', usuario.grupoOriginal || (usuario.pinceles < 0 ? 'N/A' : grupo.nombre) )}
+                </div>
+            </div>
+        `;
+        AppUI.showModal('student-modal');
     },
     
-    /**
-     * Oculta la pantalla de bienvenida.
-     */
-    hideWelcomeScreen: function() {
-        const welcomeScreen = document.getElementById('welcome-screen');
-        if (welcomeScreen) {
-            welcomeScreen.classList.add('hidden');
-            setTimeout(() => welcomeScreen.remove(), 1000);
-        }
-    },
-
-    /**
-     * Muestra la pantalla de bienvenida (si es la primera vez).
-     */
-    showWelcomeScreen: function() {
-        if (!sessionStorage.getItem('welcomeShown')) {
-            sessionStorage.setItem('welcomeShown', 'true');
-            const container = document.querySelector('.welcome-container');
-            const redirectMessage = document.getElementById('welcome-redirect-message');
-            setTimeout(() => {
-                if (container) container.style.opacity = '0';
-                if (redirectMessage) redirectMessage.style.opacity = '1';
-            }, 4000);
-            setTimeout(AppUI.hideWelcomeScreen, 6000);
-        } else {
-            AppUI.hideWelcomeScreen();
-        }
-    },
-    
-    /**
-     * Actualiza el contador regresivo para la subasta.
-     */
+    // --- CONTADOR DE SUBASTA ---
     updateCountdown: function() {
-        const container = document.querySelector('.countdown-container');
-        if (!container) return;
-
-        function getLastThursday(year, month) {
+        const getLastThursday = (year, month) => {
             const lastDayOfMonth = new Date(year, month + 1, 0);
             let lastThursday = new Date(lastDayOfMonth);
             lastThursday.setDate(lastThursday.getDate() - (lastThursday.getDay() + 3) % 7);
             return lastThursday;
-        }
+        };
 
         const now = new Date();
         const currentYear = now.getFullYear();
         const currentMonth = now.getMonth();
-
         let auctionDay = getLastThursday(currentYear, currentMonth);
-        const auctionStart = new Date(auctionDay.getFullYear(), auctionDay.getMonth(), auctionDay.getDate(), 0, 0, 0, 0);
-        const auctionEnd = new Date(auctionDay.getFullYear(), auctionDay.getMonth(), auctionDay.getDate(), 23, 59, 59, 999);
+
+        const auctionStart = new Date(auctionDay.getFullYear(), auctionDay.getMonth(), auctionDay.getDate(), 0, 0, 0);
+        const auctionEnd = new Date(auctionDay.getFullYear(), auctionDay.getMonth(), auctionDay.getDate(), 23, 59, 59);
+
+        const timerEl = document.getElementById('countdown-timer');
+        const messageEl = document.getElementById('auction-message');
 
         if (now >= auctionStart && now <= auctionEnd) {
-            container.classList.add('auction-day');
+            timerEl.classList.add('hidden');
+            messageEl.classList.remove('hidden');
         } else {
-            container.classList.remove('auction-day');
+            timerEl.classList.remove('hidden');
+            messageEl.classList.add('hidden');
 
             let targetDate = auctionStart;
-
             if (now > auctionEnd) {
                 targetDate = getLastThursday(currentYear, currentMonth + 1);
                 targetDate.setHours(0, 0, 0, 0); 
             }
 
             const distance = targetDate - now;
-
-            const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-
-            const daysEl = document.getElementById('days');
-            const hoursEl = document.getElementById('hours');
-            const minutesEl = document.getElementById('minutes');
-            const secondsEl = document.getElementById('seconds');
-
-            if(daysEl) daysEl.innerText = String(days).padStart(2, '0');
-            if(hoursEl) hoursEl.innerText = String(hours).padStart(2, '0');
-            if(minutesEl) minutesEl.innerText = String(minutes).padStart(2, '0');
-            if(secondsEl) secondsEl.innerText = String(seconds).padStart(2, '0');
+            const f = (val) => String(val).padStart(2, '0');
+            
+            document.getElementById('days').textContent = f(Math.floor(distance / (1000 * 60 * 60 * 24)));
+            document.getElementById('hours').textContent = f(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
+            document.getElementById('minutes').textContent = f(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)));
+            document.getElementById('seconds').textContent = f(Math.floor((distance % (1000 * 60)) / 1000));
         }
     }
 };
 
-// --- MANEJO DE DATOS Y LÓGICA ---
-const AppData = {
-    /**
-     * Formatea un número al estilo de R.D.
-     */
-    formatNumber: function(num) {
-        return new Intl.NumberFormat('es-DO').format(num);
-    },
-
-    /**
-     * Calcula el próximo reintento con backoff exponencial.
-     */
-    calculateNextRetryDelay: function() {
-        AppState.retryDelay = Math.min(AppState.retryDelay * 2, AppConfig.MAX_RETRY_DELAY);
-        return AppState.retryDelay;
-    },
-
-    /**
-     * Verifica si el caché de datos es válido.
-     */
-    isCacheValid: function() {
-        return AppState.cachedData && AppState.lastCacheTime && (Date.now() - AppState.lastCacheTime < AppConfig.CACHE_DURATION);
-    },
-
-    /**
-     * Detecta cambios persistentes o rápidos en los datos de usuario.
-     */
-    detectarCambiosPersistentes: function(nuevosDatos) {
-        const ahora = Date.now();
-        nuevosDatos.forEach(grupo => {
-            grupo.usuarios.forEach(usuario => {
-                const claveUsuario = `${grupo.nombre}-${usuario.nombre}`;
-                if (!AppState.historialUsuarios[claveUsuario]) {
-                    AppState.historialUsuarios[claveUsuario] = { pinceles: usuario.pinceles, cambiosRecientes: [] };
-                    return;
-                }
-                if (usuario.pinceles !== AppState.historialUsuarios[claveUsuario].pinceles) {
-                    const cambio = { tiempo: ahora, anterior: AppState.historialUsuarios[claveUsuario].pinceles, nuevo: usuario.pinceles };
-                    AppState.historialUsuarios[claveUsuario].pinceles = usuario.pinceles;
-                    AppState.historialUsuarios[claveUsuario].cambiosRecientes.push(cambio);
-
-                    AppState.historialUsuarios[claveUsuario].cambiosRecientes = AppState.historialUsuarios[claveUsuario].cambiosRecientes.filter(c => ahora - c.tiempo <= AppConfig.RAPID_CHANGE_THRESHOLD);
-                    
-                    const positiveChanges = AppState.historialUsuarios[claveUsuario].cambiosRecientes.filter(c => c.nuevo > c.anterior).length;
-                    if(positiveChanges >= 2){
-                        usuario.trending = true;
-                    }
-
-                    if (AppState.historialUsuarios[claveUsuario].cambiosRecientes.length >= AppConfig.RAPID_CHANGE_COUNT) {
-                        AppUI.showChangeNotification(usuario.nombre, grupo.nombre, AppState.historialUsuarios[claveUsuario].cambiosRecientes.length, 'rapid');
-                    } else {
-                        AppUI.showChangeNotification(usuario.nombre, grupo.nombre, 1, 'normal');
-                    }
-                }
-            });
-        });
-    },
-
-    /**
-     * Carga los datos desde la API.
-     */
-    cargarDatos: async function() {
-        if (AppState.actualizacionEnProceso) return;
-        AppState.actualizacionEnProceso = true;
-
-        try {
-            if (!navigator.onLine) {
-                AppState.isOffline = true;
-                if (AppData.isCacheValid()) {
-                    AppUI.updateConnectionStatus('error', '', true);
-                    if (!AppState.datosActuales) await AppUI.mostrarDatos(AppState.cachedData);
-                } else {
-                    AppUI.updateConnectionStatus('error', 'Sin conexión a internet. Sin datos disponibles.');
-                }
-                AppState.actualizacionEnProceso = false;
-                return;
-            }
-
-            AppUI.updateConnectionStatus('updating', 'Actualizando datos...');
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 60000);
-            let response;
-            try {
-                const urlWithCacheBuster = `${AppConfig.API_URL}?v=${new Date().getTime()}`;
-                response = await fetch(urlWithCacheBuster, { method: 'GET', cache: 'no-cache', redirect: 'follow', signal: controller.signal });
-            } finally {
-                clearTimeout(timeoutId);
-            }
-
-            if (!response.ok) {
-                const errorText = await response.text().catch(() => 'No se pudo leer la respuesta de error.');
-                throw new Error(`Error de red: ${response.status}. Respuesta: ${errorText}`);
-            }
-            const data = await response.json().catch(() => { throw new Error('La respuesta de la API no es un JSON válido.'); });
-            if (data && data.error) throw new Error(data.message || 'Error en la API');
-
-            let gruposOrdenados = Object.entries(data).map(([nombre, info]) => ({ nombre, total: info.total || 0, usuarios: info.usuarios || [] }));
-            AppState.cachedData = gruposOrdenados;
-            AppState.lastCacheTime = Date.now();
-            AppState.isOffline = false;
-
-            const negativeUsers = [];
-            gruposOrdenados.forEach(grupo => {
-                grupo.usuarios = grupo.usuarios.filter(usuario => {
-                    if (usuario.pinceles < 0) {
-                        negativeUsers.push({ ...usuario, grupoOriginal: grupo.nombre });
-                        return false;
-                    }
-                    return true;
-                });
-                grupo.total = grupo.usuarios.reduce((sum, user) => sum + user.pinceles, 0);
-            });
-            if (negativeUsers.length > 0) {
-                gruposOrdenados.push({ nombre: "Cicla", total: negativeUsers.reduce((sum, user) => sum + user.pinceles, 0), usuarios: negativeUsers });
-            }
-
-            AppData.detectarCambiosPersistentes(gruposOrdenados);
-
-            const datosNuevos = JSON.stringify(gruposOrdenados);
-            if (datosNuevos !== JSON.stringify(AppState.datosActuales)) {
-                AppState.datosActuales = gruposOrdenados;
-                await AppUI.mostrarDatos(gruposOrdenados);
-                AppUI.updateConnectionStatus('online', 'Datos actualizados');
-            } else {
-                AppUI.updateConnectionStatus('online', 'Datos sin cambios');
-            }
-            AppState.retryCount = 0;
-            AppState.retryDelay = AppConfig.INITIAL_RETRY_DELAY;
-        } catch (error) {
-            if (error.name === 'AbortError') {
-                console.error('La solicitud fue cancelada por timeout (60s).');
-                AppUI.updateConnectionStatus('error', 'El servidor tardó demasiado en responder.');
-            } else {
-                console.error('Error al cargar los datos:', error);
-                AppUI.updateConnectionStatus('error', `Error: ${error.message}`, !navigator.onLine);
-            }
-            if (AppState.retryCount < AppConfig.MAX_RETRIES && navigator.onLine) {
-                AppState.retryCount++;
-                const nextDelay = AppData.calculateNextRetryDelay();
-                AppUI.updateConnectionStatus('updating', `Reintentando en ${nextDelay/1000}s...`);
-                setTimeout(AppData.cargarDatos, nextDelay);
-            } else if (AppData.isCacheValid()) {
-                AppUI.updateConnectionStatus('error', 'Mostrando datos en caché.', true);
-                if (!AppState.datosActuales) await AppUI.mostrarDatos(AppState.cachedData);
-            } else {
-                AppUI.updateConnectionStatus('error', 'Sin datos disponibles.');
-            }
-        } finally {
-            AppState.actualizacionEnProceso = false;
-        }
-    }
-};
-
-// --- INICIALIZACIÓN DE LA APLICACIÓN ---
-const AppCore = {
-    init: function() {
-        AppUI.showWelcomeScreen();
-        AppUI.setupModals();
-        
-        // Listener global para clics en nombres de usuario
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('usuario-nombre')) {
-                const usuario = JSON.parse(e.target.dataset.usuario);
-                const grupo = JSON.parse(e.target.dataset.grupo);
-                AppUI.showStudentInfo(usuario, grupo, e.target.dataset.posicionGrupo, e.target.dataset.posicionIndividual);
-            }
-        });
-
-        AppData.cargarDatos();
-        setInterval(AppData.cargarDatos, 10000);
-        AppUI.updateCountdown();
-        setInterval(AppUI.updateCountdown, 1000);
-    }
-};
-
-// --- EJECUTAR LA APLICACIÓN ---
-document.addEventListener('DOMContentLoaded', AppCore.init);
-
+// --- INICIALIZACIÓN ---
+// Hacer AppUI accesible globalmente para los `onclick` en el HTML
+window.AppUI = AppUI;
+AppUI.init();
