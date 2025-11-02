@@ -339,10 +339,9 @@ const AppUI = {
         console.log("AppUI.init() comenzando.");
         
         // Listeners Modales de Gestión (Clave)
-        console.log("Buscando 'gestion-btn'...");
-        const gestionBtn = document.getElementById('gestion-btn');
-        console.log("Buscando 'gestion-btn':", gestionBtn);
-        gestionBtn.addEventListener('click', () => AppUI.showModal('gestion-modal'));
+        // CAMBIO: El listener de 'gestion-btn' se movió a 'actualizarSidebar'
+        // porque el botón ahora se crea dinámicamente.
+        console.log("Listeners para 'gestion-btn' se añadirán dinámicamente.");
 
         console.log("Buscando 'modal-cancel'...");
         document.getElementById('modal-cancel').addEventListener('click', () => AppUI.hideModal('gestion-modal'));
@@ -595,29 +594,37 @@ const AppUI = {
         // No cambiar el estado aquí, dejar que cargarDatos lo decida
     },
     
-    // NUEVO: Función para controlar el icono de estado
+    // CAMBIO: Función para controlar el icono de estado (solo punto)
     setConnectionStatus: function(status) {
         // status puede ser 'ok', 'loading', 'error'
-        // CAMBIO: Eliminados los SVGs, ahora usa un <span>
-        const statusText = document.getElementById('status-text');
-        if (!statusText) return;
+        const statusIndicator = document.getElementById('status-indicator');
+        const statusDot = document.getElementById('status-dot');
+        
+        if (!statusIndicator || !statusDot) return;
+
+        // CAMBIO: Lógica para el punto
+        let dotClass = 'w-3 h-3 rounded-full';
+        let titleText = 'Estado: Desconocido';
 
         switch (status) {
             case 'ok':
-                statusText.textContent = 'Conectado';
-                statusText.className = 'text-sm font-medium text-green-600';
+                dotClass += ' bg-green-500 animate-pulse-dot'; // Re-usar animacion
+                titleText = 'Estado: Conectado';
                 break;
             case 'loading':
-                statusText.textContent = 'Cargando...';
-                statusText.className = 'text-sm font-medium text-blue-600';
+                dotClass += ' bg-blue-500 animate-pulse-dot'; // Re-usar animacion
+                titleText = 'Estado: Cargando...';
                 break;
             case 'error':
-                statusText.textContent = 'Sin Conexión';
-                statusText.className = 'text-sm font-medium text-red-600';
+                dotClass += ' bg-red-500'; // Sin pulso
+                titleText = 'Estado: Sin Conexión';
                 break;
             default:
-                statusText.textContent = '';
+                dotClass += ' bg-gray-400';
         }
+        
+        statusDot.className = dotClass;
+        statusIndicator.title = titleText; // Actualizar el title para accesibilidad
     },
 
     // --- INICIO CAMBIO: Nueva función hideSidebar ---
@@ -692,6 +699,22 @@ const AppUI = {
             });
             nav.appendChild(link);
         });
+
+        // --- CAMBIO: Añadir botón de administración al final de la lista ---
+        const adminContainer = document.createElement('div');
+        adminContainer.className = "pt-2 mt-2 border-t border-gray-200"; // Separador
+        
+        const adminButton = document.createElement('button');
+        adminButton.id = "gestion-btn"; // ID se mantiene
+        adminButton.className = "flex items-center justify-center w-full px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors";
+        adminButton.innerHTML = '<span>Administración</span>';
+        
+        // AÑADIR LISTENER AQUÍ (movido desde AppUI.init)
+        adminButton.addEventListener('click', () => AppUI.showModal('gestion-modal'));
+        
+        adminContainer.appendChild(adminButton);
+        nav.appendChild(adminContainer);
+        // --- FIN CAMBIO ---
     },
 
     actualizarSidebarActivo: function() {
@@ -869,6 +892,12 @@ const AppUI = {
     actualizarAlumnosEnRiesgo: function() {
         const lista = document.getElementById('riesgo-lista');
         if (!lista) return;
+        
+        // CAMBIO: Si no hay datos (carga inicial), no reemplace el mensaje "Cargando datos..."
+        if (!AppState.datosActuales) {
+             // El HTML por defecto ya dice "Cargando datos..."
+            return;
+        }
 
         const allStudents = (AppState.datosActuales || []).flatMap(g => g.usuarios);
         
@@ -908,6 +937,12 @@ const AppUI = {
     actualizarEstadisticasRapidas: function(grupos) {
         const statsList = document.getElementById('quick-stats-list');
         if (!statsList) return;
+
+        // CAMBIO: Si no hay datos (carga inicial), no reemplace el mensaje "Cargando datos..."
+        if (!grupos || grupos.length === 0) {
+             // El HTML por defecto ya dice "Cargando datos..."
+            return;
+        }
 
         const allStudents = (grupos || []).flatMap(g => g.usuarios);
         const ciclaGrupo = (grupos || []).find(g => g.nombre === 'Cicla');
