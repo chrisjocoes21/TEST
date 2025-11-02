@@ -12,8 +12,8 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏦</text></svg>">
 
     <!-- Archivo de estilos personalizados (cache buster añadido) -->
-    <!-- CAMBIO: v=0.2.6 -->
-    <link rel="stylesheet" href="style.css?v=0.2.6">
+    <!-- CAMBIO: v=0.2.7 (CSS no cambió, pero mantenemos consistencia) -->
+    <link rel="stylesheet" href="style.css?v=0.2.7">
 </head>
 <body class="h-full">
     <div id="app-container" class="flex h-screen">
@@ -147,10 +147,12 @@
                 </div>
                 
                 <!-- MÓDULOS DE HOME (grid-cols-4) -->
-                <div id="home-modules-grid" class="hidden grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
+                <!-- CAMBIO v0.2.7: Cambiado de lg:grid-cols-4 a lg:grid-cols-5 -->
+                <div id="home-modules-grid" class="hidden grid grid-cols-1 lg:grid-cols-5 gap-6 mb-6">
                     
                     <!-- Panel de "Alumnos en Riesgo" (col-span-1) -->
-                    <div id="riesgo-container" class="bg-white rounded-lg shadow-md lg:col-span-1">
+                    <!-- CAMBIO v0.2.7: Cambiado de lg:col-span-1 a lg:col-span-2 -->
+                    <div id="riesgo-container" class="bg-white rounded-lg shadow-md lg:col-span-2">
                         <h3 class="text-lg font-semibold text-gray-800 p-4 border-b border-gray-200">Alumnos en Riesgo</h3>
                         
                         <div class="overflow-x-auto">
@@ -173,6 +175,7 @@
                     </div>
 
                     <!-- Panel de "Estadísticas Rápidas" (col-span-1) -->
+                    <!-- CAMBIO v0.2.7: Se mantiene en lg:col-span-1 (ahora es 1/5) -->
                     <div id="quick-stats-container" class="bg-white rounded-lg shadow-md lg:col-span-1">
                         <h3 class="text-lg font-semibold text-gray-800 p-4 border-b border-gray-200">Estadísticas</h3>
                         <div id="quick-stats-list" class="p-4 space-y-3">
@@ -182,6 +185,7 @@
                     </div>
 
                     <!-- Tablón de Anuncios (col-span-2) -->
+                    <!-- CAMBIO v0.2.7: Se mantiene en lg:col-span-2 (ahora es 2/5) -->
                     <div id="anuncios-container" class="bg-white rounded-lg shadow-md lg:col-span-2">
                         <div class="flex justify-between items-center p-4 border-b border-gray-200">
                             <h3 class="text-lg font-semibold text-gray-800">Tablón de Anuncios</h3>
@@ -491,8 +495,8 @@
 
 
     <!-- Lógica de la Aplicación -->
-    <!-- CAMBIO: v=0.2.6 -->
-    <script src="script.js?v=0.2.6" type="module" defer></script>
+    <!-- CAMBIO: v=0.2.7 -->
+    <script src="script.js?v=0.2.7" type="module" defer></script>
 </body>
 </html>
 
