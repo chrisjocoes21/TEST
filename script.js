@@ -10,9 +10,9 @@ const AppConfig = {
     MAX_RETRIES: 5,
     CACHE_DURATION: 300000,
     
-    // CAMBIO V0.2.6: Actualización de versión
+    // CAMBIO V0.2.7: Actualización de versión
     APP_STATUS: 'Pre-Alfa', 
-    APP_VERSION: 'v0.2.6', 
+    APP_VERSION: 'v0.2.7', 
 };
 
 // --- ESTADO DE LA APLICACIÓN ---
@@ -39,7 +39,6 @@ const AppState = {
 
 // --- AUTENTICACIÓN ---
 const AppAuth = {
-// ... (código existente sin cambios) ...
     verificarClave: function() {
         const claveInput = document.getElementById('clave-input');
         if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
@@ -61,14 +60,12 @@ const AppAuth = {
 
 // --- NÚMEROS Y FORMATO ---
 const AppFormat = {
-// ... (código existente sin cambios) ...
     formatNumber: (num) => new Intl.NumberFormat('es-DO').format(num)
 };
 
 // --- BASE DE DATOS DE ANUNCIOS ---
 // CAMBIO v0.2.4: Textos acortados para evitar saltos de línea
 const AnunciosDB = {
-// ... (código existente sin cambios) ...
     'AVISO': [
         "Subasta: Último Jueves de cada mes. ¡Preparen sus pinceles!",
         "Revisen saldos antes del cierre. No se aceptan negativos en la subasta.",
@@ -95,11 +92,9 @@ const AnunciosDB = {
 // --- MANEJO de datos ---
 const AppData = {
     
-// ... (código existente sin cambios) ...
     isCacheValid: () => AppState.cachedData && AppState.lastCacheTime && (Date.now() - AppState.lastCacheTime < AppConfig.CACHE_DURATION),
 
     cargarDatos: async function(isRetry = false) {
-// ... (código existente sin cambios) ...
         if (AppState.actualizacionEnProceso) return;
         AppState.actualizacionEnProceso = true;
 
@@ -168,14 +163,13 @@ const AppData = {
     },
 
     detectarCambios: function(nuevosDatos) {
-// ... (código existente sin cambios) ...
+        // Lógica de detección de cambios (mantenida simple)
         if (!AppState.datosActuales) return; 
 
         // ... (Tu lógica de detección de cambios si aplica)
     },
     
     procesarYMostrarDatos: function(data) {
-// ... (código existente sin cambios) ...
         // 1. Separar Tesorería y Datos Adicionales
         AppState.datosAdicionales.saldoTesoreria = data.saldoTesoreria || 0;
         AppState.datosAdicionales.prestamosActivos = data.prestamosActivos || [];
@@ -234,7 +228,6 @@ const AppData = {
 const AppUI = {
     
     init: function() {
-// ... (código existente sin cambios) ...
         console.log("AppUI.init() comenzando.");
         
         // Listeners Modales de Gestión (Clave)
@@ -287,7 +280,6 @@ const AppUI = {
         });
         
         // V0.2.4: Listeners para Búsqueda (Autocomplete)
-// ... (código existente sin cambios) ...
         document.getElementById('prestamo-alumno-search').addEventListener('input', (e) => AppUI.handleStudentSearch(e, 'prestamo'));
         document.getElementById('deposito-alumno-search').addEventListener('input', (e) => AppUI.handleStudentSearch(e, 'deposito'));
         
@@ -313,7 +305,6 @@ const AppUI = {
         // --- FIN CAMBIO v0.2.6 ---
 
         // V0.2.2: Mostrar versión de la App
-// ... (código existente sin cambios) ...
         AppUI.mostrarVersionApp();
 
         // Carga inicial
@@ -327,7 +318,6 @@ const AppUI = {
 
     // --- CORRECCIÓN: FUNCIONES DE CARGA FALTANTES ---
     showLoading: function() {
-// ... (código existente sin cambios) ...
         const overlay = document.getElementById('loading-overlay');
         if (!overlay) return;
         // La capa de carga está visible por defecto, 
@@ -336,7 +326,6 @@ const AppUI = {
     },
 
     hideLoading: function() {
-// ... (código existente sin cambios) ...
         const overlay = document.getElementById('loading-overlay');
         if (!overlay) return;
         // Oculta la capa de carga
@@ -346,13 +335,11 @@ const AppUI = {
 
     // V0.2.2: Nueva función para mostrar la versión de la App
     mostrarVersionApp: function() {
-// ... (código existente sin cambios) ...
         const versionContainer = document.getElementById('app-version-container');
         versionContainer.innerHTML = `Estado: ${AppConfig.APP_STATUS} | ${AppConfig.APP_VERSION}`;
     },
 
     showModal: function(modalId) {
-// ... (código existente sin cambios) ...
         const modal = document.getElementById(modalId);
         if (!modal) return;
         modal.classList.remove('opacity-0', 'pointer-events-none');
@@ -360,7 +347,6 @@ const AppUI = {
     },
 
     hideModal: function(modalId) {
-// ... (código existente sin cambios) ...
         const modal = document.getElementById(modalId);
         if (!modal) return;
         modal.classList.add('opacity-0', 'pointer-events-none');
@@ -398,7 +384,6 @@ const AppUI = {
     
     // V0.2.2: Función para cambiar entre pestañas del modal de administración
     changeAdminTab: function(tabId) {
-// ... (código existente sin cambios) ...
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.classList.remove('active-tab', 'border-blue-600', 'text-blue-600');
             btn.classList.add('border-transparent', 'text-gray-600');
@@ -432,7 +417,6 @@ const AppUI = {
     
     // V0.2.4: Funciones para Búsqueda (Autocomplete)
     handleStudentSearch: function(event, type) {
-// ... (código existente sin cambios) ...
         const searchTerm = event.target.value.toLowerCase();
         const resultsContainer = document.getElementById(`${type}-search-results`);
         
@@ -470,7 +454,6 @@ const AppUI = {
     },
 
     selectStudent: function(studentName, type) {
-// ... (código existente sin cambios) ...
         if (studentName) {
             document.getElementById(`${type}-alumno-search`).value = studentName;
         } else {
@@ -488,7 +471,6 @@ const AppUI = {
     },
     
     hideSearchResults: function(type) {
-// ... (código existente sin cambios) ...
         const resultsContainer = document.getElementById(`${type}-search-results`);
         if(resultsContainer) {
             resultsContainer.classList.add('hidden');
@@ -498,7 +480,6 @@ const AppUI = {
 
     // --- FUNCIÓN CENTRAL: Mostrar Modal de Administración y pestaña inicial ---
     showTransaccionModal: function(tab) {
-// ... (código existente sin cambios) ...
         if (!AppState.datosActuales) {
             // No alert(), usar el mensaje de estado si existiera, pero para esto es mejor un modal simple.
             return;
@@ -511,7 +492,6 @@ const AppUI = {
 
     // V0.2.2: Función para poblar GRUPOS de la pestaña Transacción
     populateGruposTransaccion: function() {
-// ... (código existente sin cambios) ...
         const grupoContainer = document.getElementById('transaccion-lista-grupos-container');
         grupoContainer.innerHTML = ''; 
 
@@ -548,7 +528,6 @@ const AppUI = {
 
     // V0.2.2: Función para poblar USUARIOS de la pestaña Transacción
     populateUsuariosTransaccion: function() {
-// ... (código existente sin cambios) ...
         const checkedGroups = document.querySelectorAll('#transaccion-lista-grupos-container input[type="checkbox"]:checked');
         const selectedGroupNames = Array.from(checkedGroups).map(cb => cb.value);
         
@@ -610,7 +589,6 @@ const AppUI = {
     },
     
     toggleSelectAllUsuarios: function(event) {
-// ... (código existente sin cambios) ...
         event.preventDefault();
         const btn = event.target;
         const grupoNombre = btn.dataset.grupo;
@@ -728,7 +706,6 @@ const AppUI = {
     
     // --- FUNCIONES DE DEPÓSITOS (PESTAÑA 3) ---
     loadDepositoPaquetes: function(selectedStudentName) {
-// ... (código existente sin cambios) ...
         const container = document.getElementById('deposito-paquetes-container');
         // CAMBIO v0.2.4: No se usa 'select'
         const saldoSpan = document.getElementById('deposito-alumno-saldo');
@@ -801,7 +778,6 @@ const AppUI = {
 
     // --- Utilidades UI ---
     setConnectionStatus: function(status, title) {
-// ... (código existente sin cambios) ...
         const dot = document.getElementById('status-dot');
         const indicator = document.getElementById('status-indicator');
         if (!dot) return;
@@ -824,14 +800,12 @@ const AppUI = {
     },
 
     hideSidebar: function() {
-// ... (código existente sin cambios) ...
         if (AppState.isSidebarOpen) {
             AppUI.toggleSidebar();
         }
     },
 
     toggleSidebar: function() {
-// ... (código existente sin cambios) ...
         const sidebar = document.getElementById('sidebar');
         const btn = document.getElementById('toggle-sidebar-btn');
         
@@ -864,7 +838,6 @@ const AppUI = {
     },
 
     actualizarSidebar: function(grupos) {
-// ... (código existente sin cambios) ...
         const nav = document.getElementById('sidebar-nav');
         nav.innerHTML = ''; 
         
@@ -916,7 +889,6 @@ const AppUI = {
     },
 
     actualizarSidebarActivo: function() {
-// ... (código existente sin cambios) ...
         const links = document.querySelectorAll('#sidebar-nav .nav-link');
         links.forEach(link => {
             const groupName = link.dataset.groupName;
@@ -936,7 +908,6 @@ const AppUI = {
      * Muestra la vista de "Inicio"
      */
     mostrarPantallaNeutral: function(grupos) {
-// ... (código existente sin cambios) ...
         document.getElementById('main-header-title').textContent = "Bienvenido al Banco del Pincel Dorado";
         document.getElementById('page-subtitle').innerHTML = ''; 
 
@@ -958,27 +929,27 @@ const AppUI = {
         // CAMBIO V0.2.2: Tarjeta de Tesorería (NUEVA)
         const tesoreriaSaldo = AppState.datosAdicionales.saldoTesoreria;
         
-        // CAMBIO v0.2.6: Compactado con p-3
+        // CAMBIO v0.2.7: Compactado con p-2, mb-1, text-base, text-xl
         bovedaHtml = `
             <div class="bg-white rounded-lg shadow-md divide-y divide-gray-200">
                 <!-- Sección Bóveda -->
-                <div class="p-3">
-                    <div class="flex items-center justify-between mb-2">
+                <div class="p-2">
+                    <div class="flex items-center justify-between mb-1">
                         <span class="text-sm font-medium text-gray-500 truncate">Total en Cuentas</span>
                         <span class="text-xs font-bold bg-green-100 text-green-700 rounded-full px-2 py-0.5">BÓVEDA</span>
                     </div>
-                    <p class="text-lg font-semibold text-gray-900 truncate">Pinceles Totales</p>
-                    <p class="text-2xl font-bold text-green-600 text-right">${AppFormat.formatNumber(totalGeneral)} ℙ</p>
+                    <p class="text-base font-semibold text-gray-900 truncate">Pinceles Totales</p>
+                    <p class="text-xl font-bold text-green-600 text-right">${AppFormat.formatNumber(totalGeneral)} ℙ</p>
                 </div>
                 
                 <!-- Sección Tesorería -->
-                <div class="p-3">
-                    <div class="flex items-center justify-between mb-2">
+                <div class="p-2">
+                    <div class="flex items-center justify-between mb-1">
                         <span class="text-sm font-medium text-gray-500 truncate">Capital Operativo</span>
                         <span class="text-xs font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">TESORERÍA</span>
                     </div>
-                    <p class="text-lg font-semibold text-gray-900 truncate">Fondo del Banco</p>
-                    <p class="text-2xl font-bold text-blue-600 text-right">${AppFormat.formatNumber(tesoreriaSaldo)} ℙ</p>
+                    <p class="text-base font-semibold text-gray-900 truncate">Fondo del Banco</p>
+                    <p class="text-xl font-bold text-blue-600 text-right">${AppFormat.formatNumber(tesoreriaSaldo)} ℙ</p>
                 </div>
             </div>
         `;
@@ -1038,7 +1009,6 @@ const AppUI = {
      * Muestra la tabla de un grupo específico
      */
     mostrarDatosGrupo: function(grupo) {
-// ... (código existente sin cambios) ...
         document.getElementById('main-header-title').textContent = grupo.nombre;
         
         let totalColor = "text-gray-700";
@@ -1107,7 +1077,6 @@ const AppUI = {
     },
 
     actualizarAlumnosEnRiesgo: function() {
-// ... (código existente sin cambios) ...
         const lista = document.getElementById('riesgo-lista');
         if (!lista) return;
 
@@ -1141,7 +1110,6 @@ const AppUI = {
     },
     
     actualizarEstadisticasRapidas: function(grupos) {
-// ... (código existente sin cambios) ...
         const statsList = document.getElementById('quick-stats-list');
         if (!statsList) return;
 
@@ -1221,7 +1189,6 @@ const AppUI = {
     },
 
     poblarModalAnuncios: function() {
-// ... (código existente sin cambios) ...
         const listaModal = document.getElementById('anuncios-modal-lista');
         if (!listaModal) return;
 
@@ -1256,7 +1223,6 @@ const AppUI = {
     },
 
     showStudentModal: function(nombreGrupo, nombreUsuario, rank) {
-// ... (código existente sin cambios) ...
         const student = AppState.datosAdicionales.allStudents.find(u => u.nombre === nombreUsuario);
         const grupo = AppState.datosActuales.find(g => g.nombre === nombreGrupo);
         
@@ -1313,7 +1279,6 @@ const AppUI = {
     },
     
     updateCountdown: function() {
-// ... (código existente sin cambios) ...
         // Lógica de Subastas (mantenida)
         const getLastThursday = (year, month) => {
             const lastDayOfMonth = new Date(year, month + 1, 0);
@@ -1361,7 +1326,6 @@ const AppUI = {
 const AppTransacciones = {
 
     realizarTransaccionMultiple: async function() {
-// ... (código existente sin cambios) ...
         const cantidadInput = document.getElementById('transaccion-cantidad-input');
         const statusMsg = document.getElementById('transaccion-status-msg');
         const submitBtn = document.getElementById('transaccion-submit-btn');
@@ -1445,7 +1409,6 @@ const AppTransacciones = {
     },
     
     realizarPrestamo: async function(alumnoNombre, tipoPrestamo) {
-// ... (código existente sin cambios) ...
         const modalDialog = document.getElementById('transaccion-modal-dialog');
         const submitBtn = modalDialog.querySelector(`button[onclick*="realizarPrestamo('${alumnoNombre}', '${tipoPrestamo}')"]`);
         const statusMsg = document.getElementById('transaccion-status-msg');
@@ -1491,7 +1454,6 @@ const AppTransacciones = {
     },
     
     realizarDeposito: async function(alumnoNombre, tipoDeposito) {
-// ... (código existente sin cambios) ...
         const modalDialog = document.getElementById('transaccion-modal-dialog');
         const submitBtn = modalDialog.querySelector(`button[onclick*="realizarDeposito('${alumnoNombre}', '${tipoDeposito}')"]`);
         const statusMsg = document.getElementById('transaccion-status-msg');
@@ -1539,7 +1501,6 @@ const AppTransacciones = {
     // --- Utilidades de Fetch y Estado ---
 
     fetchWithExponentialBackoff: async function(url, options, maxRetries = 5, initialDelay = 1000) {
-// ... (código existente sin cambios) ...
         for (let attempt = 0; attempt < maxRetries; attempt++) {
             try {
                 const response = await fetch(url, options);
@@ -1561,7 +1522,6 @@ const AppTransacciones = {
     },
 
     setLoadingState: function(btn, btnTextEl, isLoading, statusMsgEl, message) {
-// ... (código existente sin cambios) ...
         if (isLoading) {
             if (btnTextEl) btnTextEl.textContent = 'Procesando...';
             if (btn) btn.disabled = true;
@@ -1576,7 +1536,6 @@ const AppTransacciones = {
     },
 
     setSuccess: function(statusMsgEl, message) {
-// ... (código existente sin cambios) ...
         if (statusMsgEl) {
             statusMsgEl.textContent = message;
             statusMsgEl.className = "text-sm text-center font-medium text-green-600 h-auto min-h-[1rem]";
@@ -1584,7 +1543,6 @@ const AppTransacciones = {
     },
 
     setError: function(statusMsgEl, message) {
-// ... (código existente sin cambios) ...
         if (statusMsgEl) {
             statusMsgEl.textContent = `Error: ${message}`;
             statusMsgEl.className = "text-sm text-center font-medium text-red-600 h-auto min-h-[1em]";
