@@ -641,4 +641,8 @@ const AppUI = {
 // --- INICIALIZACIÓN ---
 // Hacer AppUI accesible globalmente para los `onclick` en el HTML
 window.AppUI = AppUI;
-AppUI.init();
+// Esperar a que el DOM esté completamente cargado antes de inicializar
+document.addEventListener('DOMContentLoaded', (event) => {
+    AppUI.init();
+});
+
