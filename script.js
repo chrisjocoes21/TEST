@@ -47,24 +47,24 @@ const AppAuth = {
 // --- CAMBIO: Base de Datos de Anuncios (Textos más largos) ---
 const AnunciosDB = {
     'AVISO': [
-        "La gran subasta de fin de mes se celebrará, como siempre, el último Jueves. ¡Preparen sus pinceles!",
-        "Revisen sus saldos con anticipación antes del cierre de mes para evitar sorpresas de último minuto.",
-        "Recuerden que la sección 'Ver Reglas' contiene toda la información importante sobre la Cicla y las subastas."
+        "La subasta de fin de mes es el último Jueves de cada mes. ¡Preparen sus pinceles!",
+        "Revisen sus saldos antes del cierre de mes. No se aceptan saldos negativos en la subasta.",
+        "Recuerden: 'Ver Reglas' tiene información importante sobre la participación en la subasta y la 'Cicla'."
     ],
     'NUEVO': [
-        "El 'Total en Bóveda' ahora se muestra en la pantalla de Inicio para una mayor transparencia de los fondos del banco.",
-        "¡Nueva sección 'Alumnos en Riesgo' en la página principal! Revisa quiénes están cerca de la Cicla.",
-        "El Top 3 Alumnos con más pinceles ahora es visible en el resumen general de la página de Inicio."
+        "El 'Total en Bóveda' ahora se muestra en la sección de Inicio para una vista global.",
+        "Nueva sección 'Alumnos en Riesgo' en la homepage para monitorear a los más cercanos a Cicla.",
+        "El Top 3 Alumnos ahora es visible en el resumen. ¡Felicidades a los que están en la cima!"
     ],
     'CONSEJO': [
-        "Puedes usar el botón '»' en la esquina superior para abrir y cerrar la barra lateral de grupos fácilmente.",
-        "Haz clic en el nombre de cualquier alumno en la tabla para ver sus estadísticas y detalles de grupo.",
-        "Es fundamental mantener un saldo positivo de pinceles para poder participar en las subastas mensuales."
+        "Usa el botón '»' en la esquina superior para abrir y cerrar la barra lateral de grupos.",
+        "Haz clic en el nombre de un alumno en la tabla para ver sus estadísticas detalladas.",
+        "Mantén un saldo positivo de pinceles para poder participar en las subastas mensuales."
     ],
     'ALERTA': [
-        "¡Mucho cuidado! Acumular saldos negativos (menos de 0 ℙ) te moverá automáticamente a la Cicla.",
-        "Los alumnos que se encuentran actualmente en Cicla no tienen permitido participar en la subasta activa.",
-        "Para poder salir de la Cicla, cada alumno debe completar exitosamente un desafío de recuperación asignado."
+        "¡Cuidado! Saldos negativos (incluso -1 ℙ) te mueven automáticamente a Cicla.",
+        "Los alumnos que se encuentran en Cicla no pueden participar en la subasta de fin de mes.",
+        "Para salir de Cicla se debe completar un desafío de recuperación. Habla con el administrador."
     ]
 };
 
@@ -205,52 +205,51 @@ const AppData = {
 // --- MANEJO DE LA INTERFAZ (UI) ---
 const AppUI = {
     
+    // --- CAMBIO: Añadidos console.log para depurar el error de carga ---
     init: function() {
-        console.log("AppUI.init() llamado."); // Log de inicio
-
+        console.log("AppUI.init() comenzando.");
+        
         // Listeners Modales
+        console.log("Buscando 'gestion-btn'...");
         const gestionBtn = document.getElementById('gestion-btn');
-        console.log("Buscando 'gestion-btn':", gestionBtn); // Log de diagnóstico
+        console.log("Buscando 'gestion-btn':", gestionBtn);
+        // El error ocurría aquí si gestionBtn era null
         gestionBtn.addEventListener('click', () => AppUI.showModal('gestion-modal'));
-        
-        const modalCancel = document.getElementById('modal-cancel');
-        console.log("Buscando 'modal-cancel':", modalCancel); // Log de diagnóstico
-        modalCancel.addEventListener('click', () => AppUI.hideModal('gestion-modal'));
-        
-        const modalSubmit = document.getElementById('modal-submit');
-        console.log("Buscando 'modal-submit':", modalSubmit); // Log de diagnóstico
-        modalSubmit.addEventListener('click', AppAuth.verificarClave);
-        
+
+        console.log("Buscando 'modal-cancel'...");
+        document.getElementById('modal-cancel').addEventListener('click', () => AppUI.hideModal('gestion-modal'));
+        console.log("Buscando 'modal-submit'...");
+        document.getElementById('modal-submit').addEventListener('click', AppAuth.verificarClave);
+        console.log("Buscando 'gestion-modal' (para cierre)...");
         document.getElementById('gestion-modal').addEventListener('click', (e) => {
             if (e.target.id === 'gestion-modal') AppUI.hideModal('gestion-modal');
         });
+        console.log("Buscando 'student-modal' (para cierre)...");
         document.getElementById('student-modal').addEventListener('click', (e) => {
             if (e.target.id === 'student-modal') AppUI.hideModal('student-modal');
         });
 
         // Listeners Modal Reglas
-        const reglasBtn = document.getElementById('reglas-btn');
-        console.log("Buscando 'reglas-btn':", reglasBtn); // Log de diagnóstico
-        reglasBtn.addEventListener('click', () => AppUI.showModal('reglas-modal'));
-        
-        const reglasModalClose = document.getElementById('reglas-modal-close');
-        console.log("Buscando 'reglas-modal-close':", reglasModalClose); // Log de diagnóstico
-        reglasModalClose.addEventListener('click', () => AppUI.hideModal('reglas-modal'));
-        
+        console.log("Buscando 'reglas-btn'...");
+        document.getElementById('reglas-btn').addEventListener('click', () => AppUI.showModal('reglas-modal'));
+        console.log("Buscando 'reglas-modal-close'...");
+        document.getElementById('reglas-modal-close').addEventListener('click', () => AppUI.hideModal('reglas-modal'));
+        console.log("Buscando 'reglas-modal' (para cierre)...");
         document.getElementById('reglas-modal').addEventListener('click', (e) => {
             if (e.target.id === 'reglas-modal') AppUI.hideModal('reglas-modal');
         });
 
         // Listener Sidebar
-        const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
-        console.log("Buscando 'toggle-sidebar-btn':", toggleSidebarBtn); // Log de diagnóstico
-        toggleSidebarBtn.addEventListener('click', AppUI.toggleSidebar);
+        console.log("Buscando 'toggle-sidebar-btn'...");
+        document.getElementById('toggle-sidebar-btn').addEventListener('click', AppUI.toggleSidebar);
 
         // Carga inicial
+        console.log("Llamando a AppData.cargarDatos() y AppUI.updateCountdown()");
         AppData.cargarDatos(false);
         setInterval(() => AppData.cargarDatos(false), 10000); 
         AppUI.updateCountdown();
         setInterval(AppUI.updateCountdown, 1000);
+        console.log("AppUI.init() completado.");
     },
 
     showModal: function(modalId) {
@@ -512,7 +511,7 @@ const AppUI = {
         document.getElementById('acceso-rapido-container').classList.add('hidden');
     },
 
-    // --- INICIO CAMBIO DE LÓGICA: Función de Alumnos en Riesgo (Ahora muestra Top 6) ---
+    // --- INICIO CAMBIO DE LÓGICA: Función de Alumnos en Riesgo (Ahora es una tabla) ---
     actualizarAlumnosEnRiesgo: function() {
         const lista = document.getElementById('riesgo-lista');
         if (!lista) return;
@@ -529,25 +528,28 @@ const AppUI = {
         const top6Riesgo = enRiesgo.slice(0, 6); 
 
         if (top6Riesgo.length === 0) {
-            lista.innerHTML = `<li class="p-4 text-sm text-gray-500 text-center">No hay alumnos en riesgo por el momento.</li>`;
+            lista.innerHTML = `<tr><td colspan="3" class="p-4 text-sm text-gray-500 text-center">No hay alumnos en riesgo por el momento.</td></tr>`;
             return;
         }
 
         lista.innerHTML = top6Riesgo.map((student, index) => {
             const grupoNombre = student.grupoOriginal || student.grupoNombre || 'N/A';
+            const pinceles = AppData.formatNumber(student.pinceles);
+            // Definir color de pinceles para la tabla
+            const pincelesColor = student.pinceles <= 0 ? 'text-red-600' : 'text-gray-900'; // 0 también es riesgo
+
             return `
-                <li class="flex items-start">
-                    <span class="text-xs font-bold bg-red-100 text-red-700 rounded-full w-20 text-center py-0.5 mr-3 mt-1 flex-shrink-0">RIESGO ${index + 1}</span>
-                    <span class="text-sm text-gray-700">
-                        ${student.nombre} (${grupoNombre}) - <strong class="font-semibold">${AppData.formatNumber(student.pinceles)} ℙ</strong>
-                    </span>
-                </li>
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-2 text-sm text-gray-700 font-medium">${student.nombre}</td>
+                    <td class="px-4 py-2 text-sm text-gray-500">${grupoNombre}</td>
+                    <td class="px-4 py-2 text-sm font-semibold ${pincelesColor} text-right">${pinceles} ℙ</td>
+                </tr>
             `;
         }).join('');
     },
     // --- FIN CAMBIO DE LÓGICA ---
     
-    // --- INICIO CAMBIO: Función para Anuncios Dinámicos (Padding aumentado a p-3) ---
+    // --- INICIO CAMBIO: Función para Anuncios Dinámicos (Uso de flexbox para mejor distribución horizontal) ---
     actualizarAnuncios: function() {
         const lista = document.getElementById('anuncios-lista');
         
@@ -563,7 +565,7 @@ const AppUI = {
 
         // Usamos una estructura más clara y compacta para el elemento de lista
         lista.innerHTML = anuncios.map(anuncio => `
-            <li class="flex items-start p-3 hover:bg-gray-50 rounded-lg transition-colors"> 
+            <li class="flex items-start p-2 hover:bg-gray-50 rounded-lg transition-colors"> 
                 <span class="text-xs font-bold ${anuncio.bg} ${anuncio.text} rounded-full w-20 text-center py-0.5 mr-3 flex-shrink-0 mt-1">${anuncio.tipo}</span>
                 <span class="text-sm text-gray-700 flex-1">${anuncio.texto}</span>
             </li>
@@ -660,9 +662,12 @@ const AppUI = {
 // --- INICIALIZACIÓN ---
 // Hacer AppUI accesible globalmente para los `onclick` en el HTML
 window.AppUI = AppUI;
-// Esperar a que TODA la ventana (incluyendo DOM) esté cargada
-window.onload = () => {
-    console.log("window.onload disparado. Iniciando AppUI.init()..."); // Log de diagnóstico
+
+// FIX: Esperar a que todo el DOM esté cargado antes de inicializar
+// Se usa window.onload en lugar de DOMContentLoaded para máxima seguridad, 
+// asegurando que todos los assets (estilos, etc.) estén listos.
+window.onload = function() {
+    console.log("window.onload disparado. El DOM está listo. Iniciando AppUI...");
     AppUI.init();
 };
 
