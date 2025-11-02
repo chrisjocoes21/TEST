@@ -3,8 +3,7 @@ const AppConfig = {
     API_URL: 'https://script.google.com/macros/s/AKfycbzFNGHqiOlKDq5AAGhuDEDweEGgqNoJZFsGrkD3r4aGetrMYLOJtieNK1tVz9iqjvHHNg/exec',
     CLAVE_MAESTRA: 'PinceladasM25-26',
     SPREADSHEET_URL: 'https://docs.google.com/spreadsheets/d/1GArB7I19uGum6awiRN6qK8HtmTWGcaPGWhOzGCdhbcs/edit',
-    RAPID_CHANGE_THRESHOLD: 300000,
-    RAPID_CHANGE_COUNT: 3,
+    // CAMBIO: Eliminada la lógica de "trending" (fuego)
     INITIAL_RETRY_DELAY: 1000,
     MAX_RETRY_DELAY: 30000,
     MAX_RETRIES: 5,
@@ -14,7 +13,7 @@ const AppConfig = {
 // --- ESTADO DE LA APLICACIÓN ---
 const AppState = {
     datosActuales: null,
-    historialUsuarios: {},
+    historialUsuarios: {}, // CAMBIO: Ya no almacena cambios recientes
     actualizacionEnProceso: false,
     retryCount: 0,
     retryDelay: AppConfig.INITIAL_RETRY_DELAY,
@@ -54,12 +53,14 @@ const AnunciosDB = {
     'NUEVO': [
         "El 'Total en Bóveda' ahora se muestra en la sección de Inicio para una vista global.",
         "Nueva sección 'Alumnos en Riesgo' en la homepage para monitorear a los más cercanos a Cicla.",
-        "El Top 3 Alumnos ahora es visible en el resumen. ¡Felicidades a los que están en la cima!"
+        "El Top 3 Alumnos ahora es visible en el resumen. ¡Felicidades a los que están en la cima!",
+        "¡Nueva sección 'Estadísticas' en la homepage! Revisa el total de alumnos y el promedio de pinceles."
     ],
     'CONSEJO': [
         "Usa el botón '»' en la esquina superior para abrir y cerrar la barra lateral de grupos.",
         "Haz clic en el nombre de un alumno en la tabla para ver sus estadísticas detalladas.",
-        "Mantén un saldo positivo de pinceles para poder participar en las subastas mensuales."
+        "Mantén un saldo positivo de pinceles para poder participar en las subastas mensuales.",
+        "Usa el botón 'Ver Todos' en el tablón de anuncios para no perderte ninguna novedad."
     ],
     'ALERTA': [
         "¡Cuidado! Saldos negativos (incluso -1 ℙ) te mueven automáticamente a Cicla.",
@@ -86,11 +87,16 @@ const AppData = {
 
         if (!AppState.datosActuales) {
             AppUI.showLoading();
+            // AppUI.setConnectionStatus('loading') se llama dentro de showLoading
+        } else {
+            // Es una recarga, mostrar spinner de carga
+            AppUI.setConnectionStatus('loading');
         }
 
         try {
             if (!navigator.onLine) {
                 AppState.isOffline = true;
+                AppUI.setConnectionStatus('error'); // NUEVO: Nube tachada
                 if (AppData.isCacheValid()) {
                     await AppData.procesarYMostrarDatos(AppState.cachedData);
                 } else {
@@ -98,6 +104,8 @@ const AppData = {
                 }
             } else {
                 AppState.isOffline = false;
+                // AppUI.setConnectionStatus('loading'); // Ya se puso arriba
+                
                 const url = `${AppConfig.API_URL}?cacheBuster=${new Date().getTime()}`;
                 const response = await fetch(url, { method: 'GET', cache: 'no-cache', redirect: 'follow' });
 
@@ -114,10 +122,13 @@ const AppData = {
                 AppState.cachedData = AppState.datosActuales;
                 AppState.lastCacheTime = Date.now();
                 AppState.retryCount = 0; // Éxito, reiniciar contador
+                AppUI.setConnectionStatus('ok'); // NUEVO: Nube OK
             }
 
         } catch (error) {
             console.error("Error al cargar datos:", error.message);
+            AppUI.setConnectionStatus('error'); // NUEVO: Nube tachada
+            
             if (AppState.retryCount < AppConfig.MAX_RETRIES) {
                 AppState.retryCount++;
                 setTimeout(() => AppData.cargarDatos(true), AppState.retryDelay);
@@ -125,6 +136,7 @@ const AppData = {
             } else if (AppData.isCacheValid()) {
                 console.warn("Fallaron los reintentos. Mostrando datos de caché.");
                 AppState.datosActuales = AppData.procesarYMostrarDatos(AppState.cachedData);
+                // Mantenemos la nube tachada porque la conexión falló, aunque tengamos caché.
             } else {
                 console.error("Fallaron todos los reintentos y no hay caché.");
             }
@@ -134,22 +146,17 @@ const AppData = {
         }
     },
 
+    // CAMBIO: Simplificada la detección de cambios, ya no rastrea "trending"
     detectarCambios: function(nuevosDatos) {
         if (!AppState.datosActuales) return; 
 
-        const ahora = Date.now();
         nuevosDatos.forEach(grupo => {
             (grupo.usuarios || []).forEach(usuario => {
                 const claveUsuario = `${grupo.nombre}-${usuario.nombre}`;
-                const historial = AppState.historialUsuarios[claveUsuario] || { pinceles: 0, cambiosRecientes: [] };
+                const historial = AppState.historialUsuarios[claveUsuario] || { pinceles: 0 };
 
                 if (usuario.pinceles !== historial.pinceles) {
-                    const cambio = { tiempo: ahora, anterior: historial.pinceles, nuevo: usuario.pinceles };
                     historial.pinceles = usuario.pinceles;
-                    
-                    historial.cambiosRecientes.push(cambio);
-                    historial.cambiosRecientes = historial.cambiosRecientes.filter(c => ahora - c.tiempo <= AppConfig.RAPID_CHANGE_THRESHOLD);
-
                 }
                 AppState.historialUsuarios[claveUsuario] = historial;
             });
@@ -239,6 +246,16 @@ const AppUI = {
             if (e.target.id === 'reglas-modal') AppUI.hideModal('reglas-modal');
         });
 
+        // NUEVO: Listeners Modal Anuncios
+        console.log("Buscando 'anuncios-modal-btn'...");
+        document.getElementById('anuncios-modal-btn').addEventListener('click', () => AppUI.showModal('anuncios-modal'));
+        console.log("Buscando 'anuncios-modal-close'...");
+        document.getElementById('anuncios-modal-close').addEventListener('click', () => AppUI.hideModal('anuncios-modal'));
+        console.log("Buscando 'anuncios-modal' (para cierre)...");
+        document.getElementById('anuncios-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'anuncios-modal') AppUI.hideModal('anuncios-modal');
+        });
+
         // Listener Sidebar
         console.log("Buscando 'toggle-sidebar-btn'...");
         document.getElementById('toggle-sidebar-btn').addEventListener('click', AppUI.toggleSidebar);
@@ -249,6 +266,9 @@ const AppUI = {
         setInterval(() => AppData.cargarDatos(false), 10000); 
         AppUI.updateCountdown();
         setInterval(AppUI.updateCountdown, 1000);
+        
+        // NUEVO: Poblar el modal de anuncios una vez
+        AppUI.poblarModalAnuncios();
         console.log("AppUI.init() completado.");
     },
 
@@ -268,10 +288,26 @@ const AppUI = {
 
     showLoading: function() {
         document.getElementById('loading-overlay').classList.remove('opacity-0', 'pointer-events-none');
+        AppUI.setConnectionStatus('loading'); // NUEVO: Mostrar spinner
     },
 
     hideLoading: function() {
         document.getElementById('loading-overlay').classList.add('opacity-0', 'pointer-events-none');
+        // No cambiar el estado aquí, dejar que cargarDatos lo decida
+    },
+    
+    // NUEVO: Función para controlar el icono de estado
+    setConnectionStatus: function(status) {
+        // status puede ser 'ok', 'loading', 'error'
+        const statusOk = document.getElementById('status-ok');
+        const statusLoading = document.getElementById('status-loading');
+        const statusError = document.getElementById('status-error');
+
+        if (!statusOk || !statusLoading || !statusError) return;
+
+        statusOk.classList.toggle('hidden', status !== 'ok');
+        statusLoading.classList.toggle('hidden', status !== 'loading');
+        statusError.classList.toggle('hidden', status !== 'error');
     },
 
     // --- INICIO CAMBIO: Nueva función hideSidebar ---
@@ -433,8 +469,9 @@ const AppUI = {
         
         // 2. MOSTRAR MÓDULOS (Idea 1 & 2)
         document.getElementById('home-modules-grid').classList.remove('hidden');
-        AppUI.actualizarAlumnosEnRiesgo(); // (CAMBIO) Llamar a la nueva función
+        AppUI.actualizarAlumnosEnRiesgo();
         AppUI.actualizarAnuncios(); // Poblar anuncios dinámicos
+        AppUI.actualizarEstadisticasRapidas(grupos); // NUEVO: Llamar a la función
         
         // 3. MOSTRAR ACCESO RÁPIDO (Idea 3)
         document.getElementById('acceso-rapido-container').classList.remove('hidden');
@@ -461,7 +498,7 @@ const AppUI = {
 
         const filas = usuariosOrdenados.map((usuario, index) => {
             const pos = index + 1;
-            const isTrending = (AppState.historialUsuarios[`${grupo.nombre}-${usuario.nombre}`]?.cambiosRecientes.length || 0) >= 2;
+            // CAMBIO: Eliminada la lógica de "trending" (fuego)
             
             let rankBg = 'bg-gray-100 text-gray-600';
             if (pos === 1) rankBg = 'bg-yellow-100 text-yellow-600';
@@ -477,7 +514,7 @@ const AppUI = {
                         </span>
                     </td>
                     <td class="px-6 py-3 text-sm font-medium text-gray-900 truncate">
-                        ${usuario.nombre} ${isTrending ? '🔥' : ''}
+                        ${usuario.nombre}
                     </td>
                     <td class="px-6 py-3 text-sm font-semibold ${usuario.pinceles < 0 ? 'text-red-600' : 'text-gray-800'} text-right">
                         ${AppData.formatNumber(usuario.pinceles)} ℙ
@@ -549,6 +586,34 @@ const AppUI = {
     },
     // --- FIN CAMBIO DE LÓGICA ---
     
+    // --- NUEVA FUNCIÓN: Módulo de Estadísticas Rápidas ---
+    actualizarEstadisticasRapidas: function(grupos) {
+        const statsList = document.getElementById('quick-stats-list');
+        if (!statsList) return;
+
+        const allStudents = (grupos || []).flatMap(g => g.usuarios);
+        const ciclaGrupo = (grupos || []).find(g => g.nombre === 'Cicla');
+        
+        const totalAlumnos = allStudents.length + (ciclaGrupo ? ciclaGrupo.usuarios.length : 0);
+        const totalEnCicla = ciclaGrupo ? ciclaGrupo.usuarios.length : 0;
+        const totalBoveda = grupos.reduce((acc, g) => acc + g.total, 0);
+        const promedioPinceles = totalAlumnos > 0 ? (totalBoveda / totalAlumnos) : 0;
+        
+        const createStat = (label, value) => `
+            <div class="flex justify-between items-baseline text-sm py-1 border-b border-gray-100">
+                <span class="text-gray-600">${label}:</span>
+                <span class="font-semibold text-gray-900">${value}</span>
+            </div>
+        `;
+
+        statsList.innerHTML = `
+            ${createStat('Alumnos Totales', totalAlumnos)}
+            ${createStat('Alumnos en Cicla', totalEnCicla)}
+            ${createStat('Pincel Promedio', `${AppData.formatNumber(promedioPinceles.toFixed(0))} ℙ`)}
+            ${createStat('Grupos Activos', grupos.length)}
+        `;
+    },
+
     // --- INICIO CAMBIO: Función para Anuncios Dinámicos (Uso de flexbox para mejor distribución horizontal) ---
     actualizarAnuncios: function() {
         const lista = document.getElementById('anuncios-lista');
@@ -572,6 +637,43 @@ const AppUI = {
         `).join('');
     },
     // --- FIN CAMBIO ---
+
+    // --- NUEVA FUNCIÓN: Poblar el modal de "Todos los Anuncios" ---
+    poblarModalAnuncios: function() {
+        const listaModal = document.getElementById('anuncios-modal-lista');
+        if (!listaModal) return;
+
+        let html = '';
+        const tipos = [
+            { id: 'AVISO', titulo: 'Avisos', bg: 'bg-gray-100', text: 'text-gray-700' },
+            { id: 'NUEVO', titulo: 'Novedades', bg: 'bg-blue-100', text: 'text-blue-700' },
+            { id: 'CONSEJO', titulo: 'Consejos', bg: 'bg-green-100', text: 'text-green-700' },
+            { id: 'ALERTA', titulo: 'Alertas', bg: 'bg-red-100', text: 'text-red-700' }
+        ];
+
+        tipos.forEach(tipo => {
+            const anuncios = AnunciosDB[tipo.id];
+            if (anuncios && anuncios.length > 0) {
+                html += `
+                    <div>
+                        <h4 class="text-sm font-semibold ${tipo.text} mb-2">${tipo.titulo}</h4>
+                        <ul class="space-y-2">
+                            ${anuncios.map(texto => `
+                                <li class="flex items-start p-2 bg-gray-50 rounded-lg">
+                                    <span class="text-xs font-bold ${tipo.bg} ${tipo.text} rounded-full w-20 text-center py-0.5 mr-3 flex-shrink-0 mt-1">${tipo.id}</span>
+                                    <span class="text-sm text-gray-700 flex-1">${texto}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+        });
+
+        listaModal.innerHTML = html;
+    },
+
+
 
     // --- MODAL DE ALUMNO ---
     showStudentModal: function(nombreGrupo, nombreUsuario, rank) {
