@@ -113,39 +113,38 @@
                                 <!-- Las 3 tarjetas de alumnos (Compactas) se insertarán here -->
                             </div>
                             
-                            <!-- CAMBIO v0.2.5: Contador movido aquí -->
-                            <div id="acceso-rapido-container" class="bg-white rounded-lg shadow-md p-3 mt-4">
-                                <div class="flex flex-wrap items-center justify-between gap-4">
+                            <!-- CAMBIO v0.3.4: Contador movido aquí (sin caja blanca) y botón de Tienda -->
+                            <div class="flex flex-wrap items-center justify-between gap-4 mt-4 px-3">
+                                
+                                <!-- Timer Horizontal Compacto -->
+                                <div id="countdown-timer" class="flex-shrink-0 text-sm font-medium text-gray-700 flex items-baseline gap-2">
+                                    <!-- CAMBIO v0.2.4: Ancho fijo (w-8) y alineación (text-right) para evitar "baile" -->
+                                    <span id="days" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
+                                    <span class="text-xs text-gray-500 uppercase -ml-1">Días</span>
                                     
-                                    <!-- Timer Horizontal Compacto -->
-                                    <div id="countdown-timer" class="flex-shrink-0 text-sm font-medium text-gray-700 flex items-baseline gap-2">
-                                        <!-- CAMBIO v0.2.4: Ancho fijo (w-8) y alineación (text-right) para evitar "baile" -->
-                                        <span id="days" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
-                                        <span class="text-xs text-gray-500 uppercase -ml-1">Días</span>
-                                        
-                                        <span id="hours" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
-                                        <span class="text-xs text-gray-500 uppercase -ml-1">Horas</span>
-                                        
-                                        <span id="minutes" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
-                                        <span class="text-xs text-gray-500 uppercase -ml-1">Minutos</span>
-                                        
-                                        <span id="seconds" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
-                                        <span class="text-xs text-gray-500 uppercase -ml-1">Segundos</span>
-                                    </div>
+                                    <span id="hours" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
+                                    <span class="text-xs text-gray-500 uppercase -ml-1">Horas</span>
+                                    
+                                    <span id="minutes" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
+                                    <span class="text-xs text-gray-500 uppercase -ml-1">Minutos</span>
+                                    
+                                    <span id="seconds" class="text-xl font-bold text-blue-600 w-8 text-right">00</span>
+                                    <span class="text-xs text-gray-500 uppercase -ml-1">Segundos</span>
+                                </div>
 
-                                    <!-- Mensaje de Subasta -->
-                                    <div id="auction-message" class="hidden w-full text-center text-green-600 font-semibold">
-                                        ¡Hoy es el día de la Subasta!
-                                    </div>
-                                    <!-- Botones de Acceso -->
-                                    <div class="flex gap-3 flex-shrink-0">
-                                        <button id="reglas-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
-                                            Ver Reglas
-                                        </button>
-                                        <a href="https://pinceladaschristopher-cloud.github.io/BPD-SUBASTAS/" target="_blank" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                                            Subasta
-                                        </a>
-                                    </div>
+                                <!-- Mensaje de Subasta -->
+                                <div id="auction-message" class="hidden w-full text-center text-green-600 font-semibold">
+                                    ¡Hoy es el día de la Subasta!
+                                </div>
+                                <!-- Botones de Acceso -->
+                                <div class="flex gap-3 flex-shrink-0">
+                                    <button id="reglas-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                                        Ver Reglas
+                                    </button>
+                                    <!-- CAMBIO v0.3.4: Botón de Tienda (reemplaza Subasta) -->
+                                    <button id="tienda-btn" disabled class="px-4 py-2 bg-gray-400 text-white text-sm font-medium rounded-lg transition-colors shadow-sm cursor-not-allowed">
+                                        Tienda
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -533,7 +532,8 @@
                                 <br><span class="text-xs text-gray-500">(Excepción: No se puede solicitar si la deuda actual es mayor al monto del rescate).</span>
                             </li>
                             <li><strong>Paquetes Estándar e Inversión:</strong>
-                                <br> - Están reservados para alumnos con saldo positivo (saldo $\ge$ 0 ℙ).
+                                <!-- CAMBIO v0.3.4: Corrección de redacción -->
+                                <br> - Están reservados para alumnos con saldo 0 ℙ o más (no negativo).
                                 <br> - El monto del préstamo solicitado no puede superar el 50% del saldo actual del alumno.
                             </li>
                         </ul>
