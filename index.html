@@ -240,6 +240,48 @@
             </div>
         </div>
     </div>
+
+    <!-- NUEVO: Modal de Transacciones -->
+    <div id="transaccion-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1002] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md transform scale-95 transition-transform duration-300">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">Panel de Transacciones</h2>
+                    <button id="transaccion-modal-close" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label for="transaccion-grupo-select" class="block text-sm font-medium text-gray-700 mb-1">Grupo</label>
+                        <select id="transaccion-grupo-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Seleccione un grupo...</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="transaccion-usuario-select" class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+                        <select id="transaccion-usuario-select" class_or_assign="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" disabled>
+                            <option value="">Seleccione un usuario...</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="transaccion-cantidad-input" class="block text-sm font-medium text-gray-700 mb-1">Cantidad (Positivo o Negativo)</label>
+                        <input type="number" id="transaccion-cantidad-input" placeholder="Ej: 100 o -50" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+
+                    <!-- Mensaje de estado para la transacción -->
+                    <div id="transaccion-status-msg" class="text-sm text-center font-medium h-4"></div>
+
+                </div>
+
+                <div class="flex justify-end gap-3 mt-6">
+                    <button id="transaccion-cancel-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">Cancelar</button>
+                    <button id="transaccion-submit-btn" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">Realizar Transacción</button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <!-- Modal de Reglas (Estética mejorada) -->
     <div id="reglas-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
@@ -303,7 +345,7 @@
 
 
     <!-- Lógica de la Aplicación -->
-    <!-- CAMBIO: Añadido ?v=2 para forzar la recarga de caché del script -->
-    <script src="script.js?v=2" type="module" defer></script>
+    <!-- CAMBIO: Añadido ?v=3 para forzar la recarga de caché del script -->
+    <script src="script.js?v=3" type="module" defer></script>
 </body>
 </html>
