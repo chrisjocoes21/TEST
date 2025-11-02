@@ -103,7 +103,7 @@ const AppData = {
         }
 
         if (!AppState.datosActuales) {
-            AppUI.showLoading();
+            AppUI.showLoading(); // <-- Esta es la línea 106
         } else {
             AppUI.setConnectionStatus('loading', 'Cargando...');
         }
@@ -156,7 +156,7 @@ const AppData = {
             }
         } finally {
             AppState.actualizacionEnProceso = false;
-            AppUI.hideLoading();
+            AppUI.hideLoading(); // <-- Esta es la línea 166
         }
     },
 
@@ -288,6 +288,23 @@ const AppUI = {
         
         AppUI.poblarModalAnuncios();
     },
+
+    // --- CORRECCIÓN: FUNCIONES DE CARGA FALTANTES ---
+    showLoading: function() {
+        const overlay = document.getElementById('loading-overlay');
+        if (!overlay) return;
+        // La capa de carga está visible por defecto, 
+        // pero si se oculta, esto la volvería a mostrar.
+        overlay.classList.remove('opacity-0', 'pointer-events-none');
+    },
+
+    hideLoading: function() {
+        const overlay = document.getElementById('loading-overlay');
+        if (!overlay) return;
+        // Oculta la capa de carga
+        overlay.classList.add('opacity-0', 'pointer-events-none');
+    },
+    // --- FIN DE LA CORRECCIÓN ---
 
     // V0.2.2: Nueva función para mostrar la versión de la App
     mostrarVersionApp: function() {
