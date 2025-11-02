@@ -99,7 +99,9 @@ const AppTransacciones = {
 
             const result = await response.json();
 
-            if (result.status === "success") {
+            // CAMBIO: Se actualiza la condición de éxito.
+            // Ahora acepta 'status: "success"' O un 'message' que comience con "Éxito"
+            if (result.status === "success" || (result.message && result.message.startsWith("Éxito"))) {
                 statusMsg.textContent = "¡Transacción exitosa!";
                 statusMsg.className = "text-sm text-center font-medium text-green-600 h-4";
                 
@@ -991,4 +993,5 @@ window.onload = function() {
     console.log("window.onload disparado. El DOM está listo. Iniciando AppUI...");
     AppUI.init();
 };
+
 
