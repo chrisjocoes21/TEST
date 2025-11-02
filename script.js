@@ -10,9 +10,9 @@ const AppConfig = {
     MAX_RETRIES: 5,
     CACHE_DURATION: 300000,
     
-    // CAMBIO V0.2.4: Actualización de versión
+    // CAMBIO V0.2.5: Actualización de versión
     APP_STATUS: 'Pre-Alfa', 
-    APP_VERSION: 'v0.2.4', 
+    APP_VERSION: 'v0.2.5', 
 };
 
 // --- ESTADO DE LA APLICACIÓN ---
@@ -103,7 +103,7 @@ const AppData = {
         }
 
         if (!AppState.datosActuales) {
-            AppUI.showLoading(); // <-- Esta es la línea 106
+            AppUI.showLoading(); 
         } else {
             AppUI.setConnectionStatus('loading', 'Cargando...');
         }
@@ -128,7 +128,7 @@ const AppData = {
                 }
                 
                 const data = await response.json();
-                console.log('DATOS RECIBIDOS DESDE APPSCRIPT:', JSON.stringify(data)); // <--- ¡CAMBIO AÑADIDO!
+                console.log('DATOS RECIBIDOS DESDE APPSCRIPT:', JSON.stringify(data)); 
                 if (data && data.error) {
                     throw new Error(`Error de API: ${data.message}`);
                 }
@@ -157,7 +157,7 @@ const AppData = {
             }
         } finally {
             AppState.actualizacionEnProceso = false;
-            AppUI.hideLoading(); // <-- Esta es la línea 166
+            AppUI.hideLoading(); 
         }
     },
 
@@ -598,7 +598,6 @@ const AppUI = {
     loadPrestamoPaquetes: function(selectedStudentName) {
         const container = document.getElementById('prestamo-paquetes-container');
         // CAMBIO v0.2.4: No se usa 'select'
-        // const select = document.getElementById('prestamo-alumno-select');
         const saldoSpan = document.getElementById('prestamo-alumno-saldo');
         
         // V0.2.2: Mostrar el saldo de Tesorería en la pestaña Préstamos
@@ -689,7 +688,6 @@ const AppUI = {
     loadDepositoPaquetes: function(selectedStudentName) {
         const container = document.getElementById('deposito-paquetes-container');
         // CAMBIO v0.2.4: No se usa 'select'
-        // const select = document.getElementById('deposito-alumno-select');
         const saldoSpan = document.getElementById('deposito-alumno-saldo');
         
         // V0.2.2: Mostrar info de Tesorería en Depósitos
@@ -1104,29 +1102,51 @@ const AppUI = {
         `;
     },
 
+    // CAMBIO v0.2.5: Lógica de anuncios modificada para aleatoriedad total
     actualizarAnuncios: function() {
         const lista = document.getElementById('anuncios-lista');
         
-        const getRandomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
+        // 1. Crear un pool de todos los anuncios
+        const allAnuncios = [];
+        const tipos = [
+            { id: 'AVISO', bg: 'bg-gray-100', text: 'text-gray-700' },
+            { id: 'NUEVO', bg: 'bg-blue-100', text: 'text-blue-700' },
+            { id: 'CONSEJO', bg: 'bg-green-100', text: 'text-green-700' },
+            { id: 'ALERTA', bg: 'bg-red-100', text: 'text-red-700' }
+        ];
+
+        tipos.forEach(tipoInfo => {
+            AnunciosDB[tipoInfo.id].forEach(texto => {
+                allAnuncios.push({
+                    tipo: tipoInfo.id,
+                    texto: texto,
+                    bg: tipoInfo.bg,
+                    text: tipoInfo.text
+                });
+            });
+        });
+
+        // 2. Función para obtener N items únicos
         const getUniqueRandomItems = (arr, num) => {
             const shuffled = [...arr].sort(() => 0.5 - Math.random());
             return shuffled.slice(0, num);
         };
-        
-        // CAMBIO v0.2.4: Se reduce el número de anuncios para compensar el texto acortado
-        const anuncios = [
-            ...getUniqueRandomItems(AnunciosDB['AVISO'], 2).map(texto => ({ tipo: 'AVISO', texto, bg: 'bg-gray-100', text: 'text-gray-700' })),
-            ...getUniqueRandomItems(AnunciosDB['NUEVO'], 2).map(texto => ({ tipo: 'NUEVO', texto, bg: 'bg-blue-100', text: 'text-blue-700' })),
-            ...getUniqueRandomItems(AnunciosDB['CONSEJO'], 1).map(texto => ({ tipo: 'CONSEJO', texto, bg: 'bg-green-100', text: 'text-green-700' })),
-            ...getUniqueRandomItems(AnunciosDB['ALERTA'], 1).map(texto => ({ tipo: 'ALERTA', texto, bg: 'bg-red-100', text: 'text-red-700' }))
-        ];
 
-        lista.innerHTML = anuncios.map(anuncio => `
-            <li class="flex items-start p-2 hover:bg-gray-50 rounded-lg transition-colors"> 
-                <span class="text-xs font-bold ${anuncio.bg} ${anuncio.text} rounded-full w-20 text-center py-0.5 mr-3 flex-shrink-0 mt-1">${anuncio.tipo}</span>
-                <span class="text-sm text-gray-700 flex-1">${anuncio.texto}</span>
-            </li>
-        `).join('');
+        // 3. Obtener 6 anuncios aleatorios de TODO el pool
+        const anuncios = getUniqueRandomItems(allAnuncios, 6);
+
+
+        // 4. Renderizar
+        if (anuncios.length > 0) {
+            lista.innerHTML = anuncios.map(anuncio => `
+                <li class="flex items-start p-2 hover:bg-gray-50 rounded-lg transition-colors"> 
+                    <span class="text-xs font-bold ${anuncio.bg} ${anuncio.text} rounded-full w-20 text-center py-0.5 mr-3 flex-shrink-0 mt-1">${anuncio.tipo}</span>
+                    <span class="text-sm text-gray-700 flex-1">${anuncio.texto}</span>
+                </li>
+            `).join('');
+        } else {
+            lista.innerHTML = `<li class="text-sm text-gray-500 text-center p-2">No hay anuncios disponibles.</li>`;
+        }
     },
 
     poblarModalAnuncios: function() {
