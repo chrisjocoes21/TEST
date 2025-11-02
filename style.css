@@ -63,6 +63,13 @@ scrollbar-width: none;  /* Firefox */
 .tab-content {
     /* Estilos para el contenido de las pestañas */
     padding-top: 0.5rem; 
-    /* CAMBIO v0.2.3: Altura mínima para estabilizar el modal */
-    min-height: 420px;
+    /* CAMBIO v0.2.4: Altura mínima aumentada para estabilizar el modal más grande */
+    min-height: 500px;
 }
+
+/* V0.2.4: Estilos para el contenedor de resultados de búsqueda (autocomplete) */
+.autocomplete-results {
+    /* Tailwind ya aplica 'absolute' y 'z-10', pero nos aseguramos */
+    position: absolute; 
+}
+
