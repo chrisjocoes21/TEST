@@ -13,40 +13,54 @@ font-family: 'Inter', sans-serif;
 animation: shake 0.5s;
 }
 
-/* NUEVO: Animación de puntos de carga (movida desde index.html) */
+/* NUEVO: Animación de puntos de carga (para el indicador de estado) */
 @keyframes pulse-dot-animation {
 0%, 100% {
 opacity: 1;
 }
 50% {
-opacity: 0.5;
+opacity: 0.3; /* Hacemos el pulso más sutil */
 }
 }
 .animate-pulse-dot {
 animation: pulse-dot-animation 1.4s infinite ease-in-out;
 }
 
-/* Estilos para el scrollbar (opcional pero le da un toque moderno) /
+/* Estilos para el scrollbar (opcional pero le da un toque moderno) */
 ::-webkit-scrollbar {
 width: 6px;
 height: 6px;
 }
 ::-webkit-scrollbar-thumb {
-background: #cbd5e1; / gris de tailwind /
+background: #cbd5e1; /* gris de tailwind */
 border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-background: #94a3b8; / gris más oscuro /
+background: #94a3b8; /* gris más oscuro */
 }
 ::-webkit-scrollbar-track {
-background: #f1f5f9; / gris claro */
+background: #f1f5f9; /* gris claro */
 }
 
-/* Ocultar scrollbar /
+/* Ocultar scrollbar */
 .no-scrollbar::-webkit-scrollbar {
 display: none;
 }
 .no-scrollbar {
--ms-overflow-style: none;  / IE y Edge /
-scrollbar-width: none;  / Firefox */
+-ms-overflow-style: none;  /* IE y Edge */
+scrollbar-width: none;  /* Firefox */
+}
+
+/* Estilos para las Pestañas (Tabs) en el modal de administración */
+.tab-btn {
+    border-radius: 0;
+    margin-right: 0.5rem;
+}
+.active-tab {
+    border-bottom-color: #3b82f6 !important; /* blue-600 */
+    color: #3b82f6 !important;
+}
+.tab-content {
+    /* Estilos para el contenido de las pestañas */
+    padding-top: 0.5rem; 
 }
