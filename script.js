@@ -12,8 +12,8 @@ const AppConfig = {
     
     // CAMBIO v0.3.0: Versión y Estado de la Aplicación (Nueva función P2P)
     APP_STATUS: 'Pre-Alfa', 
-    // CAMBIO v0.3.9: Lógica Top 3 (Fix), Tooltip CSS, Impuesto 5% Depósitos
-    APP_VERSION: 'v0.3.9', 
+    // CAMBIO v0.3.10: Sincronización de versión (fix scrollbars en HTML)
+    APP_VERSION: 'v0.3.10', 
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -122,7 +122,7 @@ const AppData = {
         }
 
         if (!AppState.datosActuales) {
-            AppUI.showLoading(); // <-- Esta es la línea 106
+            AppUI.showLoading(); 
         } else {
             AppUI.setConnectionStatus('loading', 'Cargando...');
         }
@@ -147,7 +147,7 @@ const AppData = {
                 }
                 
                 const data = await response.json();
-                // console.log('DATOS RECIBIDOS DESDE APPSCRIPT:', JSON.stringify(data));
+                
                 if (data && data.error) {
                     throw new Error(`Error de API: ${data.message}`);
                 }
@@ -176,7 +176,7 @@ const AppData = {
             }
         } finally {
             AppState.actualizacionEnProceso = false;
-            AppUI.hideLoading(); // <-- Esta es la línea 166
+            AppUI.hideLoading(); 
         }
     },
 
@@ -1558,11 +1558,6 @@ const AppTransacciones = {
                 AppUI.populateGruposTransaccion(); // Recargar la lista
                 AppUI.populateUsuariosTransaccion(); // Limpiar usuarios
 
-                // CAMBIO v0.2.4: No cerrar el modal
-                // setTimeout(() => {
-                //     AppUI.hideModal('transaccion-modal');
-                // }, 2000); 
-
             } else {
                 throw new Error(result.message || "Error desconocido de la API.");
             }
@@ -1602,11 +1597,6 @@ const AppTransacciones = {
                 AppData.cargarDatos(false); 
                 AppUI.loadPrestamoPaquetes(alumnoNombre); // Recargar paquetes para ese alumno
 
-                // CAMBIO v0.2.4: No cerrar el modal
-                // setTimeout(() => {
-                //     AppUI.hideModal('transaccion-modal');
-                // }, 2000); 
-
             } else {
                 throw new Error(result.message || "Error al otorgar el préstamo.");
             }
@@ -1645,11 +1635,6 @@ const AppTransacciones = {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Depósito creado con éxito!");
                 AppData.cargarDatos(false); 
                 AppUI.loadDepositoPaquetes(alumnoNombre); // Recargar paquetes para ese alumno
-
-                // CAMBIO v0.2.4: No cerrar el modal
-                // setTimeout(() => {
-                //     AppUI.hideModal('transaccion-modal');
-                // }, 2000); 
 
             } else {
                 throw new Error(result.message || "Error al crear el depósito.");
@@ -1802,3 +1787,4 @@ window.onload = function() {
     console.log("window.onload disparado. Iniciando AppUI...");
     AppUI.init();
 };
+
