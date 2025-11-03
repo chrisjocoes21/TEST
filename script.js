@@ -855,7 +855,7 @@ const AppUI = {
 
             const buttonClass = isEligible ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed';
             const buttonDisabled = !isEligible ? 'disabled' : '';
-            const action = isEligible ? `AppTransacciones.realizarDeposito('${selectedStudentName}', '${tipo}')` : '';
+            const action = isEligible ? `AppTransacciones.realizarDeposito('${selectedStudentName}', '${tipoDeposito}')` : '';
 
             html += `
                 <div class="flex justify-between items-center p-3 border-b border-green-100">
@@ -1454,7 +1454,9 @@ const AppUI = {
         const messageEl = document.getElementById('store-message'); // CAMBIO v0.3.13
         const tiendaBtn = document.getElementById('tienda-btn'); 
 
-        const tiendaBtn = document.getElementById('tienda-btn'); // CAMBIO v0.3.4: Botón de tienda
+        // ***** ESTA ES LA LÍNEA QUE CORREGÍ *****
+        // Se eliminó la segunda declaración de 'tiendaBtn'
+        // const tiendaBtn = document.getElementById('tienda-btn'); // <-- LÍNEA DUPLICADA ELIMINADA
 
         if (now >= storeOpen && now <= storeClose) { // CAMBIO v0.3.13
             timerEl.classList.add('hidden');
@@ -1798,4 +1800,3 @@ window.onload = function() {
     console.log("window.onload disparado. Iniciando AppUI...");
     AppUI.init();
 };
-
