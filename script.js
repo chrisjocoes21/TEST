@@ -87,7 +87,8 @@ const AnunciosDB = {
         "¡Nuevo Sistema Económico! Depósitos de admin limitados por la Tesorería.",
         "Nueva sección 'Préstamos' y 'Depósitos' en el Panel de Administración.",
         "¡Nuevo Portal P2P! Transfiere pinceles a tus compañeros (con 10% de comisión).",
-        "La Tesorería cobra un 0.05% diario de impuesto a saldos altos."
+        // CAMBIO: Impuesto actualizado a 0.5%
+        "La Tesorería cobra un 0.5% diario de impuesto a saldos altos."
     ],
     'CONSEJO': [
         "Usa el botón '»' en la esquina para abrir y cerrar la barra lateral.",
@@ -709,10 +710,11 @@ const AppUI = {
         saldoSpan.textContent = `(Saldo actual: ${AppFormat.formatNumber(student.pinceles)} ℙ)`;
 
         // Mapeo de paquetes (debería coincidir con el backend)
+        // CAMBIO: Actualizados intereses y plazos
         const paquetes = {
-            'rescate': { monto: 15000, interes: 25, label: "Rescate" },
-            'estandar': { monto: 50000, interes: 20, label: "Estándar" },
-            'inversion': { monto: 120000, interes: 15, label: "Inversión" }
+            'rescate': { monto: 15000, interes: 25, plazoDias: 7, label: "Rescate" },
+            'estandar': { monto: 50000, interes: 25, plazoDias: 14, label: "Estándar" },
+            'inversion': { monto: 120000, interes: 25, plazoDias: 21, label: "Inversión" }
         };
         
         let html = '';
@@ -726,9 +728,9 @@ const AppUI = {
         Object.keys(paquetes).forEach(tipo => {
             const pkg = paquetes[tipo];
             
-            // ***** CAMBIO v12.2: Cálculo de cuota diaria *****
+            // ***** CAMBIO: Cálculo de cuota diaria basado en plazo del paquete *****
             const totalAPagar = Math.ceil(pkg.monto * (1 + pkg.interes / 100));
-            const cuotaDiaria = Math.ceil(totalAPagar / 7);
+            const cuotaDiaria = Math.ceil(totalAPagar / pkg.plazoDias);
             // ***** FIN DEL CAMBIO *****
             
             // Lógica de elegibilidad del frontend
@@ -772,8 +774,8 @@ const AppUI = {
                 <div class="flex justify-between items-center p-3 border-b border-blue-100">
                     <div>
                         <span class="font-semibold text-gray-800">${pkg.label} (${AppFormat.formatNumber(pkg.monto)} ℙ)</span>
-                        <!-- ***** CAMBIO v12.2: Mostrar cuota diaria ***** -->
-                        <span class="text-xs text-gray-500 block">Cuota: <strong>${AppFormat.formatNumber(cuotaDiaria)} ℙ</strong> (x7 días). Total: ${AppFormat.formatNumber(totalAPagar)} ℙ.</span>
+                        <!-- ***** CAMBIO: Mostrar cuota diaria y plazo correctos ***** -->
+                        <span class="text-xs text-gray-500 block">Cuota: <strong>${AppFormat.formatNumber(cuotaDiaria)} ℙ</strong> (x${pkg.plazoDias} días). Total: ${AppFormat.formatNumber(totalAPagar)} ℙ.</span>
                     </div>
                     <button onclick="${action}" class="px-3 py-1 text-xs font-medium text-white rounded-lg transition-colors ${buttonClass}" ${buttonDisabled}>
                         Otorgar ${isEligible ? '' : eligibilityMessage}
