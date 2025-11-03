@@ -12,7 +12,8 @@ const AppConfig = {
     
     // CAMBIO v0.3.0: Versión y Estado de la Aplicación (Nueva función P2P)
     APP_STATUS: 'Pre-Alfa', 
-    APP_VERSION: 'v0.3.5', // CAMBIO v0.3.5: Ajuste de layout (2x2)
+    // CAMBIO v0.3.6: Lógica de Capital Total para Top 3
+    APP_VERSION: 'v0.3.6', 
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -1040,11 +1041,37 @@ const AppUI = {
             </div>
         `;
         
-        // Tarjetas Top 3 Alumnos
-        const top3 = AppState.datosAdicionales.allStudents.sort((a, b) => b.pinceles - a.pinceles).slice(0, 3);
+        // ===================================================================
+        // INICIO DE LA MODIFICACIÓN (v0.3.6): Lógica de "Alumnos Destacados"
+        // ===================================================================
+        
+        // Tarjetas Top 3 Alumnos (CON LÓGICA DE DEPÓSITOS)
+        
+        // 1. Obtener datos necesarios
+        const allStudents = AppState.datosAdicionales.allStudents;
+        const depositosActivos = AppState.datosAdicionales.depositosActivos;
 
+        // 2. Mapear alumnos para incluir su capital total
+        const studentsWithCapital = allStudents.map(student => {
+            // Calcular el total invertido para este alumno
+            const totalInvertido = depositosActivos
+                .filter(deposito => deposito.alumno === student.nombre)
+                .reduce((sum, deposito) => sum + (deposito.monto || 0), 0); // 'monto' es el capital invertido
+
+            const capitalTotal = student.pinceles + totalInvertido;
+
+            return {
+                ...student, // Copia todas las propiedades originales (nombre, pinceles, grupoNombre, etc.)
+                totalInvertido: totalInvertido,
+                capitalTotal: capitalTotal
+            };
+        });
+
+        // 3. Ordenar por capitalTotal y tomar los 3 primeros
+        const top3 = studentsWithCapital.sort((a, b) => b.capitalTotal - a.capitalTotal).slice(0, 3);
+
+        // 4. Generar el HTML para las tarjetas del Top 3
         if (top3.length > 0) {
-            // CAMBIO v0.3.5: Añadido h-full para igualar altura y flex-col
             top3Html = top3.map((student, index) => {
                 let rankColor = 'bg-blue-100 text-blue-700';
                 if (index === 0) rankColor = 'bg-yellow-100 text-yellow-700';
@@ -1052,6 +1079,7 @@ const AppUI = {
                 if (index === 2) rankColor = 'bg-orange-100 text-orange-700';
                 const grupoNombre = student.grupoNombre || 'N/A';
 
+                // NUEVO HTML con desglose
                 return `
                     <div class="bg-white rounded-lg shadow-md p-3 h-full flex flex-col justify-between">
                         <div>
@@ -1061,23 +1089,52 @@ const AppUI = {
                             </div>
                             <p class="text-base font-semibold text-gray-900 truncate">${student.nombre}</p>
                         </div>
-                        <p class="text-xl font-bold text-blue-600 text-right">${AppFormat.formatNumber(student.pinceles)} ℙ</p>
+                        
+                        <!-- CONTENIDO MODIFICADO (v0.3.6) -->
+                        <div class="text-right mt-2">
+                            <p class="text-xl font-bold text-blue-600" title="Capital Total (En Bolsa + Invertido)">
+                                ${AppFormat.formatNumber(student.capitalTotal)} ℙ
+                            </p>
+                            <p class="text-xs text-gray-500 leading-tight" title="Pinceles en bolsa (líquidos)">
+                                En bolsa: ${AppFormat.formatNumber(student.pinceles)} ℙ
+                            </p>
+                            <p class="text-xs text-green-600 leading-tight" title="Pinceles en depósitos a plazo">
+                                Invertido: ${AppFormat.formatNumber(student.totalInvertido)} ℙ
+                            </p>
+                        </div>
+                        <!-- FIN DE LA MODIFICACIÓN -->
                     </div>
                 `;
             }).join('');
         }
+        
+        // 5. Generar tarjetas de relleno (placeholders) si hay menos de 3
         for (let i = top3.length; i < 3; i++) {
-             // CAMBIO v0.3.5: Añadido h-full para igualar altura y flex-col
             top3Html += `
                 <div class="bg-white rounded-lg shadow-md p-3 opacity-50 h-full flex flex-col justify-between">
                     <div>
-                        <div class="flex items-center justify-between mb-1"><span class="text-sm font-medium text-gray-400">-</span><span class="text-xs font-bold bg-gray-100 text-gray-400 rounded-full px-2 py-0.5">${i + 1}º</span></div>
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="text-sm font-medium text-gray-400">-</span>
+                            <span class="text-xs font-bold bg-gray-100 text-gray-400 rounded-full px-2 py-0.5">${i + 1}º</span>
+                        </div>
                         <p class="text-base font-semibold text-gray-400 truncate">-</p>
                     </div>
-                    <p class="text-xl font-bold text-gray-400 text-right">- ℙ</p>
+                    
+                    <!-- CONTENIDO MODIFICADO (Placeholder v0.3.6) -->
+                    <div class="text-right mt-2">
+                         <p class="text-xl font-bold text-gray-400">- ℙ</p>
+                         <p class="text-xs text-gray-500 leading-tight">En bolsa: - ℙ</p>
+                         <p class="text-xs text-green-600 leading-tight">Invertido: - ℙ</p>
+                    </div>
+                    <!-- FIN DE LA MODIFICACIÓN -->
                 </div>
             `;
         }
+        
+        // ===================================================================
+        // FIN DE LA MODIFICACIÓN (v0.3.6)
+        // ===================================================================
+
 
         // CAMBIO v0.3.5: Inyectar en contenedores separados
         bovedaContainer.innerHTML = bovedaHtml;
