@@ -11,9 +11,9 @@
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏦</text></svg>">
 
-    <!-- Archivo de estilos personalizados (cache buster añadido) -->
-    <!-- CAMBIO v0.3.13: Versión actualizada -->
-    <link rel="stylesheet" href="style.css?v=0.3.13">
+    <!-- Archivo de estilos personalizados -->
+    <!-- CAMBIO v0.4.0: Versión actualizada -->
+    <link rel="stylesheet" href="style.css?v=0.4.0">
 </head>
 <body class="h-full overflow-hidden"> <!-- v0.3.10: overflow-hidden -->
     <div id="app-container" class="flex h-screen">
@@ -34,14 +34,22 @@
             </div>
             
             <!-- Footer de la Sidebar (Botón Admin y Versión) -->
-            <!-- CAMBIO v0.3.0: Añadido Botón P2P -->
+            <!-- CAMBIO v0.4.0: Añadido Botón Fondo de Inversión -->
             <div class="p-2 border-t border-gray-200 bg-white flex-shrink-0 space-y-2">
                 <!-- V0.2.2: Contenedor de la Versión -->
                 <div id="app-version-container" class="text-center py-1 text-xs text-gray-400">
                     <!-- Versión se inyecta aquí -->
                 </div>
                 
-                <!-- NUEVO Botón P2P -->
+                <!-- NUEVO Botón Fondo de Inversión -->
+                <button id="fondo-portal-btn" class="flex items-center justify-center w-full px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12.75 3 3m0 0 3-3m-3 3v-7.5m1.5-9H18a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 18 21H6a2.25 2.25 0 0 1-2.25-2.25V6.75A2.25 2.25 0 0 1 6 4.5H18" />
+                    </svg>
+                    <span>Fondo de Inversión</span>
+                </button>
+
+                <!-- Botón P2P -->
                 <button id="p2p-portal-btn" class="p2p-btn flex items-center justify-center w-full px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-md">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
@@ -80,7 +88,6 @@
             </header>
             
             <!-- Contenido (scrollable) -->
-            <!-- v0.3.10: overflow-x-hidden -->
             <main id="main-content-area" class="flex-1 overflow-y-auto bg-gray-100 p-4 md:p-6 lg:p-8 overflow-x-hidden">
                 <!-- Subtítulo (para total de grupo o bienvenida) -->
                 <div id="page-subtitle" class="mb-6">
@@ -95,41 +102,30 @@
                 <!-- Contenedor de Resumen Compacto (Solo en Home) -->
                 <div id="home-stats-container" class="mb-6 hidden">
     
-                    <!-- Títulos (CAMBIO: text-base) -->
+                    <!-- Títulos -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-2">
                         <h3 class="text-base font-semibold text-gray-800">Resumen del Banco</h3>
                         <h3 class="text-base font-semibold text-gray-800">Alumnos Destacados</h3>
                     </div>
                     
-                    <!-- 
-                      CAMBIO: Reestructurado a un grid 2x2 "plano" para forzar alturas de fila iguales.
-                      Se eliminaron los divs de "flex-col" que envolvían las columnas.
-                      El grid-cols-2 ahora aplica directamente a las 4 tarjetas/contenedores.
-                      El comportamiento de "stretch" por defecto de Tailwind Grid forzará
-                      que los items de la misma fila (1 y 2, 3 y 4) tengan la misma altura.
-                    -->
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     
                         <!-- Fila 1, Col 1: Bóveda -->
                         <div id="boveda-card-container">
-                            <!-- Bóveda Card Injected here. El JS (script.js) ya le añade h-full. -->
+                            <!-- Bóveda Card Injected here. -->
                         </div>
                         
                         <!-- Fila 1, Col 2: Top 3 Grid -->
                         <div id="top-3-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <!-- Top 3 cards Injected here. El JS (script.js) ya les añade h-full. -->
+                            <!-- Top 3 cards Injected here. -->
                         </div>
                         
                         <!-- Fila 2, Col 1: Tesorería -->
                         <div id="tesoreria-card-container">
-                            <!-- Tesorería Card Injected here. El JS (script.js) ya le añade h-full. -->
+                            <!-- Tesorería Card Injected here. -->
                         </div>
                         
                         <!-- Fila 2, Col 2: Contador/Botones -->
-                        <!-- 
-                            Añadimos h-full a esta tarjeta para que ocupe toda la altura 
-                            de su celda de grid, igualando a la tarjeta de Tesorería.
-                        -->
                         <div class="flex flex-wrap items-center justify-between gap-4 px-3 bg-white rounded-lg shadow-md p-3 h-full">
                             <!-- Timer -->
                             <div id="countdown-timer" class="flex-shrink-0 text-sm font-medium text-gray-700 flex items-baseline gap-2">
@@ -139,7 +135,6 @@
                                 <span id="seconds" class="text-xl font-bold text-blue-600 w-8 text-right">00</span><span class="text-xs text-gray-500 uppercase -ml-1">Segundos</span>
                             </div>
                             <!-- Mensaje -->
-                            <!-- CAMBIO v0.3.13: ID y texto actualizados -->
                             <div id="store-message" class="hidden w-full text-center text-green-600 font-semibold">
                                 ¡La tienda está abierta!
                             </div>
@@ -158,7 +153,6 @@
                 </div>
                 
                 <!-- MÓDULOS DE HOME -->
-                <!-- CAMBIO v0.3.3: Cambiado a 12 columnas (4-2-6) para dar más espacio a Anuncios -->
                 <div id="home-modules-grid" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
                     
                     <!-- Panel de "Alumnos en Riesgo" (col-span-4) -->
@@ -194,7 +188,6 @@
                     </div>
 
                     <!-- Tablón de Anuncios (col-span-6) -->
-                    <!-- CAMBIO v0.3.3: Aumentado a col-span-6 -->
                     <div id="anuncios-container" class="bg-white rounded-lg shadow-md lg:col-span-6">
                         <div class="flex justify-between items-center p-4 border-b border-gray-200">
                             <h3 class="text-base font-semibold text-gray-800">Tablón de Anuncios</h3>
@@ -253,14 +246,10 @@
         </div>
     </div>
     
-    <!-- =================================================================== -->
-    <!-- MODAL DE ADMINISTRACIÓN (TAMAÑO v0.2.4: max-w-4xl) -->
-    <!-- =================================================================== -->
+    <!-- MODAL DE ADMINISTRACIÓN -->
     <div id="transaccion-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- CAMBIO v0.2.4: Ancho aumentado a max-w-4xl -->
+        <!-- Contenido... (sin cambios) -->
         <div id="transaccion-modal-dialog" class="bg-white rounded-lg shadow-xl w-full max-w-4xl transform scale-95 transition-transform duration-300 overflow-hidden"> 
-            
-            <!-- Encabezado con TABS -->
             <div class="bg-gray-50 border-b border-gray-200">
                 <div class="flex justify-between items-center p-4">
                     <h2 class="text-lg font-semibold text-gray-900">
@@ -268,8 +257,6 @@
                     </h2>
                     <button id="transaccion-modal-close-btn" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
                 </div>
-                
-                <!-- PESTAÑAS -->
                 <div class="flex border-b border-gray-200 px-4">
                     <button data-tab="transaccion" class="tab-btn active-tab px-4 py-2 text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors hover:bg-gray-100">
                         Transacción Múltiple
@@ -282,152 +269,97 @@
                     </button>
                 </div>
             </div>
-
-            <!-- CONTENEDORES DE CONTENIDO (Tab-Content) -->
-            <!-- CAMBIO v0.2.4: Altura aumentada a max-h-[80vh] -->
             <div class="p-6 max-h-[80vh] overflow-y-auto">
-                
-                <!-- 1. CONTENIDO DE TRANSACCIÓN MÚLTIPLE (Default) -->
                 <div id="tab-transaccion" class="tab-content active"> 
-                    
                     <div class="grid grid-cols-2 gap-4 mb-4">
-                        
-                        <!-- Columna de Grupos -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Grupos</label>
-                            <!-- CAMBIO v0.2.4: Altura aumentada a h-72 -->
                             <div id="transaccion-lista-grupos-container" class="w-full h-72 overflow-y-auto bg-gray-50 border border-gray-300 rounded-lg p-2 space-y-1">
                                 <span class="text-sm text-gray-500 p-2">Cargando grupos...</span>
                             </div>
                         </div>
-                        
-                        <!-- Columna de Usuarios -->
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-1">Usuarios</label>
-                             <!-- CAMBIO v0.2.4: Altura aumentada a h-72 -->
                             <div id="transaccion-lista-usuarios-container" class="w-full h-72 overflow-y-auto bg-gray-50 border border-gray-300 rounded-lg p-2 space-y-1">
                                 <span class="text-sm text-gray-500 p-2">Seleccione un grupo...</span>
                             </div>
                         </div>
-
                     </div>
-
-                    <!-- Campo de Cantidad (con saldo de Tesorería) -->
                     <div class="mt-4">
                         <label for="transaccion-cantidad-input" class="block text-sm font-medium text-gray-700 mb-1">
                             Cantidad (para cada usuario seleccionado)
                             <span id="tesoreria-saldo-transaccion" class="text-xs text-blue-600 ml-2 font-normal">
-                                <!-- Saldo de Tesorería se inyecta aquí -->
                             </span>
                         </label>
                         <input type="number" id="transaccion-cantidad-input" placeholder="Ej: 100 o -50" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                     </div>
-
-                    <!-- Botón y Status de Transacción -->
                     <div class="mt-6 flex justify-end">
                         <button id="transaccion-submit-btn" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm w-full md:w-auto">
                             <span id="transaccion-btn-text">Realizar Transacción</span>
                         </button>
                     </div>
                 </div>
-
-                <!-- 2. CONTENIDO DE PRÉSTAMOS -->
                 <div id="tab-prestamos" class="tab-content hidden">
-                    
-                    <!-- CAMBIO v0.2.4: Reemplazado <select> por <input> de búsqueda -->
                     <div class="mb-4 relative">
                         <label for="prestamo-alumno-search" class="block text-sm font-medium text-gray-700 mb-1">
                             Buscar Alumno
                             <span id="prestamo-alumno-saldo" class="text-xs text-gray-500 ml-2 font-normal"></span>
                         </label>
                         <input type="text" id="prestamo-alumno-search" placeholder="Escriba el nombre del alumno..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <!-- Contenedor de resultados de búsqueda -->
                         <div id="prestamo-search-results" class="search-results-container hidden absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
-                            <!-- Los resultados se inyectarán aquí -->
                         </div>
                     </div>
-
                     <div class="mt-4 p-4 border border-blue-200 rounded-lg bg-blue-50">
                         <h4 class="text-base font-semibold text-blue-800 mb-3">
                             Paquetes de Préstamo
                             <span id="tesoreria-saldo-prestamo" class="text-sm text-blue-600 ml-2 font-normal float-right">
-                                <!-- Saldo de Tesorería se inyecta aquí -->
                             </span>
                         </h4>
-                        
                         <div id="prestamo-paquetes-container" class="space-y-3">
                             <div class="text-sm text-gray-500">Seleccione un alumno para ver las opciones de préstamo.</div>
                         </div>
                     </div>
-
-                    <div class="mt-6 flex justify-end">
-                        <!-- Botón Submit para Préstamos se crea dinámicamente -->
-                    </div>
                 </div>
-
-                <!-- 3. CONTENIDO DE DEPÓSITOS -->
                 <div id="tab-depositos" class="tab-content hidden">
-                    
-                     <!-- CAMBIO v0.2.4: Reemplazado <select> por <input> de búsqueda -->
                     <div class="mb-4 relative">
                         <label for="deposito-alumno-search" class="block text-sm font-medium text-gray-700 mb-1">
                             Buscar Alumno
                             <span id="deposito-alumno-saldo" class="text-xs text-gray-500 ml-2 font-normal"></span>
                         </label>
                         <input type="text" id="deposito-alumno-search" placeholder="Escriba el nombre del alumno..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <!-- Contenedor de resultados de búsqueda -->
                         <div id="deposito-search-results" class="search-results-container hidden absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
-                            <!-- Los resultados se inyectarán aquí -->
                         </div>
                     </div>
-                    
                     <div class="mt-4 p-4 border border-green-200 rounded-lg bg-green-50">
                         <h4 class="text-base font-semibold text-green-800 mb-3">
                             Certificados de Depósito a Plazo
                             <span id="deposito-info-tesoreria" class="text-sm text-green-600 ml-2 font-normal float-right">
-                                <!-- Info de Tesorería se inyecta aquí -->
                             </span>
                         </h4>
-                        
                         <div id="deposito-paquetes-container" class="space-y-3">
                             <div class="text-sm text-gray-500">Seleccione un alumno para ver las opciones de depósito.</div>
                         </div>
                     </div>
-                    
-                    <div class="mt-6 flex justify-end">
-                        <!-- Botón Submit para Depósitos se crea dinámicamente -->
-                    </div>
                 </div>
-                
-                <!-- Status y Error General (Visible en todas las pestañas) -->
                 <div id="transaccion-status-msg" class="text-sm text-center font-medium px-6 pt-4 h-auto min-h-[1rem]">
-                    <!-- Mensajes de éxito o error irán aquí -->
                 </div>
             </div>
-
-            <!-- Footer con Botones -->
             <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-between gap-3 flex-shrink-0">
-                <!-- Botón de Base de Datos -->
-                <a id="db-link-btn" href="https://docs.google.com/spreadsheets/d/1GArB7I19uGum6awiRN6qK8HtmTWGcaPGWhOzGCdhbcs/edit?usp=sharing" target="_blank" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm flex items-center">
+                <a id="db-link-btn" href="https." target="_blank" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-1">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3-3m0 0-3-3m-1.5 1.5H19.5" />
                     </svg>
                     Ver Base de Datos
                 </a>
-                
                 <button id="transaccion-cancel-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">Cerrar</button>
             </div>
         </div>
     </div>
-    <!-- =================================================================== -->
     
-    <!-- =================================================================== -->
-    <!-- NUEVO MODAL (v0.3.0): PORTAL DE TRANSFERENCIAS P2P -->
-    <!-- =================================================================== -->
+    <!-- MODAL DE TRANSFERENCIAS P2P -->
     <div id="p2p-transfer-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <!-- Contenido... (sin cambios) -->
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg transform scale-95 transition-transform duration-300 overflow-hidden"> 
-            
-            <!-- Encabezado -->
             <div class="bg-gray-50 border-b border-gray-200">
                 <div class="flex justify-between items-center p-4">
                     <h2 class="text-lg font-semibold text-gray-900">
@@ -436,53 +368,32 @@
                     <button id="p2p-modal-close-btn" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
                 </div>
             </div>
-
-            <!-- Contenido del Modal P2P -->
             <div class="p-6 space-y-4">
-                
-                <!-- 1. Campo Origen (Tu Nombre) -->
                 <div class="relative">
                     <label for="p2p-search-origen" class="block text-sm font-medium text-gray-700 mb-1">Tu Nombre (Remitente)</label>
                     <input type="text" id="p2p-search-origen" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                     <div id="p2p-origen-results" class="search-results-container hidden absolute z-20 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
-                        <!-- Resultados de búsqueda de origen -->
                     </div>
                 </div>
-
-                <!-- 2. Campo Clave P2P -->
                 <div>
                     <label for="p2p-clave" class="block text-sm font-medium text-gray-700 mb-1">Tu Clave P2P</label>
                     <input type="password" id="p2p-clave" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                 </div>
-                
-                <!-- 3. Campo Destino (Enviar A) -->
                 <div class="relative">
                     <label for="p2p-search-destino" class="block text-sm font-medium text-gray-700 mb-1">Enviar a (Destinatario)</label>
                     <input type="text" id="p2p-search-destino" placeholder="Busca el nombre del destinatario..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                     <div id="p2p-destino-results" class="search-results-container hidden absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
-                        <!-- Resultados de búsqueda de destino -->
                     </div>
                 </div>
-                
-                <!-- 4. Campo Cantidad -->
                 <div>
                     <label for="p2p-cantidad" class="block text-sm font-medium text-gray-700 mb-1">Cantidad a Enviar</label>
                     <input type="number" id="p2p-cantidad" placeholder="Ej: 1000" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
                 </div>
-
-                <!-- 5. Cálculo de Impuesto -->
                 <div id="p2p-calculo-impuesto" class="text-sm text-center text-gray-600 h-5">
-                    <!-- El cálculo del 10% de impuesto aparecerá aquí -->
                 </div>
-                
-                <!-- 6. Mensaje de Estado P2P -->
                 <div id="p2p-status-msg" class="text-sm text-center font-medium px-6 pt-2 h-auto min-h-[1rem]">
-                    <!-- Mensajes de éxito o error P2P irán aquí -->
                 </div>
-
             </div>
-
-            <!-- Footer con Botones P2P -->
             <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-end gap-3 flex-shrink-0">
                 <button id="p2p-cancel-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">Cerrar</button>
                 <button id="p2p-submit-btn" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
@@ -491,28 +402,141 @@
             </div>
         </div>
     </div>
+
+    <!-- =================================================================== -->
+    <!-- NUEVO MODAL (v0.4.0): FONDO DE INVERSIÓN BPD -->
+    <!-- =================================================================== -->
+    <div id="fondo-inversion-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg transform scale-95 transition-transform duration-300 overflow-hidden"> 
+            
+            <!-- Encabezado -->
+            <div class="bg-gray-50 border-b border-gray-200">
+                <div class="flex justify-between items-center p-4">
+                    <h2 class="text-lg font-semibold text-gray-900">
+                        Fondo de Crecimiento BPD
+                    </h2>
+                    <button id="fondo-modal-close-btn" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+
+                <!-- Info del Fondo y del Alumno -->
+                <div class="p-4 bg-white border-b border-gray-200 grid grid-cols-2 gap-4">
+                    <!-- Valor de la Participación -->
+                    <div class="text-center">
+                        <label class="text-xs font-medium text-gray-500 uppercase">Valor Actual (Participación)</label>
+                        <p id="fondo-valor-actual" class="text-2xl font-bold text-purple-600">--.-- ℙ</p>
+                    </div>
+                    <!-- Balance del Alumno -->
+                    <div class="text-center">
+                        <label class="text-xs font-medium text-gray-500 uppercase">Mi Balance</label>
+                        <p id="fondo-balance-alumno" class="text-lg font-bold text-gray-800">0.00 <span class="text-sm font-normal text-gray-600">(~0 ℙ)</span></p>
+                    </div>
+                </div>
+
+                <!-- Pestañas Comprar / Vender -->
+                <div class="flex border-b border-gray-200 px-4">
+                    <button data-tab="comprar" class="fondo-tab-btn active-tab px-4 py-2 text-sm font-medium border-b-2 border-purple-600 text-purple-600 transition-colors hover:bg-gray-100">
+                        Comprar
+                    </button>
+                    <button data-tab="vender" class="fondo-tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-600 transition-colors hover:bg-gray-100">
+                        Vender
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contenido del Modal -->
+            <div class="p-6">
+
+                <!-- Pestaña COMPRAR -->
+                <div id="fondo-tab-comprar" class="fondo-tab-content active space-y-4">
+                    <!-- 1. Campo Origen (Tu Nombre) -->
+                    <div class="relative">
+                        <label for="fondo-search-origen-comprar" class="block text-sm font-medium text-gray-700 mb-1">Tu Nombre</label>
+                        <input type="text" id="fondo-search-origen-comprar" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        <div id="fondo-origen-results-comprar" class="search-results-container hidden absolute z-20 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                            <!-- Resultados de búsqueda de origen -->
+                        </div>
+                    </div>
+                    <!-- 2. Campo Cantidad a Comprar -->
+                    <div>
+                        <label for="fondo-comprar-cantidad-pinceles" class="block text-sm font-medium text-gray-700 mb-1">Monto a Invertir (en ℙ)</label>
+                        <input type="number" id="fondo-comprar-cantidad-pinceles" placeholder="Ej: 1000" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    <!-- 3. Campo Clave P2P -->
+                    <div>
+                        <label for="fondo-comprar-clave" class="block text-sm font-medium text-gray-700 mb-1">Tu Clave P2P</label>
+                        <input type="password" id="fondo-comprar-clave" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    <!-- 4. Cálculo de Comisión -->
+                    <div id="fondo-comprar-calculo" class="text-sm text-center text-gray-600 min-h-[4rem] p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <!-- El cálculo de la comisión aparecerá aquí -->
+                        <span class="text-gray-400">Ingrese un monto para ver el cálculo.</span>
+                    </div>
+                    <!-- 5. Mensaje de Estado -->
+                    <div id="fondo-status-msg-comprar" class="text-sm text-center font-medium px-6 h-auto min-h-[1rem]">
+                    </div>
+                    <!-- 6. Botón Submit -->
+                    <div class="flex justify-end pt-2">
+                        <button id="fondo-comprar-submit-btn" class="px-6 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
+                            <span id="fondo-comprar-btn-text">Comprar Participaciones</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Pestaña VENDER -->
+                <div id="fondo-tab-vender" class="fondo-tab-content hidden space-y-4">
+                    <!-- 1. Campo Origen (Tu Nombre) -->
+                    <div class="relative">
+                        <label for="fondo-search-origen-vender" class="block text-sm font-medium text-gray-700 mb-1">Tu Nombre</label>
+                        <input type="text" id="fondo-search-origen-vender" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                        <div id="fondo-origen-results-vender" class="search-results-container hidden absolute z-20 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                            <!-- Resultados de búsqueda de origen -->
+                        </div>
+                    </div>
+                    <!-- 2. Campo Cantidad a Vender -->
+                    <div>
+                        <label for="fondo-vender-cantidad-participaciones" class="block text-sm font-medium text-gray-700 mb-1">Nº de Participaciones a Vender</label>
+                        <input type="number" id="fondo-vender-cantidad-participaciones" placeholder="Ej: 10.5" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    <!-- 3. Campo Clave P2P -->
+                    <div>
+                        <label for="fondo-vender-clave" class="block text-sm font-medium text-gray-700 mb-1">Tu Clave P2P</label>
+                        <input type="password" id="fondo-vender-clave" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    </div>
+                    <!-- 4. Cálculo de Comisión y Plusvalía -->
+                    <div id="fondo-vender-calculo" class="text-sm text-left text-gray-600 min-h-[4rem] p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <span class="text-gray-400">Ingrese participaciones para ver el cálculo.</span>
+                    </div>
+                    <!-- 5. Mensaje de Estado -->
+                    <div id="fondo-status-msg-vender" class="text-sm text-center font-medium px-6 h-auto min-h-[1rem]">
+                    </div>
+                    <!-- 6. Botón Submit -->
+                    <div class="flex justify-end pt-2">
+                        <button id="fondo-vender-submit-btn" class="px-6 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
+                            <span id="fondo-vender-btn-text">Vender Participaciones</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer con Botón Cerrar -->
+            <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-end gap-3 flex-shrink-0">
+                <button id="fondo-cancel-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">Cerrar</button>
+            </div>
+        </div>
+    </div>
     <!-- =================================================================== -->
 
 
-    <!-- Modal de Reglas (Estética mejorada) -->
-    <!-- CAMBIO: Ancho aumentado a max-w-5xl para mejor legibilidad -->
+    <!-- Modal de Reglas -->
     <div id="reglas-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <!-- Contenido... (ACTUALIZADO) -->
         <div class="bg-white rounded-lg shadow-xl w-full max-w-5xl transform scale-95 transition-transform duration-300">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold text-gray-900">Reglas y Economía del Banco</h2>
                     <button id="reglas-modal-close" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
                 </div>
-                <!-- 
-                  CAMBIOS:
-                  - Contenedor de texto: Añadido 'text-base' (fuente más grande) y 'text-justify' (texto justificado).
-                  - Listas (ul): Cambiado 'text-sm' a 'text-base' para heredar el tamaño.
-                  - Texto: Eliminados asteriscos y clarificadas las secciones de Préstamos.
-                  - ACTUALIZADO: Impuesto a 0.5% y plazos de préstamos.
-                -->
                 <div class="space-y-6 max-h-[70vh] overflow-y-auto pr-4 text-gray-700 no-scrollbar text-base text-justify">
-                    
-                    <!-- Sección 1: Tesorería y Anti-Inflación -->
                     <div class="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
                         <h4 class="font-bold text-blue-800 text-left">Economía Cerrada y Tesorería</h4>
                         <ul class="mt-2 text-base list-disc pl-5 space-y-1 text-gray-700">
@@ -525,74 +549,69 @@
                                     <li>Cobro de cuotas e intereses (regulares y por mora) de préstamos.</li>
                                     <li>Multas (retiros de pinceles) impuestas por el administrador.</li>
                                     <li>Ingreso Pasivo Diario (simulación de crecimiento económico).</li>
+                                    <!-- NUEVO -->
+                                    <li>Comisiones e impuestos del Fondo de Inversión.</li>
                                 </ul>
                             </li>
                         </ul>
                     </div>
-
-                    <!-- Sección 2: Préstamos (Admin) -->
+                    <!-- NUEVO: Reglas del Fondo de Inversión -->
+                    <div class="pt-4 border-t border-gray-100">
+                        <h4 class="font-semibold text-gray-800 text-left">Fondo de Inversión BPD (Riesgo Alto)</h4>
+                        <ul class="mt-2 text-base list-disc pl-5 space-y-1">
+                            <li>Permite a los alumnos invertir en un fondo con **retorno variable** (puede ganar o perder).</li>
+                            <li>El **Valor de la Participación** cambia cada noche basado en una simulación de mercado.</li>
+                            <li>**Comisión de Compra (Bróker - 1%):** Al comprar, se cobra un 1% sobre el monto total en Pinceles. El 99% restante se usa para comprar participaciones.</li>
+                            <li>**Comisiones de Venta (Doble):** Al vender, se aplican dos comisiones sobre el valor total de la venta:
+                                <ul class="list-[circle] pl-4 mt-1 space-y-0.5">
+                                    <li>**Comisión de Venta (Bróker - 1%):** Se cobra un 1% sobre el total vendido (gane o pierda).</li>
+                                    <li>**Impuesto a la Ganancia (10%):** Se cobra un 10% *solo sobre la ganancia neta* (plusvalía). Si vende con pérdidas, este impuesto es 0.</li>
+                                </ul>
+                            </li>
+                            <li>**Comisión de Administración (0.01% diario):** El banco cobra esta comisión *directamente al fondo* cada noche. Es invisible para el alumno, pero afecta el rendimiento diario del valor de la participación.</li>
+                        </ul>
+                    </div>
                     <div>
                         <h4 class="font-semibold text-gray-800 text-left">Préstamos Bancarios (Admin)</h4>
                         <ul class="mt-2 text-base list-disc pl-5 space-y-1">
-                            <li>El préstamo se paga automáticamente en cuotas diarias según el plazo (7, 14 o 21 días). Cada día, el sistema intentará cobrar la cuota diaria calculada.</li>
-                            <li><strong>Falta de Fondos (Plazo Regular):</strong> Si un alumno no tiene saldo suficiente para la cuota diaria, el pago de ese día se omite. El interés no se acumula por mora durante los días de plazo regular.</li>
-                            <li class="text-red-700 font-semibold"><strong>Penalización por Mora (Al vencer el plazo):</strong></li>
-                            <ul class="list-[circle] pl-4 space-y-1">
-                                <li>Si el préstamo vence (Día 8, 15 o 22+) y aún tiene un monto pendiente:
-                                    <br>1. La deuda pendiente <strong>aumentará un 1% CADA DÍA</strong> (interés por mora).
-                                    <br>2. El sistema intentará cobrar diariamente un <strong>20% del saldo actual</strong> del alumno (no de la deuda) como pago parcial hasta saldar.
-                                </li>
-                            </ul>
-                            <li><strong>Requisito General:</strong> Un alumno no puede solicitar un préstamo si ya tiene uno 'Activo' o 'Vencido'.</li>
-                            <li><strong>Paquete Rescate (7 días):</strong> Es universal. Está disponible para cualquier alumno (con saldo positivo, cero o negativo), siempre que no tenga un préstamo activo.
-                                <br><span class="text-sm text-gray-500">(Excepción: No se puede solicitar si la deuda actual es mayor al monto del rescate).</span>
-                            </li>
-                            <li><strong>Paquetes Estándar (14 días) e Inversión (21 días):</strong>
-                                <br> - Están reservados para alumnos con saldo 0 ℙ o más (no negativo).
-                                <br> - Requisito: El monto del préstamo <strong>no puede superar el 50% del saldo actual</strong> del alumno.
-                            </li>
+                            <li>El préstamo se paga automáticamente en cuotas diarias según el plazo (7, 14 o 21 días).</li>
+                            <li class="text-red-700 font-semibold"><strong>Penalización por Mora (Al vencer el plazo):</strong> Si el préstamo vence y aún tiene un monto pendiente, la deuda pendiente <strong>aumentará un 1% CADA DÍA</strong> y el sistema intentará cobrar un <strong>20% del saldo actual</strong> del alumno.</li>
+                            <li>Requisito: Un alumno no puede solicitar un préstamo si ya tiene uno 'Activo' o 'Vencido'.</li>
+                            <li>Paquete Rescate (7 días): Universal, siempre que no tenga préstamo activo.</li>
+                            <li>Paquetes Estándar (14 días) e Inversión (21 días): Requieren saldo positivo y que el préstamo no supere el 50% del saldo actual.</li>
                         </ul>
                     </div>
-                    
-                    <!-- Sección 3: Depósitos a Plazo (Admin) -->
                     <div class="pt-4 border-t border-gray-100">
-                        <h4 class="font-semibold text-gray-800 text-left">Depósitos a Plazo (Admin)</h4>
+                        <h4 class="font-semibold text-gray-800 text-left">Depósitos a Plazo (Admin - Riesgo Cero)</h4>
                         <ul class="mt-2 text-base list-disc pl-5 space-y-1">
-                            <li>Permite a los alumnos invertir sus pinceles para ganar intereses fijos, depositando capital en la Tesorería.</li>
-                            <li><strong>Requisito Principal:</strong> El alumno no debe tener ningún préstamo activo para poder invertir.</li>
-                            <li><strong>Requisito de Saldo:</strong> El alumno debe tener en su cuenta el monto exacto que exige el paquete de depósito.</li>
-                            <li>Al vencer el plazo, la Tesorería paga al alumno el monto original MÁS el interés ganado. Si la Tesorería no tiene fondos suficientes en ese momento, el pago se reintentará automáticamente cada día.</li>
-                            <!-- CAMBIO v0.3.9: Añadido impuesto sobre intereses -->
-                            <li class="text-red-700">Se aplica un impuesto del 5% sobre los intereses (ganancias) generados. Este impuesto se transfiere a la Tesorería.</li>
+                            <li>Permite a los alumnos invertir sus pinceles para ganar **intereses fijos y garantizados**.</li>
+                            <li>Requisito: No debe tener ningún préstamo activo y debe tener el saldo exacto del paquete.</li>
+                            <li>Al vencer el plazo, la Tesorería paga al alumno el monto original MÁS el interés ganado.</li>
+                            <li class="text-red-700">Se aplica un impuesto del 5% sobre los intereses (ganancias) generados.</li>
                         </ul>
                     </div>
-                    
-                    <!-- Sección 4: Transferencias P2P (Alumnos) -->
                     <div class="pt-4 border-t border-gray-100">
                         <h4 class="font-semibold text-gray-800 text-left">Transferencias P2P (Alumno-Alumno)</h4>
                         <ul class="mt-2 text-base list-disc pl-5 space-y-1">
                             <li>Los alumnos pueden transferir pinceles entre ellos usando el "Portal P2P" y su clave P2P.</li>
                             <li><strong>Comisión (Impuesto):</strong> Cada transferencia tiene una comisión fija del <strong>10%</strong> sobre el monto enviado.</li>
-                            <li><strong>Lógica de Cobro:</strong> El impuesto se suma al costo total de la transacción para el remitente. El destinatario recibe el 100% del monto enviado.
-                                <br><span class="text-sm text-gray-500">(Ej: Para enviar 1,000 ℙ, el remitente debe tener 1,100 ℙ. El destinatario recibe 1,000 ℙ y la Tesorería recibe 100 ℙ).</span>
-                            </li>
+                            <li>El impuesto se suma al costo total para el remitente. (Ej: Para enviar 1,000 ℙ, necesita 1,100 ℙ).</li>
                         </ul>
                     </div>
-                    
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- NUEVO: Modal de Todos los Anuncios -->
+    <!-- Modal de Todos los Anuncios -->
     <div id="anuncios-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <!-- Contenido... (sin cambios) -->
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl transform scale-95 transition-transform duration-300">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="text-lg font-semibold text-gray-900">Todos los Anuncios</h2>
                     <button id="anuncios-modal-close" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
                 </div>
-                <!-- Contenido de todos los anuncios -->
                 <div id="anuncios-modal-lista" class="max-h-[60vh] overflow-y-auto space-y-4 pr-2">
                     <p class="text-gray-500 text-center">Cargando anuncios...</p>
                 </div>
@@ -600,7 +619,7 @@
         </div>
     </div>
 
-    <!-- Modal de Información del Alumno (Rediseñado) -->
+    <!-- Modal de Información del Alumno -->
     <div id="student-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1002] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
         <div id="student-modal-content" class="bg-white rounded-lg shadow-xl w-full max-w-lg transform scale-95 transition-transform duration-300">
             <!-- Contenido se insertará aquí -->
@@ -609,7 +628,7 @@
 
 
     <!-- Lógica de la Aplicación -->
-    <!-- CAMBIO v0.3.13: Versión actualizada -->
-    <script src="script.js?v=0.3.13" type="module" defer></script>
+    <!-- CAMBIO v0.4.0: Versión actualizada -->
+    <script src="script.js?v=0.4.0" type="module" defer></script>
 </body>
 </html>
