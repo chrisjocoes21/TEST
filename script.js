@@ -12,8 +12,8 @@ const AppConfig = {
     
     // CAMBIO v0.3.0: Versión y Estado de la Aplicación (Nueva función P2P)
     APP_STATUS: 'Pre-Alfa', 
-    // CAMBIO v0.3.6: Lógica de Capital Total para Top 3
-    APP_VERSION: 'v0.3.6', 
+    // CAMBIO v0.3.7: UI Top 3 (Tooltip) y Lógica de Capital
+    APP_VERSION: 'v0.3.7', 
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -1042,7 +1042,7 @@ const AppUI = {
         `;
         
         // ===================================================================
-        // INICIO DE LA MODIFICACIÓN (v0.3.6): Lógica de "Alumnos Destacados"
+        // INICIO DE LA MODIFICACIÓN (v0.3.7): Lógica de "Alumnos Destacados"
         // ===================================================================
         
         // Tarjetas Top 3 Alumnos (CON LÓGICA DE DEPÓSITOS)
@@ -1079,7 +1079,7 @@ const AppUI = {
                 if (index === 2) rankColor = 'bg-orange-100 text-orange-700';
                 const grupoNombre = student.grupoNombre || 'N/A';
 
-                // NUEVO HTML con desglose
+                // NUEVO HTML con desglose en el tooltip
                 return `
                     <div class="bg-white rounded-lg shadow-md p-3 h-full flex flex-col justify-between">
                         <div>
@@ -1090,16 +1090,11 @@ const AppUI = {
                             <p class="text-base font-semibold text-gray-900 truncate">${student.nombre}</p>
                         </div>
                         
-                        <!-- CONTENIDO MODIFICADO (v0.3.6) -->
+                        <!-- CONTENIDO MODIFICADO (v0.3.7) -->
                         <div class="text-right mt-2">
-                            <p class="text-xl font-bold text-blue-600" title="Capital Total (En Bolsa + Invertido)">
+                            <p class="text-xl font-bold text-blue-600" 
+                               title="Capital Total. Desglose: ${AppFormat.formatNumber(student.pinceles)} (en bolsa) + ${AppFormat.formatNumber(student.totalInvertido)} (invertido)">
                                 ${AppFormat.formatNumber(student.capitalTotal)} ℙ
-                            </p>
-                            <p class="text-xs text-gray-500 leading-tight" title="Pinceles en bolsa (líquidos)">
-                                En bolsa: ${AppFormat.formatNumber(student.pinceles)} ℙ
-                            </p>
-                            <p class="text-xs text-green-600 leading-tight" title="Pinceles en depósitos a plazo">
-                                Invertido: ${AppFormat.formatNumber(student.totalInvertido)} ℙ
                             </p>
                         </div>
                         <!-- FIN DE LA MODIFICACIÓN -->
@@ -1120,11 +1115,9 @@ const AppUI = {
                         <p class="text-base font-semibold text-gray-400 truncate">-</p>
                     </div>
                     
-                    <!-- CONTENIDO MODIFICADO (Placeholder v0.3.6) -->
+                    <!-- CONTENIDO MODIFICADO (Placeholder v0.3.7) -->
                     <div class="text-right mt-2">
                          <p class="text-xl font-bold text-gray-400">- ℙ</p>
-                         <p class="text-xs text-gray-500 leading-tight">En bolsa: - ℙ</p>
-                         <p class="text-xs text-green-600 leading-tight">Invertido: - ℙ</p>
                     </div>
                     <!-- FIN DE LA MODIFICACIÓN -->
                 </div>
@@ -1132,7 +1125,7 @@ const AppUI = {
         }
         
         // ===================================================================
-        // FIN DE LA MODIFICACIÓN (v0.3.6)
+        // FIN DE LA MODIFICACIÓN (v0.3.7)
         // ===================================================================
 
 
@@ -1774,3 +1767,4 @@ window.onload = function() {
     console.log("window.onload disparado. Iniciando AppUI...");
     AppUI.init();
 };
+
