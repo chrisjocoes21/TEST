@@ -10,15 +10,18 @@ const AppConfig = {
     MAX_RETRIES: 5,
     CACHE_DURATION: 300000,
     
-    // CAMBIO v0.4.1: Versión y Estado (Fondo Removido)
+    // CAMBIO v0.4.2: Versión y Estado (Comisión Admin)
     APP_STATUS: 'Beta', 
-    APP_VERSION: 'v0.4.1 (Fondos Removidos)', 
+    APP_VERSION: 'v0.4.2 (Comisión Admin)', 
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
     
     // CAMBIO v0.3.9: Nueva tasa de impuesto sobre intereses de depósitos
     IMPUESTO_DEPOSITO_TASA: 0.05, // 5%
+    
+    // NUEVO v0.4.2: Comisión sobre depósitos de admin
+    IMPUESTO_DEPOSITO_ADMIN: 0.05, // 5%
 };
 
 // --- ESTADO DE LA APLICACIÓN ---
@@ -286,6 +289,9 @@ const AppUI = {
         // Listener para el botón de enviar transacción
         document.getElementById('transaccion-submit-btn').addEventListener('click', AppTransacciones.realizarTransaccionMultiple);
         
+        // NUEVO v0.4.2: Listener para el cálculo de comisión de admin
+        document.getElementById('transaccion-cantidad-input').addEventListener('input', AppUI.updateAdminDepositoCalculo);
+        
         // Listener para el link de DB
         document.getElementById('db-link-btn').href = AppConfig.SPREADSHEET_URL;
         
@@ -379,7 +385,7 @@ const AppUI = {
         modal.querySelector('[class*="transform"]').classList.remove('scale-95');
     },
 
-    // CAMBIO v0.4.1: Eliminada limpieza del modal del Fondo
+    // CAMBIO v0.4.2: Añadida limpieza del cálculo de comisión admin
     hideModal: function(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -391,6 +397,7 @@ const AppUI = {
             document.getElementById('transaccion-lista-grupos-container').innerHTML = '';
             document.getElementById('transaccion-lista-usuarios-container').innerHTML = '';
             document.getElementById('transaccion-cantidad-input').value = "";
+            document.getElementById('transaccion-calculo-impuesto').textContent = ""; // NUEVO v0.4.2
             document.getElementById('transaccion-status-msg').textContent = "";
             AppUI.resetSearchInput('prestamo');
             AppUI.resetSearchInput('deposito');
@@ -570,6 +577,24 @@ const AppUI = {
     },
 
     // --- FIN FUNCIONES P2P ---
+    
+    // --- NUEVO v0.4.2: Cálculo de Comisión Admin ---
+    updateAdminDepositoCalculo: function() {
+        const cantidadInput = document.getElementById('transaccion-cantidad-input');
+        const calculoMsg = document.getElementById('transaccion-calculo-impuesto');
+        const cantidad = parseInt(cantidadInput.value, 10);
+
+        if (isNaN(cantidad) || cantidad <= 0) {
+            calculoMsg.textContent = ""; // Limpiar si es 0, negativo o vacío
+            return;
+        }
+
+        const comision = Math.round(cantidad * AppConfig.IMPUESTO_DEPOSITO_ADMIN);
+        const costoNeto = cantidad - comision;
+
+        calculoMsg.textContent = `Monto a depositar: ${AppFormat.formatNumber(cantidad)} ℙ | Costo Neto Tesorería: ${AppFormat.formatNumber(costoNeto)} ℙ (Comisión: ${AppFormat.formatNumber(comision)} ℙ)`;
+    },
+
 
     // --- ELIMINADO v0.4.1: FUNCIONES FONDO DE INVERSIÓN ---
 
@@ -1540,6 +1565,7 @@ const AppTransacciones = {
                 AppTransacciones.setSuccess(statusMsg, successMsg);
                 
                 cantidadInput.value = "";
+                document.getElementById('transaccion-calculo-impuesto').textContent = ""; // NUEVO v0.4.2
                 AppData.cargarDatos(false); 
                 AppUI.populateGruposTransaccion(); 
                 AppUI.populateUsuariosTransaccion(); 
@@ -1764,4 +1790,3 @@ window.onload = function() {
     console.log("window.onload disparado. Iniciando AppUI...");
     AppUI.init();
 };
-
