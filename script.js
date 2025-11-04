@@ -80,10 +80,11 @@ const AppAuth = {
 
 // --- NÚMEROS Y FORMATO ---
 const AppFormat = {
-    formatNumber: (num) => new Intl.NumberFormat('es-DO').format(num),
+    // CAMBIO: Añadido 'maximumFractionDigits: 0' para eliminar decimales en todos los montos principales.
+    formatNumber: (num) => new Intl.NumberFormat('es-DO', { maximumFractionDigits: 0 }).format(num),
     // ELIMINADO v0.4.1: Formateo para participaciones
     // formatParticipacion: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(num),
-    // NUEVO v0.4.0: Formateo de Pinceles (2 decimales)
+    // NUEVO v0.4.0: Formateo de Pinceles (2 decimales) - Esta función no parece estar en uso activo.
     formatPincel: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)
 };
 
