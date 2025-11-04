@@ -13,8 +13,8 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏦</text></svg>">
 
     <!-- Archivo de estilos personalizados -->
-    <!-- CAMBIO v0.4.0: Versión actualizada -->
-    <link rel="stylesheet" href="style.css?v=0.4.0">
+    <!-- CAMBIO v0.4.1: Versión actualizada -->
+    <link rel="stylesheet" href="style.css?v=0.4.1">
 </head>
 <!-- CAMBIO 1 (SCROLL): 'overflow-hidden' ya estaba aquí (correcto) -->
 <body class="h-full overflow-hidden"> 
@@ -37,20 +37,12 @@
             </div>
             
             <!-- Footer de la Sidebar (Botón Admin y Versión) -->
-            <!-- CAMBIO v0.4.0: Añadido Botón Fondo de Inversión -->
+            <!-- CAMBIO v0.4.1: Eliminado Botón Fondo de Inversión -->
             <div class="p-2 border-t border-gray-200 bg-white flex-shrink-0 space-y-2">
                 <!-- V0.2.2: Contenedor de la Versión -->
                 <div id="app-version-container" class="text-center py-1 text-xs text-gray-400">
                     <!-- Versión se inyecta aquí -->
                 </div>
-                
-                <!-- NUEVO Botón Fondo de Inversión -->
-                <button id="fondo-portal-btn" class="flex items-center justify-center w-full px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12.75 3 3m0 0 3-3m-3 3v-7.5m1.5-9H18a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 18 21H6a2.25 2.25 0 0 1-2.25-2.25V6.75A2.25 2.25 0 0 1 6 4.5H18" />
-                    </svg>
-                    <span>Fondo de Inversión</span>
-                </button>
 
                 <!-- Botón P2P -->
                 <button id="p2p-portal-btn" class="p2p-btn flex items-center justify-center w-full px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors shadow-md">
@@ -408,132 +400,12 @@
     </div>
 
     <!-- =================================================================== -->
-    <!-- NUEVO MODAL (v0.4.0): FONDO DE INVERSIÓN BPD -->
+    <!-- MODAL DE FONDO DE INVERSIÓN BPD (ELIMINADO v0.4.1) -->
     <!-- =================================================================== -->
-    <div id="fondo-inversion-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg transform scale-95 transition-transform duration-300 overflow-hidden"> 
-            
-            <!-- Encabezado -->
-            <div class="bg-gray-50 border-b border-gray-200">
-                <div class="flex justify-between items-center p-4">
-                    <h2 class="text-lg font-semibold text-gray-900">
-                        Fondo de Crecimiento BPD
-                    </h2>
-                    <button id="fondo-modal-close-btn" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-                </div>
-
-                <!-- Info del Fondo y del Alumno -->
-                <div class="p-4 bg-white border-b border-gray-200 grid grid-cols-2 gap-4">
-                    <!-- Valor de la Participación -->
-                    <div class="text-center">
-                        <label class="text-xs font-medium text-gray-500 uppercase">Valor Actual (Participación)</label>
-                        <p id="fondo-valor-actual" class="text-2xl font-bold text-purple-600">--.-- ℙ</p>
-                    </div>
-                    <!-- Balance del Alumno -->
-                    <div class="text-center">
-                        <label class="text-xs font-medium text-gray-500 uppercase">Mi Balance</label>
-                        <p id="fondo-balance-alumno" class="text-lg font-bold text-gray-800">0.00 <span class="text-sm font-normal text-gray-600">(~0 ℙ)</span></p>
-                    </div>
-                </div>
-
-                <!-- Pestañas Comprar / Vender -->
-                <div class="flex border-b border-gray-200 px-4">
-                    <button data-tab="comprar" class="fondo-tab-btn active-tab px-4 py-2 text-sm font-medium border-b-2 border-purple-600 text-purple-600 transition-colors hover:bg-gray-100">
-                        Comprar
-                    </button>
-                    <button data-tab="vender" class="fondo-tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-600 transition-colors hover:bg-gray-100">
-                        Vender
-                    </button>
-                </div>
-            </div>
-
-            <!-- Contenido del Modal -->
-            <div class="p-6">
-
-                <!-- Pestaña COMPRAR -->
-                <div id="fondo-tab-comprar" class="fondo-tab-content active space-y-4">
-                    <!-- 1. Campo Origen (Tu Nombre) -->
-                    <div class="relative">
-                        <label for="fondo-search-origen-comprar" class="block text-sm font-medium text-gray-700 mb-1">Tu Nombre</label>
-                        <input type="text" id="fondo-search-origen-comprar" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                        <div id="fondo-origen-results-comprar" class="search-results-container hidden absolute z-20 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
-                            <!-- Resultados de búsqueda de origen -->
-                        </div>
-                    </div>
-                    <!-- 2. Campo Cantidad a Comprar -->
-                    <div>
-                        <label for="fondo-comprar-cantidad-pinceles" class="block text-sm font-medium text-gray-700 mb-1">Monto a Invertir (en ℙ)</label>
-                        <input type="number" id="fondo-comprar-cantidad-pinceles" placeholder="Ej: 1000" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                    </div>
-                    <!-- 3. Campo Clave P2P -->
-                    <div>
-                        <label for="fondo-comprar-clave" class="block text-sm font-medium text-gray-700 mb-1">Tu Clave P2P</label>
-                        <input type="password" id="fondo-comprar-clave" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                    </div>
-                    <!-- 4. Cálculo de Comisión -->
-                    <div id="fondo-comprar-calculo" class="text-sm text-center text-gray-600 min-h-[4rem] p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <!-- El cálculo de la comisión aparecerá aquí -->
-                        <span class="text-gray-400">Ingrese un monto para ver el cálculo.</span>
-                    </div>
-                    <!-- 5. Mensaje de Estado -->
-                    <div id="fondo-status-msg-comprar" class="text-sm text-center font-medium px-6 h-auto min-h-[1rem]">
-                    </div>
-                    <!-- 6. Botón Submit -->
-                    <div class="flex justify-end pt-2">
-                        <button id="fondo-comprar-submit-btn" class="px-6 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
-                            <span id="fondo-comprar-btn-text">Comprar Participaciones</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Pestaña VENDER -->
-                <div id="fondo-tab-vender" class="fondo-tab-content hidden space-y-4">
-                    <!-- 1. Campo Origen (Tu Nombre) -->
-                    <div class="relative">
-                        <label for="fondo-search-origen-vender" class="block text-sm font-medium text-gray-700 mb-1">Tu Nombre</label>
-                        <input type="text" id="fondo-search-origen-vender" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                        <div id="fondo-origen-results-vender" class="search-results-container hidden absolute z-20 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
-                            <!-- Resultados de búsqueda de origen -->
-                        </div>
-                    </div>
-                    <!-- 2. Campo Cantidad a Vender -->
-                    <div>
-                        <label for="fondo-vender-cantidad-participaciones" class="block text-sm font-medium text-gray-700 mb-1">Nº de Participaciones a Vender</label>
-                        <input type="number" id="fondo-vender-cantidad-participaciones" placeholder="Ej: 10.5" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                    </div>
-                    <!-- 3. Campo Clave P2P -->
-                    <div>
-                        <label for="fondo-vender-clave" class="block text-sm font-medium text-gray-700 mb-1">Tu Clave P2P</label>
-                        <input type="password" id="fondo-vender-clave" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                    </div>
-                    <!-- 4. Cálculo de Comisión y Plusvalía -->
-                    <div id="fondo-vender-calculo" class="text-sm text-left text-gray-600 min-h-[4rem] p-3 bg-gray-50 rounded-lg border border-gray-200">
-                        <span class="text-gray-400">Ingrese participaciones para ver el cálculo.</span>
-                    </div>
-                    <!-- 5. Mensaje de Estado -->
-                    <div id="fondo-status-msg-vender" class="text-sm text-center font-medium px-6 h-auto min-h-[1rem]">
-                    </div>
-                    <!-- 6. Botón Submit -->
-                    <div class="flex justify-end pt-2">
-                        <button id="fondo-vender-submit-btn" class="px-6 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
-                            <span id="fondo-vender-btn-text">Vender Participaciones</span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer con Botón Cerrar -->
-            <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-end gap-3 flex-shrink-0">
-                <button id="fondo-cancel-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">Cerrar</button>
-            </div>
-        </div>
-    </div>
-    <!-- =================================================================== -->
-
-
+    
     <!-- Modal de Reglas -->
     <div id="reglas-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- CAMBIO 3 (REGLAS): Contenido completamente rediseñado -->
+        <!-- CAMBIO v0.4.1: Contenido rediseñado y SIN FONDO -->
         <div class="bg-white rounded-lg shadow-xl w-full max-w-5xl transform scale-95 transition-transform duration-300">
             <div class="p-6 md:p-8">
                 <div class="flex justify-between items-center mb-6">
@@ -556,7 +428,6 @@
                         <!-- Bloque de Ingresos de Tesorería -->
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-2">
                             <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Impuestos P2P:</strong> Comisión del 10% sobre todas las transferencias entre alumnos.</p>
-                            <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Comisiones del Fondo:</strong> Comisiones de bróker (1%) e impuestos a la ganancia (10%) en el Fondo de Inversión.</p>
                             <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Intereses de Préstamos:</strong> Ganancias recibidas por el pago de cuotas e intereses de préstamos.</p>
                             <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Impuesto Pasivo:</strong> Cobro diario del 0.5% a saldos superiores a 100 ℙ.</p>
                             <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Impuesto a Depósitos:</strong> Cobro del 5% sobre los intereses generados por los depósitos a plazo.</p>
@@ -564,28 +435,7 @@
                         </div>
                     </div>
 
-                    <!-- Sección 2: Fondo de Inversión -->
-                    <div class="space-y-3 pt-4 border-t">
-                        <h4 class="text-lg font-semibold text-gray-800">Fondo de Inversión BPD (Riesgo Alto)</h4>
-                        <p class="text-gray-600 text-justify">
-                            Permite a los alumnos invertir en un fondo con retorno variable, lo que significa que su valor puede subir o bajar. El Valor de la Participación se actualiza cada noche basado en una simulación de mercado.
-                        </p>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Comprar -->
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <h5 class="font-semibold text-gray-800 mb-1">Al Comprar Participaciones</h5>
-                                <p class="text-sm text-gray-600">Se cobra una <strong class="text-gray-900">Comisión de Bróker del 1%</strong> sobre el monto total en Pinceles. El 99% restante se utiliza para adquirir las participaciones.</p>
-                            </div>
-                            <!-- Vender -->
-                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                                <h5 class="font-semibold text-gray-800 mb-1">Al Vender Participaciones</h5>
-                                <p class="text-sm text-gray-600">Se aplica una <strong class="text-gray-900">Comisión de Bróker del 1%</strong> sobre el valor total de la venta. Adicionalmente, se cobra un <strong class="text-gray-900">Impuesto a la Ganancia del 10%</strong>, que aplica *únicamente* sobre la ganancia neta (plusvalía). Si se vende con pérdidas, este impuesto es cero.</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sección 3: Préstamos -->
+                    <!-- Sección 2: Préstamos -->
                     <div class="space-y-3 pt-4 border-t">
                         <h4 class="text-lg font-semibold text-gray-800">Préstamos Bancarios (Admin)</h4>
                         <p class="text-gray-600 text-justify">
@@ -597,7 +447,7 @@
                         </div>
                     </div>
 
-                    <!-- Sección 4: Depósitos -->
+                    <!-- Sección 3: Depósitos -->
                     <div class="space-y-3 pt-4 border-t">
                         <h4 class="text-lg font-semibold text-gray-800">Depósitos a Plazo (Admin - Riesgo Cero)</h4>
                         <p class="text-gray-600 text-justify">
@@ -608,7 +458,7 @@
                         </p>
                     </div>
 
-                    <!-- Sección 5: P2P -->
+                    <!-- Sección 4: P2P -->
                     <div class="space-y-3 pt-4 border-t">
                         <h4 class="text-lg font-semibold text-gray-800">Transferencias P2P (Alumno-Alumno)</h4>
                         <p class="text-gray-600 text-justify">
@@ -648,7 +498,7 @@
 
 
     <!-- Lógica de la Aplicación -->
-    <!-- CAMBIO v0.4.0: Versión actualizada -->
-    <script src="script.js?v=0.4.0" type="module" defer></script>
+    <!-- CAMBIO v0.4.1: Versión actualizada -->
+    <script src="script.js?v=0.4.1" type="module" defer></script>
 </body>
 </html>
