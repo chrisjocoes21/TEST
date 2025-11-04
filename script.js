@@ -10,9 +10,9 @@ const AppConfig = {
     MAX_RETRIES: 5,
     CACHE_DURATION: 300000,
     
-    // CAMBIO v0.5.6: Fix altura modal bonos y simetría home
+    // CAMBIO v14.0: Actualización de versión para la Tienda
     APP_STATUS: 'Beta', 
-    APP_VERSION: 'v0.5.6 (Fix Layout)', 
+    APP_VERSION: 'v14.0 (Tienda v2)', 
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -22,6 +22,24 @@ const AppConfig = {
     
     // NUEVO v0.4.2: Comisión sobre depósitos de admin
     IMPUESTO_DEPOSITO_ADMIN: 0.05, // 5%
+
+    // NUEVO v14.0: Tasa de ITBIS para la Tienda (según V2.docx)
+    TASA_ITBIS: 0.18, // 18%
+
+    // NUEVO v14.0: Lista de artículos de la tienda (según V2.docx)
+    // Se usa para renderizar. El stock y el precio base vienen de la API,
+    // pero esto define el orden, nombre, tipo y ID.
+    tiendaItems: [
+        { id: 'exonerar_tema', nombre: 'Exonerar un Tema de Examen', tipo: 'Académico' },
+        { id: 'salto_clase', nombre: 'Salto de Clase Justificado (x1)', tipo: 'Privilegio' },
+        { id: 'revisar_proy', nombre: 'Revisión de Proyecto (Post-Entrega)', tipo: 'Académico' },
+        { id: 'veto_pregunta', nombre: 'Veto de Pregunta (Examen Parcial)', tipo: 'Académico' },
+        { id: 'inmunidad_cicla', nombre: 'Inmunidad Cicla (48 Horas)', tipo: 'Privilegio' },
+        { id: 'dia_extra', nombre: 'Día Extra en Entrega de Proyectos', tipo: 'Académico' },
+        { id: 'filantropo', nombre: 'Título de "Filántropo" (Donación)', tipo: 'Estatus' },
+        { id: 'loteria', nombre: 'Lotería "El Tesoro del BPD"', tipo: 'Riesgo' },
+        { id: 'bonus_p2p', nombre: 'Transferencia P2P Sin Impuestos (x1)', tipo: 'Económico' }
+    ]
 };
 
 // --- ESTADO DE LA APLICACIÓN ---
@@ -31,7 +49,8 @@ const AppState = {
         saldoTesoreria: 0,
         prestamosActivos: [],
         depositosActivos: [],
-        allStudents: [] // Lista plana de todos los alumnos
+        allStudents: [], // Lista plana de todos los alumnos
+        tiendaStock: {} // NUEVO v14.0: Stock de la tienda
     },
     historialUsuarios: {}, 
     actualizacionEnProceso: false,
@@ -46,12 +65,14 @@ const AppState = {
     transaccionSelectAll: {}, 
     
     // CAMBIO v0.4.1: Eliminado 'fondoOrigen'
+    // CAMBIO v14.0: Añadido 'tiendaAlumno'
     currentSearch: {
         prestamo: { query: '', selected: null },
         deposito: { query: '', selected: null },
         p2pOrigen: { query: '', selected: null },
         p2pDestino: { query: '', selected: null },
-        bonoAlumno: { query: '', selected: null } // NUEVO v0.5.0
+        bonoAlumno: { query: '', selected: null }, // NUEVO v0.5.0
+        tiendaAlumno: { query: '', selected: null } // NUEVO v14.0
     },
     
     // NUEVO v0.5.0: Estado de Bonos
@@ -94,11 +115,12 @@ const AppFormat = {
 
 // --- BASE DE DATOS DE ANUNCIOS ---
 // CAMBIO v0.4.1: Eliminados anuncios del fondo
+// CAMBIO v14.0: Actualizado anuncio de tienda
 const AnunciosDB = {
     'AVISO': [
-        "La tienda de fin de mes abre el último Jueves de cada mes.", 
+        "La Tienda BPD (v2.0) abre el último Jueves de cada mes.", 
         "Revisen sus saldos antes del cierre de mes. No se aceptan saldos negativos.",
-        "Recuerden: 'Ver Reglas' tiene información importante sobre la tienda." 
+        "Recuerden: 'Ver Reglas' tiene información importante sobre la economía." 
     ],
     'NUEVO': [
         // NUEVO v0.5.0: Anuncio de Bonos
@@ -168,6 +190,7 @@ const AppData = {
                 
                 // CAMBIO V0.4.0: La API devuelve un objeto con más datos
                 // CAMBIO v0.5.0: Procesa también los bonos
+                // CAMBIO v14.0: Procesa también el stock de la tienda
                 AppData.procesarYMostrarDatos(data); // Modifica AppState.datosActuales
                 AppState.cachedData = data;
                 AppState.lastCacheTime = Date.now();
@@ -203,6 +226,7 @@ const AppData = {
     },
     
     // CAMBIO v0.5.0: Modificado para aceptar Bonos
+    // CAMBIO v14.0: Modificado para aceptar TiendaStock
     procesarYMostrarDatos: function(data) {
         // 1. Separar Tesorería y Datos Adicionales
         AppState.datosAdicionales.saldoTesoreria = data.saldoTesoreria || 0;
@@ -212,16 +236,19 @@ const AppData = {
         // 2. NUEVO v0.5.0: Procesar Bonos
         AppState.bonos.disponibles = data.bonosDisponibles || [];
         AppState.bonos.canjeados = data.bonosCanjeadosUsuario || []; // (Actualmente vacío, pero listo para el futuro)
+        
+        // 3. NUEVO v14.0: Procesar Stock de la Tienda
+        AppState.datosAdicionales.tiendaStock = data.tiendaStock || {};
 
         const allGroups = data.gruposData;
         
         let gruposOrdenados = Object.entries(allGroups).map(([nombre, info]) => ({ nombre, total: info.total || 0, usuarios: info.usuarios || [] }));
         
-        // 3. Separar Cicla (que viene en el array)
+        // 4. Separar Cicla (que viene en el array)
         const ciclaGroup = gruposOrdenados.find(g => g.nombre === 'Cicla');
         const activeGroups = gruposOrdenados.filter(g => g.nombre !== 'Cicla' && g.nombre !== 'Banco');
 
-        // 4. Crear lista plana de todos los alumnos
+        // 5. Crear lista plana de todos los alumnos
         AppState.datosAdicionales.allStudents = activeGroups.flatMap(g => g.usuarios).concat(ciclaGroup ? ciclaGroup.usuarios : []);
         
         // Asignar el nombre del grupo a cada alumno para fácil búsqueda
@@ -232,16 +259,16 @@ const AppData = {
             ciclaGroup.usuarios.forEach(u => u.grupoNombre = 'Cicla');
         }
 
-        // 5. Ordenar y filtrar
+        // 6. Ordenar y filtrar
         activeGroups.sort((a, b) => b.total - a.total);
         if (ciclaGroup) {
             activeGroups.push(ciclaGroup);
         }
         
-        // 6. Detectar cambios antes de actualizar el estado
+        // 7. Detectar cambios antes de actualizar el estado
         AppData.detectarCambios(activeGroups);
 
-        // 7. Actualizar UI
+        // 8. Actualizar UI
         AppUI.actualizarSidebar(activeGroups);
         
         if (AppState.selectedGrupo) {
@@ -258,10 +285,15 @@ const AppData = {
         
         AppUI.actualizarSidebarActivo();
         
-        // 8. NUEVO v0.5.0: Actualizar UI de Bonos (si está abierta)
+        // 9. NUEVO v0.5.0: Actualizar UI de Bonos (si está abierta)
         if (document.getElementById('bonos-modal').classList.contains('opacity-0') === false) {
             AppUI.populateBonoList();
             AppUI.populateBonoAdminList();
+        }
+        
+        // 10. NUEVO v14.0: Actualizar UI de Tienda (si está abierta)
+        if (document.getElementById('tienda-modal').classList.contains('opacity-0') === false) {
+            AppUI.renderTiendaItems();
         }
 
         AppState.datosActuales = activeGroups; // Actualizar el estado al final
@@ -334,6 +366,14 @@ const AppUI = {
             AppTransacciones.crearActualizarBono();
         });
         document.getElementById('bono-admin-clear-btn').addEventListener('click', AppUI.clearBonoAdminForm);
+        
+        // NUEVO v14.0: Listeners Modal Tienda
+        document.getElementById('tienda-btn').addEventListener('click', () => AppUI.showTiendaModal());
+        document.getElementById('tienda-modal-close').addEventListener('click', () => AppUI.hideModal('tienda-modal'));
+        document.getElementById('tienda-cancel-btn').addEventListener('click', () => AppUI.hideModal('tienda-modal'));
+        document.getElementById('tienda-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'tienda-modal') AppUI.hideModal('tienda-modal');
+        });
 
 
         // Listeners Modal Reglas
@@ -378,6 +418,7 @@ const AppUI = {
         AppUI.setupSearchInput('p2p-search-origen', 'p2p-origen-results', 'p2pOrigen', AppUI.selectP2PStudent);
         AppUI.setupSearchInput('p2p-search-destino', 'p2p-destino-results', 'p2pDestino', AppUI.selectP2PStudent);
         AppUI.setupSearchInput('bono-search-alumno', 'bono-search-results', 'bonoAlumno', AppUI.selectBonoStudent); // NUEVO v0.5.0
+        AppUI.setupSearchInput('tienda-alumno-search', 'tienda-search-results', 'tiendaAlumno', AppUI.selectTiendaStudent); // NUEVO v14.0
 
 
         // Carga inicial
@@ -415,6 +456,7 @@ const AppUI = {
 
     // CAMBIO v0.4.2: Añadida limpieza del cálculo de comisión admin
     // CAMBIO v0.5.0: Añadida limpieza de modal de bonos
+    // CAMBIO v14.0: Añadida limpieza de modal de tienda
     hideModal: function(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -467,6 +509,14 @@ const AppUI = {
             AppState.bonos.adminPanelUnlocked = false;
         }
         
+        // NUEVO v14.0: Limpiar campos de Tienda
+        if (modalId === 'tienda-modal') {
+            AppUI.resetSearchInput('tiendaAlumno');
+            document.getElementById('tienda-clave-p2p').value = "";
+            document.getElementById('tienda-status-msg').textContent = "";
+            document.getElementById('tienda-items-container').innerHTML = '<p class="text-sm text-gray-500 text-center col-span-full">Cargando artículos...</p>';
+        }
+        
         if (modalId === 'gestion-modal') {
              document.getElementById('clave-input').value = "";
              document.getElementById('clave-input').classList.remove('shake', 'border-red-500');
@@ -511,6 +561,8 @@ const AppUI = {
             AppState.currentSearch[stateKey].query = query;
             AppState.currentSearch[stateKey].selected = null; 
             
+            // CAMBIO v14.0: Llamar al callback con null al borrar
+            // para que se actualice la UI (ej. botones de tienda)
             if (query === '') {
                 onSelectCallback(null);
             }
@@ -544,6 +596,7 @@ const AppUI = {
         let studentList = AppState.datosAdicionales.allStudents;
         
         // Permitir a Cicla en P2P Destino y en Préstamos (para rescate)
+        // CAMBIO v14.0: No permitir a Cicla en la Tienda
         if (stateKey !== 'p2pDestino' && stateKey !== 'prestamo') {
             studentList = studentList.filter(s => s.grupoNombre !== 'Cicla');
         }
@@ -565,9 +618,9 @@ const AppUI = {
                     const input = document.getElementById(inputId);
                     input.value = student.nombre;
                     AppState.currentSearch[stateKey].query = student.nombre;
-                    AppState.currentSearch[stateKey].selected = student.nombre;
+                    AppState.currentSearch[stateKey].selected = student; // CAMBIO v14.0: Guardar el objeto entero
                     resultsContainer.classList.add('hidden');
-                    onSelectCallback(student.nombre); // Llamar al callback con el nombre
+                    onSelectCallback(student); // Llamar al callback con el objeto
                 };
                 resultsContainer.appendChild(div);
             });
@@ -577,12 +630,15 @@ const AppUI = {
 
     // CAMBIO v0.4.1: Eliminada lógica del fondo
     // CAMBIO v0.5.0: Añadido 'bono'
+    // CAMBIO v14.0: Añadido 'tienda'
     resetSearchInput: function(stateKey) {
         let inputId = '';
         if (stateKey.includes('p2p')) {
              inputId = `${stateKey.replace('p2p', 'p2p-search-')}`;
         } else if (stateKey.includes('bono')) {
              inputId = 'bono-search-alumno';
+        } else if (stateKey.includes('tienda')) { // NUEVO v14.0
+             inputId = 'tienda-alumno-search';
         } else {
             inputId = `${stateKey}-alumno-search`;
         }
@@ -612,7 +668,8 @@ const AppUI = {
         AppUI.showModal('p2p-transfer-modal');
     },
     
-    selectP2PStudent: function(studentName) {
+    // CAMBIO v14.0: student ahora es un objeto
+    selectP2PStudent: function(student) {
         // Callback para P2P (no hace nada extra)
     },
     
@@ -695,7 +752,8 @@ const AppUI = {
     },
     
     // Callback para el buscador de alumno en el modal de bonos
-    selectBonoStudent: function(studentName) {
+    // CAMBIO v14.0: student ahora es un objeto
+    selectBonoStudent: function(student) {
         // No se necesita acción extra, solo seleccionar
     },
 
@@ -815,6 +873,139 @@ const AppUI = {
     },
     
     // --- FIN FUNCIONES DE BONOS ---
+
+    // --- NUEVO v14.0: FUNCIONES DE TIENDA ---
+
+    // Callback para el buscador de alumno en el modal de tienda
+    // CAMBIO v14.0: student ahora es un objeto
+    selectTiendaStudent: function(student) {
+        // Al seleccionar/borrar un alumno, re-renderizar los items
+        // para actualizar el estado "sin-fondos" de los botones.
+        AppUI.renderTiendaItems();
+    },
+    
+    // Muestra el modal de la tienda
+    showTiendaModal: function() {
+        if (!AppState.datosActuales) return;
+        
+        // Resetear campos
+        AppUI.resetSearchInput('tiendaAlumno');
+        document.getElementById('tienda-clave-p2p').value = "";
+        document.getElementById('tienda-status-msg').textContent = "";
+        
+        // Poblar artículos
+        AppUI.renderTiendaItems();
+        
+        // Mostrar modal
+        AppUI.showModal('tienda-modal');
+    },
+
+    // Renderiza la lista de artículos en la tienda
+    renderTiendaItems: function() {
+        const container = document.getElementById('tienda-items-container');
+        if (!container) return;
+        
+        const items = AppConfig.tiendaItems;
+        const stockData = AppState.datosAdicionales.tiendaStock;
+        const alumno = AppState.currentSearch.tiendaAlumno.selected;
+        const isTiendaAbierta = AppUI._isTiendaAbierta();
+
+        if (Object.keys(stockData).length === 0) {
+            container.innerHTML = `<p class="text-sm text-gray-500 text-center col-span-full">Cargando artículos...</p>`;
+            return;
+        }
+
+        container.innerHTML = items.map(item => {
+            const itemInfo = stockData[item.id] || { precio: 0, stock: 0 };
+            const precioBase = itemInfo.precio;
+            const stock = itemInfo.stock;
+            const esIlimitado = (item.id === 'filantropo');
+            
+            const itbis = Math.round(precioBase * AppConfig.TASA_ITBIS);
+            const costoFinal = precioBase + itbis;
+
+            // --- Lógica de Estado ---
+            let isAgotado = (!esIlimitado && stock <= 0);
+            let sinFondos = (alumno && alumno.pinceles < costoFinal);
+            
+            let isDisabled = false;
+            let buttonClass = 'comprar-tienda-btn';
+            let buttonText = 'Comprar';
+            let cardClass = 'tienda-item-card';
+
+            if (isAgotado) {
+                isDisabled = true;
+                buttonClass += ' agotado-btn';
+                buttonText = 'Agotado';
+                cardClass += ' agotado';
+            } else if (!isTiendaAbierta) {
+                isDisabled = true;
+                buttonText = 'Tienda Cerrada';
+            } else if (sinFondos) {
+                // No deshabilitar, pero mostrar estado visual
+                buttonClass += ' sin-fondos-btn';
+                buttonText = 'Fondos Insuficientes';
+                cardClass += ' sin-fondos';
+            } else {
+                // Comprable
+                buttonClass += ' comprable';
+            }
+            
+            return `
+                <div class="${cardClass}">
+                    <!-- Contenido de la tarjeta -->
+                    <div class="p-4 flex-1">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="text-xs font-semibold ${item.tipo === 'Académico' ? 'text-blue-600' : (item.tipo === 'Privilegio' ? 'text-purple-600' : (item.tipo === 'Económico' ? 'text-green-600' : (item.tipo === 'Riesgo' ? 'text-yellow-700' : 'text-gray-500')))}">
+                                ${item.tipo}
+                            </span>
+                            <span class="text-xs font-medium text-gray-500">
+                                ${esIlimitado ? 'Stock: Ilimitado' : `Quedan: ${stock}`}
+                            </span>
+                        </div>
+                        <h4 class="text-base font-semibold text-gray-900 truncate">${item.nombre}</h4>
+                        
+                        <div class="mt-3">
+                            <p class="text-xs text-gray-500">Precio Base: ${AppFormat.formatNumber(precioBase)} ℙ</p>
+                            <p class="text-xs text-gray-500">ITBIS (18%): ${AppFormat.formatNumber(itbis)} ℙ</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Footer de la tarjeta (Precio y Botón) -->
+                    <div class="bg-gray-50 p-3 rounded-b-lg border-t border-gray-100">
+                        <p class="text-lg font-bold text-gray-800 text-center mb-2">${AppFormat.formatNumber(costoFinal)} ℙ</p>
+                        <button 
+                            id="buy-btn-${item.id}"
+                            class="${buttonClass}" 
+                            ${isDisabled ? 'disabled' : ''}
+                            onclick="AppTransacciones.comprarItem('${item.id}')"
+                        >
+                            ${buttonText}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+    
+    // Helper para verificar si la tienda está abierta
+    _isTiendaAbierta: function() {
+        const getLastThursday = (year, month) => {
+            const lastDayOfMonth = new Date(year, month + 1, 0);
+            let lastThursday = new Date(lastDayOfMonth);
+            lastThursday.setDate(lastThursday.getDate() - (lastThursday.getDay() + 3) % 7);
+            return lastThursday;
+        };
+
+        const now = new Date();
+        const storeDay = getLastThursday(now.getFullYear(), now.getMonth());
+        const storeOpen = new Date(storeDay.getFullYear(), storeDay.getMonth(), storeDay.getDate(), 0, 0, 0);
+        const storeClose = new Date(storeDay.getFullYear(), storeDay.getMonth(), storeDay.getDate(), 23, 59, 59);
+
+        return (now >= storeOpen && now <= storeClose);
+    },
+
+    // --- FIN FUNCIONES DE TIENDA ---
     
 
     // --- NUEVO v0.4.2: Cálculo de Comisión Admin ---
@@ -966,20 +1157,18 @@ const AppUI = {
     },
 
     // --- FUNCIONES DE PRÉSTAMOS (PESTAÑA 2) ---
-    loadPrestamoPaquetes: function(selectedStudentName) {
+    // CAMBIO v14.0: student ahora es un objeto
+    loadPrestamoPaquetes: function(student) {
         const container = document.getElementById('prestamo-paquetes-container');
         const saldoSpan = document.getElementById('prestamo-alumno-saldo');
         
         document.getElementById('tesoreria-saldo-prestamo').textContent = `(Tesorería: ${AppFormat.formatNumber(AppState.datosAdicionales.saldoTesoreria)} ℙ)`;
 
-        if (!selectedStudentName) {
+        if (!student) {
             container.innerHTML = '<div class="text-sm text-gray-500">Busque y seleccione un alumno para ver las opciones.</div>';
             saldoSpan.textContent = '';
             return;
         }
-
-        const student = AppState.datosAdicionales.allStudents.find(s => s.nombre === selectedStudentName);
-        if (!student) return;
         
         saldoSpan.textContent = `(Saldo actual: ${AppFormat.formatNumber(student.pinceles)} ℙ)`;
 
@@ -990,7 +1179,7 @@ const AppUI = {
         };
         
         let html = '';
-        let hasActiveLoan = AppState.datosAdicionales.prestamosActivos.some(p => p.alumno === selectedStudentName);
+        let hasActiveLoan = AppState.datosAdicionales.prestamosActivos.some(p => p.alumno === student.nombre);
 
         if (hasActiveLoan) {
              container.innerHTML = `<div class="p-3 text-sm font-semibold text-red-700 bg-red-100 rounded-lg">🚫 El alumno ya tiene un préstamo activo.</div>`;
@@ -1032,7 +1221,7 @@ const AppUI = {
 
             const buttonClass = isEligible ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed';
             const buttonDisabled = !isEligible ? 'disabled' : '';
-            const action = isEligible ? `AppTransacciones.realizarPrestamo('${selectedStudentName}', '${tipo}')` : '';
+            const action = isEligible ? `AppTransacciones.realizarPrestamo('${student.nombre}', '${tipo}')` : '';
 
             html += `
                 <div class="flex justify-between items-center p-3 border-b border-blue-100">
@@ -1051,20 +1240,18 @@ const AppUI = {
     },
     
     // --- FUNCIONES DE DEPÓSITOS (PESTAÑA 3) ---
-    loadDepositoPaquetes: function(selectedStudentName) {
+    // CAMBIO v14.0: student ahora es un objeto
+    loadDepositoPaquetes: function(student) {
         const container = document.getElementById('deposito-paquetes-container');
         const saldoSpan = document.getElementById('deposito-alumno-saldo');
         
         document.getElementById('deposito-info-tesoreria').textContent = `(Tesorería: ${AppFormat.formatNumber(AppState.datosAdicionales.saldoTesoreria)} ℙ)`;
 
-        if (!selectedStudentName) {
+        if (!student) {
             container.innerHTML = '<div class="text-sm text-gray-500">Busque y seleccione un alumno para ver las opciones.</div>';
             saldoSpan.textContent = '';
             return;
         }
-
-        const student = AppState.datosAdicionales.allStudents.find(s => s.nombre === selectedStudentName);
-        if (!student) return;
 
         saldoSpan.textContent = `(Saldo actual: ${AppFormat.formatNumber(student.pinceles)} ℙ)`;
 
@@ -1075,7 +1262,7 @@ const AppUI = {
         };
 
         let html = '';
-        let hasActiveLoan = AppState.datosAdicionales.prestamosActivos.some(p => p.alumno === selectedStudentName);
+        let hasActiveLoan = AppState.datosAdicionales.prestamosActivos.some(p => p.alumno === student.nombre);
 
         if (hasActiveLoan) {
              container.innerHTML = `<div class="p-3 text-sm font-semibold text-red-700 bg-red-100 rounded-lg">🚫 El alumno tiene un préstamo activo. Debe saldarlo para invertir.</div>`;
@@ -1100,7 +1287,7 @@ const AppUI = {
 
             const buttonClass = isEligible ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed';
             const buttonDisabled = !isEligible ? 'disabled' : '';
-            const action = isEligible ? `AppTransacciones.realizarDeposito('${selectedStudentName}', '${tipo}')` : '';
+            const action = isEligible ? `AppTransacciones.realizarDeposito('${student.nombre}', '${tipo}')` : '';
 
             html += `
                 <div class="flex justify-between items-center p-3 border-b border-green-100">
@@ -1673,6 +1860,8 @@ const AppUI = {
     },
     
     // CORRECCIÓN v0.3.14: Eliminada declaración duplicada de tiendaBtn
+    // CAMBIO v14.0: Refactorizado para manejar el botón de tienda (siempre activo)
+    // y los mensajes de estado de la tienda (en home y en modal).
     updateCountdown: function() {
         const getLastThursday = (year, month) => {
             const lastDayOfMonth = new Date(year, month + 1, 0);
@@ -1691,48 +1880,78 @@ const AppUI = {
 
         const timerEl = document.getElementById('countdown-timer');
         const messageEl = document.getElementById('store-message'); 
-        const tiendaBtn = document.getElementById('tienda-btn'); // ÚNICA DECLARACIÓN
+        
+        // NUEVO v14.0: Referencia al mensaje del modal de la tienda
+        const tiendaTimerMsg = document.getElementById('tienda-timer-message');
+        
+        const isAbierta = (now >= storeOpen && now <= storeClose);
+        let timerMessage = ""; // Para el modal
 
-        if (now >= storeOpen && now <= storeClose) { 
+        if (isAbierta) { 
+            // --- TIENDA ABIERTA ---
             timerEl.classList.add('hidden');
             messageEl.classList.remove('hidden');
+            messageEl.textContent = "¡La tienda está abierta!"; // Mensaje principal
+            
+            timerMessage = "¡LA TIENDA ESTÁ ABIERTA! (Cierra a la medianoche)";
 
-            if (tiendaBtn) {
+            // V14.0: El botón de tienda principal SIEMPRE está habilitado.
+            const tiendaBtn = document.getElementById('tienda-btn');
+            if (tiendaBtn && tiendaBtn.disabled) { // Solo si estaba deshabilitado
                 tiendaBtn.disabled = false;
                 tiendaBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
                 tiendaBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
             }
             
         } else {
+            // --- TIENDA CERRADA ---
             timerEl.classList.remove('hidden');
             messageEl.classList.add('hidden');
             
-            if (tiendaBtn && !tiendaBtn.disabled) { 
-                tiendaBtn.disabled = true;
-                tiendaBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
-                tiendaBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-            }
-
+            // V14.0: El botón de tienda principal SIEMPRE está habilitado.
+            
             let targetDate = storeOpen; 
             if (now > storeClose) { 
-                targetDate = getLastThursday(currentYear, currentMonth + 1);
+                // Si ya pasó, apuntar al próximo mes
+                const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+                targetDate = getLastThursday(nextMonth.getFullYear(), nextMonth.getMonth());
                 targetDate.setHours(0, 0, 0, 0); 
             }
 
             const distance = targetDate - now;
             const f = (val) => String(val).padStart(2, '0');
             
-            document.getElementById('days').textContent = f(Math.floor(distance / (1000 * 60 * 60 * 24)));
-            document.getElementById('hours').textContent = f(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
-            document.getElementById('minutes').textContent = f(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)));
-            document.getElementById('seconds').textContent = f(Math.floor((distance % (1000 * 60)) / 1000));
+            const days = f(Math.floor(distance / (1000 * 60 * 60 * 24)));
+            const hours = f(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
+            const minutes = f(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)));
+            const seconds = f(Math.floor((distance % (1000 * 60)) / 1000));
+
+            document.getElementById('days').textContent = days;
+            document.getElementById('hours').textContent = hours;
+            document.getElementById('minutes').textContent = minutes;
+            document.getElementById('seconds').textContent = seconds;
+            
+            timerMessage = `La tienda abre en: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+        }
+        
+        // Actualizar el mensaje DENTRO del modal de la tienda
+        if (tiendaTimerMsg) {
+            tiendaTimerMsg.textContent = timerMessage;
+            if (isAbierta) {
+                tiendaTimerMsg.classList.remove('text-blue-800', 'bg-blue-50', 'border-blue-200');
+                tiendaTimerMsg.classList.add('text-green-800', 'bg-green-50', 'border-green-200');
+            } else {
+                tiendaTimerMsg.classList.add('text-blue-800', 'bg-blue-50', 'border-blue-200');
+                tiendaTimerMsg.classList.remove('text-green-800', 'bg-green-50', 'border-green-200');
+            }
         }
     }
 };
 
-// --- OBJETO TRANSACCIONES (Préstamos, Depósitos, P2P, Bonos) ---
+// --- OBJETO TRANSACCIONES (Préstamos, Depósitos, P2P, Bonos, Tienda) ---
 // CAMBIO v0.5.0: Añadida lógica de Bonos
 // CAMBIO v0.5.4: Añadida lógica de Eliminar Bonos
+// CAMBIO v14.0: Añadida lógica de Comprar Item (Tienda)
 const AppTransacciones = {
 
     realizarTransaccionMultiple: async function() {
@@ -1838,7 +2057,9 @@ const AppTransacciones = {
             if (result.success === true) {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Préstamo otorgado con éxito!");
                 AppData.cargarDatos(false); 
-                AppUI.loadPrestamoPaquetes(alumnoNombre); 
+                // CAMBIO v14.0: Recargar paquetes con el objeto alumno
+                const student = AppState.currentSearch.prestamo.selected;
+                AppUI.loadPrestamoPaquetes(student); 
 
             } else {
                 throw new Error(result.message || "Error al otorgar el préstamo.");
@@ -1877,7 +2098,9 @@ const AppTransacciones = {
             if (result.success === true) {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Depósito creado con éxito!");
                 AppData.cargarDatos(false); 
-                AppUI.loadDepositoPaquetes(alumnoNombre); 
+                // CAMBIO v14.0: Recargar paquetes con el objeto alumno
+                const student = AppState.currentSearch.deposito.selected;
+                AppUI.loadDepositoPaquetes(student); 
 
             } else {
                 throw new Error(result.message || "Error al crear el depósito.");
@@ -1895,8 +2118,9 @@ const AppTransacciones = {
         const submitBtn = document.getElementById('p2p-submit-btn');
         const btnText = document.getElementById('p2p-btn-text');
         
-        const nombreOrigen = AppState.currentSearch.p2pOrigen.selected;
-        const nombreDestino = AppState.currentSearch.p2pDestino.selected;
+        // CAMBIO v14.0: Obtener nombre del objeto
+        const nombreOrigen = AppState.currentSearch.p2pOrigen.selected ? AppState.currentSearch.p2pOrigen.selected.nombre : null;
+        const nombreDestino = AppState.currentSearch.p2pDestino.selected ? AppState.currentSearch.p2pDestino.selected.nombre : null;
         const claveP2P = document.getElementById('p2p-clave').value;
         const cantidad = parseInt(document.getElementById('p2p-cantidad').value, 10);
         
@@ -1965,7 +2189,8 @@ const AppTransacciones = {
         const submitBtn = document.getElementById('bono-submit-btn');
         const btnText = document.getElementById('bono-btn-text');
         
-        const alumnoNombre = AppState.currentSearch.bonoAlumno.selected;
+        // CAMBIO v14.0: Obtener nombre del objeto
+        const alumnoNombre = AppState.currentSearch.bonoAlumno.selected ? AppState.currentSearch.bonoAlumno.selected.nombre : null;
         const claveP2P = document.getElementById('bono-clave-p2p').value;
         const claveBono = document.getElementById('bono-clave-input').value.toUpperCase();
 
@@ -2123,6 +2348,76 @@ const AppTransacciones = {
         // No hay 'finally' para rehabilitar botones; si tiene éxito, la lista se recargará
         // y los botones se rehabilitarán (o no existirán)
     },
+
+    // --- NUEVO v14.0: LÓGICA DE TIENDA ---
+    
+    comprarItem: async function(itemId) {
+        const statusMsg = document.getElementById('tienda-status-msg');
+        
+        // CAMBIO v14.0: Obtener nombre del objeto
+        const alumnoNombre = AppState.currentSearch.tiendaAlumno.selected ? AppState.currentSearch.tiendaAlumno.selected.nombre : null;
+        const claveP2P = document.getElementById('tienda-clave-p2p').value;
+
+        let errorValidacion = "";
+        if (!alumnoNombre) {
+            errorValidacion = "Debe seleccionar su nombre (Comprador) de la lista.";
+        } else if (!claveP2P) {
+            errorValidacion = "Debe ingresar su Clave P2P para confirmar la compra.";
+        } else if (!itemId) {
+            errorValidacion = "Error de artículo. Recargue la página.";
+        }
+        
+        if (errorValidacion) {
+            AppTransacciones.setError(statusMsg, errorValidacion);
+            return;
+        }
+
+        // Deshabilitar TODOS los botones de compra mientras se procesa
+        document.querySelectorAll('.comprar-tienda-btn').forEach(btn => btn.disabled = true);
+        AppTransacciones.setLoading(statusMsg, `Procesando compra de "${itemId}"...`);
+        
+        try {
+            const payload = {
+                accion: 'comprar_item_tienda',
+                alumnoNombre: alumnoNombre,
+                claveP2P: claveP2P,
+                itemId: itemId
+            };
+
+            const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            const result = await response.json();
+
+            if (result.success === true) {
+                AppTransacciones.setSuccess(statusMsg, result.message || "¡Compra exitosa!");
+                
+                // Limpiar clave P2P por seguridad
+                document.getElementById('tienda-clave-p2p').value = "";
+                
+                // Recargar datos (actualiza saldo y stock)
+                await AppData.cargarDatos(false); 
+                
+                // Forzar re-render de items (ya se hace en procesarYMostrarDatos,
+                // pero lo dejamos por si acaso)
+                // AppUI.renderTiendaItems(); 
+
+            } else {
+                throw new Error(result.message || "Error desconocido de la API.");
+            }
+
+        } catch (error) {
+            AppTransacciones.setError(statusMsg, error.message);
+            // Si hay error, los botones se reactivarán cuando se re-renderice la tienda
+            // (lo cual ocurre al final de AppData.cargarDatos si el modal sigue abierto)
+            // O podemos forzar un re-render aquí:
+            AppUI.renderTiendaItems();
+        }
+        // No hay 'finally'
+    },
+    
     
 
     // --- Utilidades de Fetch y Estado ---
