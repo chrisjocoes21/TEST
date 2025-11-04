@@ -926,7 +926,8 @@ const AppUI = {
         const homeLink = document.createElement('a');
         homeLink.href = '#';
         homeLink.dataset.groupName = "home"; 
-        homeLink.className = "flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link";
+        // CAMBIO: Eliminado 'justify-between'
+        homeLink.className = "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link";
         homeLink.innerHTML = `<span class="truncate">Inicio</span>`;
         homeLink.addEventListener('click', (e) => {
             e.preventDefault();
@@ -945,15 +946,17 @@ const AppUI = {
             const link = document.createElement('a');
             link.href = '#';
             link.dataset.groupName = grupo.nombre;
-            link.className = "flex items-center justify-between px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link";
+            // CAMBIO: Eliminado 'justify-between'
+            link.className = "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link";
             
-            let totalColor = "text-gray-600";
-            if (grupo.total < 0) totalColor = "text-red-600";
-            if (grupo.total > 0) totalColor = "text-green-600";
+            // ELIMINADO: Lógica de color de total
+            // let totalColor = "text-gray-600";
+            // if (grupo.total < 0) totalColor = "text-red-600";
+            // if (grupo.total > 0) totalColor = "text-green-600";
 
+            // CAMBIO: Eliminado span de total
             link.innerHTML = `
                 <span class="truncate">${grupo.nombre}</span>
-                <span class="text-xs font-semibold ${totalColor}">${AppFormat.formatNumber(grupo.total)} ℙ</span>
             `;
             link.addEventListener('click', (e) => {
                 e.preventDefault();
@@ -1761,3 +1764,4 @@ window.onload = function() {
     console.log("window.onload disparado. Iniciando AppUI...");
     AppUI.init();
 };
+
