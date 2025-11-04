@@ -441,7 +441,8 @@
                             <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Intereses de Préstamos:</strong> Ganancias recibidas por el pago de cuotas e intereses de préstamos.</p>
                             <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Impuesto Pasivo:</strong> Cobro diario del 0.5% a saldos superiores a 100 ℙ.</p>
                             <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Impuesto a Depósitos:</strong> Cobro del 5% sobre los intereses generados por los depósitos a plazo.</p>
-                            <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Ingreso Pasivo:</strong> Simulación de crecimiento económico que inyecta fondos diariamente.</p>
+                            <!-- CAMBIO v0.4.3: Eliminada "Simulación" -->
+                            <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Ingreso Pasivo:</strong> Crecimiento económico del banco que inyecta fondos diariamente.</p>
                         </div>
                     </div>
 
@@ -449,7 +450,8 @@
 
                     <!-- Sección 3: Préstamos -->
                     <div class="space-y-3 pt-4 border-t">
-                        <h4 class="text-lg font-semibold text-gray-800">Préstamos Bancarios (Admin)</h4>
+                        <!-- CAMBIO v0.4.3: Eliminado (Admin) -->
+                        <h4 class="text-lg font-semibold text-gray-800">Préstamos Bancarios</h4>
                         <p class="text-gray-600 text-justify">
                             Los préstamos se otorgan desde la Tesorería y se pagan automáticamente en cuotas diarias (7, 14 o 21 días). Un alumno no puede solicitar un préstamo si ya tiene uno activo.
                         </p>
@@ -461,7 +463,8 @@
 
                     <!-- Sección 4: Depósitos -->
                     <div class="space-y-3 pt-4 border-t">
-                        <h4 class="text-lg font-semibold text-gray-800">Depósitos a Plazo (Admin - Riesgo Cero)</h4>
+                        <!-- CAMBIO v0.4.3: Eliminado (Admin - Riesgo Cero) -->
+                        <h4 class="text-lg font-semibold text-gray-800">Depósitos a Plazo</h4>
                         <p class="text-gray-600 text-justify">
                             Permiten a los alumnos bloquear sus Pinceles para ganar intereses fijos y garantizados. Al vencer el plazo, la Tesorería paga el monto original más el interés neto.
                         </p>
@@ -472,7 +475,8 @@
 
                     <!-- Sección 5: P2P -->
                     <div class="space-y-3 pt-4 border-t">
-                        <h4 class="text-lg font-semibold text-gray-800">Transferencias P2P (Alumno-Alumno)</h4>
+                        <!-- CAMBIO v0.4.3: Eliminado (Alumno-Alumno) -->
+                        <h4 class="text-lg font-semibold text-gray-800">Transferencias P2P</h4>
                         <p class="text-gray-600 text-justify">
                             Los alumnos pueden transferirse Pinceles entre ellos usando el "Portal P2P" y su clave personal.
                         </p>
@@ -510,7 +514,7 @@
 
 
     <!-- Lógica de la Aplicación -->
-    <!-- CAMBIO v0.4.1: Versión actualizada -->
-    <script src="script.js?v=0.4.1" type="module" defer></script>
+    <!-- CAMBIO v0.4.2: Versión actualizada para comisión admin -->
+    <script src="script.js?v=0.4.2" type="module" defer></script>
 </body>
 </html>
