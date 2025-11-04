@@ -10,9 +10,9 @@ const AppConfig = {
     MAX_RETRIES: 5,
     CACHE_DURATION: 300000,
     
-    // CAMBIO v0.4.0: Versión y Estado de la Aplicación (Fondo de Inversión)
+    // CAMBIO v0.4.1: Versión y Estado (Fondo Removido)
     APP_STATUS: 'Beta', 
-    APP_VERSION: 'v0.4.0 (Fondos)', 
+    APP_VERSION: 'v0.4.1 (Fondos Removidos)', 
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -28,17 +28,10 @@ const AppState = {
         saldoTesoreria: 0,
         prestamosActivos: [],
         depositosActivos: [],
-        inversionesFondoActivas: [], // NUEVO v0.4.0
+        // inversionesFondoActivas: [], // ELIMINADO v0.4.1
         allStudents: [] // Lista plana de todos los alumnos
     },
-    // NUEVO v0.4.0: Estado del Fondo de Inversión
-    fondoData: {
-        valorParticipacion: 0,
-        tasas: { 
-            broker: 0.01, // Tasa de comisión (Modelo 1)
-            plusvalia: 0.10 // Tasa de impuesto a ganancia (Modelo 2)
-        }
-    },
+    // ELIMINADO v0.4.1: Estado del Fondo de Inversión
     historialUsuarios: {}, 
     actualizacionEnProceso: false,
     retryCount: 0,
@@ -51,13 +44,13 @@ const AppState = {
     sidebarTimer: null, 
     transaccionSelectAll: {}, 
     
-    // CAMBIO v0.4.0: Añadido 'fondoOrigen'
+    // CAMBIO v0.4.1: Eliminado 'fondoOrigen'
     currentSearch: {
         prestamo: { query: '', selected: null },
         deposito: { query: '', selected: null },
         p2pOrigen: { query: '', selected: null },
-        p2pDestino: { query: '', selected: null },
-        fondoOrigen: { query: '', selected: null } // NUEVO v0.4.0
+        p2pDestino: { query: '', selected: null }
+        // fondoOrigen: { query: '', selected: null } // ELIMINADO v0.4.1
     }
 };
 
@@ -85,14 +78,14 @@ const AppAuth = {
 // --- NÚMEROS Y FORMATO ---
 const AppFormat = {
     formatNumber: (num) => new Intl.NumberFormat('es-DO').format(num),
-    // NUEVO v0.4.0: Formateo para participaciones (más decimales)
-    formatParticipacion: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(num),
+    // ELIMINADO v0.4.1: Formateo para participaciones
+    // formatParticipacion: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(num),
     // NUEVO v0.4.0: Formateo de Pinceles (2 decimales)
     formatPincel: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)
 };
 
 // --- BASE DE DATOS DE ANUNCIOS ---
-// CAMBIO v0.4.0: Añadidos anuncios del fondo
+// CAMBIO v0.4.1: Eliminados anuncios del fondo
 const AnunciosDB = {
     'AVISO': [
         "La tienda de fin de mes abre el último Jueves de cada mes.", 
@@ -102,13 +95,13 @@ const AnunciosDB = {
     'NUEVO': [
         "¡Nuevo Sistema Económico! Depósitos de admin limitados por la Tesorería.",
         "¡Nuevo Portal P2P! Transfiere pinceles a tus compañeros (con 10% de comisión).",
-        "¡NUEVO! Fondo de Inversión BPD. ¡Compra participaciones y arriésgate a ganar (o perder)!",
+        // "¡NUEVO! Fondo de Inversión BPD. ¡Compra participaciones y arriésgate a ganar (o perder)!", // ELIMINADO v0.4.1
         "La Tesorería cobra un 0.5% diario de impuesto a saldos altos."
     ],
     'CONSEJO': [
         "Usa el botón '»' en la esquina para abrir y cerrar la barra lateral.",
         "Haz clic en el nombre de un alumno en la tabla para ver sus estadísticas.",
-        "El Fondo de Inversión tiene riesgo. Su valor puede bajar. Invierte con cuidado.",
+        // "El Fondo de Inversión tiene riesgo. Su valor puede bajar. Invierte con cuidado.", // ELIMINADO v0.4.1
         "¡Invierte! Usa los Depósitos a Plazo para obtener retornos fijos (Admin)."
     ],
     'ALERTA': [
@@ -198,19 +191,19 @@ const AppData = {
         // ... (Tu lógica de detección de cambios si aplica)
     },
     
-    // CAMBIO v0.4.0: Procesar todos los nuevos datos de la API
+    // CAMBIO v0.4.1: Eliminado procesamiento de datos del Fondo
     procesarYMostrarDatos: function(data) {
         // 1. Separar Tesorería y Datos Adicionales
         AppState.datosAdicionales.saldoTesoreria = data.saldoTesoreria || 0;
         AppState.datosAdicionales.prestamosActivos = data.prestamosActivos || [];
         AppState.datosAdicionales.depositosActivos = data.depositosActivos || [];
-        // NUEVO v0.4.0: Datos del Fondo
-        AppState.datosAdicionales.inversionesFondoActivas = data.inversionesFondoActivas || [];
-        AppState.fondoData.valorParticipacion = data.valorParticipacionActual || 0;
-        if (data.tasasFondo) {
-            AppState.fondoData.tasas.broker = data.tasasFondo.broker || 0.01;
-            AppState.fondoData.tasas.plusvalia = data.tasasFondo.plusvalia || 0.10;
-        }
+        // ELIMINADO v0.4.1: Datos del Fondo
+        // AppState.datosAdicionales.inversionesFondoActivas = data.inversionesFondoActivas || [];
+        // AppState.fondoData.valorParticipacion = data.valorParticipacionActual || 0;
+        // if (data.tasasFondo) {
+        //     AppState.fondoData.tasas.broker = data.tasasFondo.broker || 0.01;
+        //     AppState.fondoData.tasas.plusvalia = data.tasasFondo.plusvalia || 0.10;
+        // }
 
         const allGroups = data.gruposData;
         
@@ -257,10 +250,10 @@ const AppData = {
         
         AppUI.actualizarSidebarActivo();
         
-        // NUEVO v0.4.0: Actualizar info del fondo si el modal está abierto
-        if (document.getElementById('fondo-inversion-modal').classList.contains('opacity-0') === false) {
-            AppUI.updateFondoInfo();
-        }
+        // ELIMINADO v0.4.1: Actualizar info del fondo
+        // if (document.getElementById('fondo-inversion-modal').classList.contains('opacity-0') === false) {
+        //     AppUI.updateFondoInfo();
+        // }
 
         return activeGroups; // Devuelve solo los grupos limpios y ordenados (con Cicla al final)
     }
@@ -306,23 +299,7 @@ const AppUI = {
         document.getElementById('p2p-submit-btn').addEventListener('click', AppTransacciones.realizarTransferenciaP2P);
         document.getElementById('p2p-cantidad').addEventListener('input', AppUI.updateP2PCalculoImpuesto);
 
-        // NUEVO v0.4.0: Listeners Modal Fondo de Inversión
-        document.getElementById('fondo-portal-btn').addEventListener('click', () => AppUI.showFondoModal());
-        document.getElementById('fondo-modal-close-btn').addEventListener('click', () => AppUI.hideModal('fondo-inversion-modal'));
-        document.getElementById('fondo-cancel-btn').addEventListener('click', () => AppUI.hideModal('fondo-inversion-modal'));
-        document.getElementById('fondo-inversion-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'fondo-inversion-modal') AppUI.hideModal('fondo-inversion-modal');
-        });
-        document.querySelectorAll('.fondo-tab-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                AppUI.changeFondoTab(e.target.dataset.tab);
-            });
-        });
-        document.getElementById('fondo-comprar-cantidad-pinceles').addEventListener('input', AppUI.updateFondoComprarCalculo);
-        document.getElementById('fondo-vender-cantidad-participaciones').addEventListener('input', AppUI.updateFondoVenderCalculo);
-        document.getElementById('fondo-comprar-submit-btn').addEventListener('click', AppTransacciones.realizarCompraFondo);
-        document.getElementById('fondo-vender-submit-btn').addEventListener('click', AppTransacciones.realizarVentaFondo);
-
+        // ELIMINADO v0.4.1: Listeners Modal Fondo de Inversión
 
         // Listeners Modal Reglas
         document.getElementById('reglas-btn').addEventListener('click', () => AppUI.showModal('reglas-modal'));
@@ -366,9 +343,7 @@ const AppUI = {
         AppUI.setupSearchInput('p2p-search-origen', 'p2p-origen-results', 'p2pOrigen', AppUI.selectP2PStudent);
         AppUI.setupSearchInput('p2p-search-destino', 'p2p-destino-results', 'p2pDestino', AppUI.selectP2PStudent);
         
-        // NUEVO v0.4.0: Listeners para buscadores del Fondo (ambos usan el mismo estado 'fondoOrigen')
-        AppUI.setupSearchInput('fondo-search-origen-comprar', 'fondo-origen-results-comprar', 'fondoOrigen', AppUI.selectFondoStudent);
-        AppUI.setupSearchInput('fondo-search-origen-vender', 'fondo-origen-results-vender', 'fondoOrigen', AppUI.selectFondoStudent);
+        // ELIMINADO v0.4.1: Listeners para buscadores del Fondo
 
 
         // Carga inicial
@@ -404,6 +379,7 @@ const AppUI = {
         modal.querySelector('[class*="transform"]').classList.remove('scale-95');
     },
 
+    // CAMBIO v0.4.1: Eliminada limpieza del modal del Fondo
     hideModal: function(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -435,22 +411,7 @@ const AppUI = {
             AppTransacciones.setLoadingState(document.getElementById('p2p-submit-btn'), document.getElementById('p2p-btn-text'), false, 'Realizar Transferencia');
         }
         
-        // NUEVO v0.4.0: Limpiar campos del Fondo
-        if (modalId === 'fondo-inversion-modal') {
-            AppUI.resetSearchInput('fondoOrigen');
-            document.getElementById('fondo-search-origen-comprar').value = "";
-            document.getElementById('fondo-search-origen-vender').value = "";
-            document.getElementById('fondo-comprar-cantidad-pinceles').value = "";
-            document.getElementById('fondo-comprar-clave').value = "";
-            document.getElementById('fondo-vender-cantidad-participaciones').value = "";
-            document.getElementById('fondo-vender-clave').value = "";
-            document.getElementById('fondo-comprar-calculo').innerHTML = '<span class="text-gray-400">Ingrese un monto para ver el cálculo.</span>';
-            document.getElementById('fondo-vender-calculo').innerHTML = '<span class="text-gray-400">Ingrese participaciones para ver el cálculo.</span>';
-            document.getElementById('fondo-status-msg-comprar').textContent = "";
-            document.getElementById('fondo-status-msg-vender').textContent = "";
-            AppTransacciones.setLoadingState(document.getElementById('fondo-comprar-submit-btn'), document.getElementById('fondo-comprar-btn-text'), false, 'Comprar Participaciones');
-            AppTransacciones.setLoadingState(document.getElementById('fondo-vender-submit-btn'), document.getElementById('fondo-vender-btn-text'), false, 'Vender Participaciones');
-        }
+        // ELIMINADO v0.4.1: Limpiar campos del Fondo
         
         if (modalId === 'gestion-modal') {
              document.getElementById('clave-input').value = "";
@@ -552,14 +513,13 @@ const AppUI = {
         resultsContainer.classList.remove('hidden');
     },
 
+    // CAMBIO v0.4.1: Eliminada lógica del fondo
     resetSearchInput: function(stateKey) {
         let inputId = '';
         if (stateKey.includes('p2p')) {
              inputId = `${stateKey.replace('p2p', 'p2p-search-')}`;
-        } else if (stateKey.includes('fondo')) {
-            // Limpia ambos inputs del fondo
-             document.getElementById('fondo-search-origen-comprar').value = "";
-             document.getElementById('fondo-search-origen-vender').value = "";
+        // } else if (stateKey.includes('fondo')) {
+            // ELIMINADO
         } else {
             inputId = `${stateKey}-alumno-search`;
         }
@@ -611,148 +571,7 @@ const AppUI = {
 
     // --- FIN FUNCIONES P2P ---
 
-    // --- NUEVO v0.4.0: FUNCIONES FONDO DE INVERSIÓN ---
-
-    // Cambia entre "Comprar" y "Vender"
-    changeFondoTab: function(tabId) {
-        document.querySelectorAll('.fondo-tab-btn').forEach(btn => {
-            btn.classList.remove('active-tab', 'border-purple-600', 'text-purple-600');
-            btn.classList.add('border-transparent', 'text-gray-600');
-        });
-
-        document.querySelectorAll('.fondo-tab-content').forEach(content => {
-            content.classList.add('hidden');
-        });
-
-        document.querySelector(`.fondo-tab-btn[data-tab="${tabId}"]`).classList.add('active-tab', 'border-purple-600', 'text-purple-600');
-        document.querySelector(`.fondo-tab-btn[data-tab="${tabId}"]`).classList.remove('border-transparent', 'text-gray-600');
-        document.getElementById(`fondo-tab-${tabId}`).classList.remove('hidden');
-        
-        // Limpiar mensajes de estado al cambiar
-        document.getElementById('fondo-status-msg-comprar').textContent = "";
-        document.getElementById('fondo-status-msg-vender').textContent = "";
-    },
-
-    // Callback para el buscador de alumno en el modal del fondo
-    selectFondoStudent: function(studentName) {
-        // Sincronizar ambos inputs
-        document.getElementById('fondo-search-origen-comprar').value = studentName || "";
-        document.getElementById('fondo-search-origen-vender').value = studentName || "";
-        
-        AppUI.updateFondoBalance(studentName);
-        AppUI.updateFondoComprarCalculo();
-        AppUI.updateFondoVenderCalculo();
-    },
-
-    // Muestra el modal del fondo y carga la info
-    showFondoModal: function() {
-        if (!AppState.datosActuales) return;
-        
-        // Resetear campos (se hace en hideModal, pero por si acaso)
-        AppUI.hideModal('fondo-inversion-modal'); // Llama a la lógica de limpieza
-        
-        AppUI.updateFondoInfo();
-        AppUI.updateFondoBalance(null); // Limpiar balance
-        AppUI.changeFondoTab('comprar'); // Empezar en "Comprar"
-
-        AppUI.showModal('fondo-inversion-modal');
-    },
-
-    // Actualiza el valor de la participación
-    updateFondoInfo: function() {
-        const valorActual = AppState.fondoData.valorParticipacion;
-        document.getElementById('fondo-valor-actual').textContent = `${AppFormat.formatPincel(valorActual)} ℙ`;
-    },
-
-    // Actualiza el balance del alumno
-    updateFondoBalance: function(studentName) {
-        const balanceEl = document.getElementById('fondo-balance-alumno');
-        if (!studentName) {
-            balanceEl.innerHTML = `0.00 <span class="text-sm font-normal text-gray-600">(~0 ℙ)</span>`;
-            return;
-        }
-
-        const inversion = AppState.datosAdicionales.inversionesFondoActivas.find(inv => inv.alumno === studentName);
-        
-        if (!inversion || inversion.participaciones === 0) {
-            balanceEl.innerHTML = `0.00 <span class="text-sm font-normal text-gray-600">(~0 ℙ)</span>`;
-            return;
-        }
-
-        const valorActual = AppState.fondoData.valorParticipacion;
-        const valorTotal = inversion.participaciones * valorActual;
-
-        balanceEl.innerHTML = `${AppFormat.formatParticipacion(inversion.participaciones)} <span class="text-sm font-normal text-gray-600">(~${AppFormat.formatPincel(valorTotal)} ℙ)</span>`;
-    },
-
-    // Calcula y muestra el desglose de COMPRA
-    updateFondoComprarCalculo: function() {
-        const calculoEl = document.getElementById('fondo-comprar-calculo');
-        const montoPinceles = parseFloat(document.getElementById('fondo-comprar-cantidad-pinceles').value);
-        const valorActual = AppState.fondoData.valorParticipacion;
-
-        if (isNaN(montoPinceles) || montoPinceles <= 0 || valorActual === 0) {
-            calculoEl.innerHTML = '<span class="text-gray-400">Ingrese un monto para ver el cálculo.</span>';
-            return;
-        }
-
-        const tasaBroker = AppState.fondoData.tasas.broker;
-        const comision = montoPinceles * tasaBroker;
-        const montoNeto = montoPinceles - comision;
-        const participaciones = montoNeto / valorActual;
-
-        calculoEl.innerHTML = `
-            <div class="space-y-1 text-left">
-                <div class="flex justify-between"><span>Monto a Invertir:</span> <span class="font-medium">${AppFormat.formatPincel(montoPinceles)} ℙ</span></div>
-                <div class="flex justify-between text-red-600"><span>Comisión Bróker (${tasaBroker * 100}%):</span> <span class="font-medium">-${AppFormat.formatPincel(comision)} ℙ</span></div>
-                <hr class="my-1 border-gray-300">
-                <div class="flex justify-between"><span>Monto Neto:</span> <span class="font-medium">${AppFormat.formatPincel(montoNeto)} ℙ</span></div>
-                <div class="flex justify-between text-purple-600"><span>Participaciones (Est.):</span> <span class="font-bold">${AppFormat.formatParticipacion(participaciones)}</span></div>
-            </div>
-        `;
-    },
-
-    // Calcula y muestra el desglose de VENTA
-    updateFondoVenderCalculo: function() {
-        const calculoEl = document.getElementById('fondo-vender-calculo');
-        const studentName = AppState.currentSearch.fondoOrigen.selected;
-        const participacionesVender = parseFloat(document.getElementById('fondo-vender-cantidad-participaciones').value);
-        
-        if (!studentName || isNaN(participacionesVender) || participacionesVender <= 0) {
-            calculoEl.innerHTML = '<span class="text-gray-400">Ingrese participaciones para ver el cálculo.</span>';
-            return;
-        }
-
-        const inversion = AppState.datosAdicionales.inversionesFondoActivas.find(inv => inv.alumno === studentName);
-        if (!inversion || inversion.participaciones < participacionesVender) {
-            calculoEl.innerHTML = '<span class="text-red-600 font-medium">No tienes suficientes participaciones para vender.</span>';
-            return;
-        }
-
-        const valorActual = AppState.fondoData.valorParticipacion;
-        const tasaBroker = AppState.fondoData.tasas.broker;
-        const tasaPlusvalia = AppState.fondoData.tasas.plusvalia;
-        const costePromedio = inversion.costePromedio;
-
-        const valorBrutoVenta = participacionesVender * valorActual;
-        const comisionBroker = valorBrutoVenta * tasaBroker;
-        
-        const costeDeLoVendido = participacionesVender * costePromedio;
-        const gananciaBruta = valorBrutoVenta - costeDeLoVendido;
-        const impuestoGanancia = (gananciaBruta > 0) ? (gananciaBruta * tasaPlusvalia) : 0;
-
-        const pagoNeto = valorBrutoVenta - comisionBroker - impuestoGanancia;
-
-        calculoEl.innerHTML = `
-            <div class="space-y-1 text-left">
-                <div class="flex justify-between"><span>Valor Bruto de Venta:</span> <span class="font-medium">${AppFormat.formatPincel(valorBrutoVenta)} ℙ</span></div>
-                <div class="flex justify-between text-red-600"><span>Comisión Bróker (${tasaBroker * 100}%):</span> <span class="font-medium">-${AppFormat.formatPincel(comisionBroker)} ℙ</span></div>
-                <div class="flex justify-between text-red-600"><span>Impuesto Ganancia (${tasaPlusvalia * 100}%):</span> <span class="font-medium">-${AppFormat.formatPincel(impuestoGanancia)} ℙ</span></div>
-                <hr class="my-1 border-gray-300">
-                <div class="flex justify-between text-green-600"><span>Total a Recibir (Neto):</span> <span class="font-bold">${AppFormat.formatPincel(pagoNeto)} ℙ</span></div>
-            </div>
-        `;
-    },
+    // --- ELIMINADO v0.4.1: FUNCIONES FONDO DE INVERSIÓN ---
 
     // --- FIN FUNCIONES FONDO DE INVERSIÓN ---
 
@@ -1170,7 +989,7 @@ const AppUI = {
     /**
      * Muestra la vista de "Inicio"
      */
-    // CAMBIO v0.4.0: Actualizada lógica de "Alumnos Destacados" para incluir Fondos
+    // CAMBIO v0.4.1: Revertida lógica de "Alumnos Destacados" para NO incluir Fondos
     mostrarPantallaNeutral: function(grupos) {
         document.getElementById('main-header-title').textContent = "Bienvenido al Banco del Pincel Dorado";
         document.getElementById('page-subtitle').innerHTML = ''; 
@@ -1228,15 +1047,15 @@ const AppUI = {
         `;
         
         // ===================================================================
-        // INICIO DE LA MODIFICACIÓN (v0.4.0): Lógica "Alumnos Destacados"
+        // INICIO DE LA MODIFICACIÓN (v0.4.1): Lógica "Alumnos Destacados" (SIN FONDOS)
         // ===================================================================
         
         // 1. Obtener datos necesarios
         const allStudents = AppState.datosAdicionales.allStudents;
         const depositosActivos = AppState.datosAdicionales.depositosActivos;
-        // NUEVO: Datos del fondo
-        const inversionesFondoActivas = AppState.datosAdicionales.inversionesFondoActivas;
-        const valorParticipacion = AppState.fondoData.valorParticipacion;
+        // ELIMINADO v0.4.1
+        // const inversionesFondoActivas = AppState.datosAdicionales.inversionesFondoActivas;
+        // const valorParticipacion = AppState.fondoData.valorParticipacion;
 
         // 2. Mapear alumnos para incluir su capital total
         const studentsWithCapital = allStudents.map(student => {
@@ -1249,19 +1068,15 @@ const AppUI = {
                     return sum + montoNumerico;
                 }, 0);
             
-            // b) NUEVO: Calcular total en Fondo de Inversión
-            const inversionFondo = inversionesFondoActivas.find(inv => inv.alumno === student.nombre);
-            const totalInvertidoFondo = (inversionFondo && valorParticipacion > 0) 
-                ? (inversionFondo.participaciones * valorParticipacion) 
-                : 0;
-
-            // c) Calcular Capital Total
-            const capitalTotal = student.pinceles + totalInvertidoDepositos + totalInvertidoFondo;
+            // b) ELIMINADO v0.4.1: Calcular total en Fondo de Inversión
+            
+            // c) Calcular Capital Total (REVERTIDO)
+            const capitalTotal = student.pinceles + totalInvertidoDepositos;
 
             return {
                 ...student, 
                 totalInvertidoDepositos: totalInvertidoDepositos,
-                totalInvertidoFondo: totalInvertidoFondo,
+                // totalInvertidoFondo: 0, // ELIMINADO v0.4.1
                 capitalTotal: capitalTotal
             };
         });
@@ -1280,8 +1095,8 @@ const AppUI = {
                 
                 // Formatear números para el tooltip
                 const pincelesLiquidosF = AppFormat.formatNumber(student.pinceles);
-                // MODIFICADO: Sumar ambos tipos de inversión
-                const totalInvertidoF = AppFormat.formatNumber(student.totalInvertidoDepositos + student.totalInvertidoFondo);
+                // MODIFICADO (v0.4.1 REVERTIDO): Solo depósitos
+                const totalInvertidoF = AppFormat.formatNumber(student.totalInvertidoDepositos);
 
                 return `
                     <div class="bg-white rounded-lg shadow-md p-3 h-full flex flex-col justify-between">
@@ -1332,7 +1147,7 @@ const AppUI = {
         }
         
         // ===================================================================
-        // FIN DE LA MODIFICACIÓN (v0.4.0)
+        // FIN DE LA MODIFICACIÓN (v0.4.1)
         // ===================================================================
 
 
@@ -1539,7 +1354,7 @@ const AppUI = {
         listaModal.innerHTML = html;
     },
 
-    // CAMBIO v0.4.0: Añadida info del Fondo de Inversión
+    // CAMBIO v0.4.1: Eliminada info del Fondo de Inversión
     showStudentModal: function(nombreGrupo, nombreUsuario, rank) {
         const student = AppState.datosAdicionales.allStudents.find(u => u.nombre === nombreUsuario);
         const grupo = AppState.datosActuales.find(g => g.nombre === nombreGrupo);
@@ -1552,11 +1367,11 @@ const AppUI = {
         const gruposRankeados = AppState.datosActuales.filter(g => g.nombre !== 'Cicla');
         const rankGrupo = gruposRankeados.findIndex(g => g.nombre === nombreGrupo) + 1;
         
-        // Buscar préstamos, depósitos e inversiones
+        // Buscar préstamos y depósitos
         const prestamoActivo = AppState.datosAdicionales.prestamosActivos.find(p => p.alumno === student.nombre);
         const depositoActivo = AppState.datosAdicionales.depositosActivos.find(d => d.alumno === student.nombre);
-        // NUEVO
-        const inversionActiva = AppState.datosAdicionales.inversionesFondoActivas.find(i => i.alumno === student.nombre);
+        // ELIMINADO v0.4.1
+        // const inversionActiva = AppState.datosAdicionales.inversionesFondoActivas.find(i => i.alumno === student.nombre);
 
         const createStat = (label, value, valueClass = 'text-gray-900') => `
             <div class="bg-gray-50 p-4 rounded-lg text-center">
@@ -1574,12 +1389,7 @@ const AppUI = {
             const fechaString = `${vencimiento.getDate()}/${vencimiento.getMonth() + 1}`;
             extraHtml += `<p class="text-sm font-bold text-green-600 text-center mt-3 p-2 bg-green-50 rounded-lg">🏦 Depósito Activo (Vence: ${fechaString})</p>`;
         }
-        // NUEVO
-        if (inversionActiva) {
-            const valorActual = AppState.fondoData.valorParticipacion;
-            const valorTotal = inversionActiva.participaciones * valorActual;
-            extraHtml += `<p class="text-sm font-bold text-purple-600 text-center mt-3 p-2 bg-purple-50 rounded-lg">📈 Inversión en Fondo: ${AppFormat.formatPincel(valorTotal)} ℙ</p>`;
-        }
+        // ELIMINADO v0.4.1
         
         modalContent.innerHTML = `
             <div class="p-6">
@@ -1662,7 +1472,8 @@ const AppUI = {
     }
 };
 
-// --- OBJETO TRANSACCIONES (Préstamos, Depósitos, P2P y Fondo) ---
+// --- OBJETO TRANSACCIONES (Préstamos, Depósitos, P2P) ---
+// CAMBIO v0.4.1: Eliminadas funciones del Fondo
 const AppTransacciones = {
 
     realizarTransaccionMultiple: async function() {
@@ -1887,133 +1698,7 @@ const AppTransacciones = {
         }
     },
     
-    // --- NUEVO v0.4.0: FUNCIONES DEL FONDO ---
-
-    realizarCompraFondo: async function() {
-        const statusMsg = document.getElementById('fondo-status-msg-comprar');
-        const submitBtn = document.getElementById('fondo-comprar-submit-btn');
-        const btnText = document.getElementById('fondo-comprar-btn-text');
-
-        const nombreOrigen = AppState.currentSearch.fondoOrigen.selected;
-        const claveP2P = document.getElementById('fondo-comprar-clave').value;
-        const montoPinceles = parseFloat(document.getElementById('fondo-comprar-cantidad-pinceles').value);
-
-        let errorValidacion = "";
-        if (!nombreOrigen) {
-            errorValidacion = "Debe seleccionar su nombre de la lista.";
-        } else if (!claveP2P) {
-            errorValidacion = "Debe ingresar su Clave P2P.";
-        } else if (isNaN(montoPinceles) || montoPinceles <= 0) {
-            errorValidacion = "El monto a invertir debe ser un número positivo.";
-        }
-
-        if (errorValidacion) {
-            AppTransacciones.setError(statusMsg, errorValidacion);
-            return;
-        }
-
-        AppTransacciones.setLoadingState(submitBtn, btnText, true, 'Procesando Compra...');
-        AppTransacciones.setLoading(statusMsg, `Comprando ${AppFormat.formatPincel(montoPinceles)} ℙ en el fondo...`);
-
-        try {
-            const payload = {
-                accion: 'comprar_fondo',
-                nombre_origen: nombreOrigen,
-                clave_p2p_origen: claveP2P,
-                montoPinceles: montoPinceles
-            };
-
-            const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.API_URL, {
-                method: 'POST',
-                body: JSON.stringify(payload), 
-            });
-
-            const result = await response.json();
-
-            if (result.success === true) {
-                AppTransacciones.setSuccess(statusMsg, result.message || "¡Compra exitosa!");
-                
-                // Limpiar campos
-                document.getElementById('fondo-comprar-cantidad-pinceles').value = "";
-                document.getElementById('fondo-comprar-clave').value = "";
-                document.getElementById('fondo-comprar-calculo').innerHTML = '<span class="text-gray-400">Ingrese un monto para ver el cálculo.</span>';
-                
-                AppData.cargarDatos(false); // Recargar todo
-                AppUI.updateFondoBalance(nombreOrigen); // Actualizar balance inmediatamente
-
-            } else {
-                throw new Error(result.message || "Error desconocido de la API.");
-            }
-
-        } catch (error) {
-            AppTransacciones.setError(statusMsg, error.message);
-        } finally {
-            AppTransacciones.setLoadingState(submitBtn, btnText, false, 'Comprar Participaciones');
-        }
-    },
-
-    realizarVentaFondo: async function() {
-        const statusMsg = document.getElementById('fondo-status-msg-vender');
-        const submitBtn = document.getElementById('fondo-vender-submit-btn');
-        const btnText = document.getElementById('fondo-vender-btn-text');
-
-        const nombreOrigen = AppState.currentSearch.fondoOrigen.selected;
-        const claveP2P = document.getElementById('fondo-vender-clave').value;
-        const participacionesAVender = parseFloat(document.getElementById('fondo-vender-cantidad-participaciones').value);
-
-        let errorValidacion = "";
-        if (!nombreOrigen) {
-            errorValidacion = "Debe seleccionar su nombre de la lista.";
-        } else if (!claveP2P) {
-            errorValidacion = "Debe ingresar su Clave P2P.";
-        } else if (isNaN(participacionesAVender) || participacionesAVender <= 0) {
-            errorValidacion = "El número de participaciones a vender debe ser positivo.";
-        }
-
-        if (errorValidacion) {
-            AppTransacciones.setError(statusMsg, errorValidacion);
-            return;
-        }
-
-        AppTransacciones.setLoadingState(submitBtn, btnText, true, 'Procesando Venta...');
-        AppTransacciones.setLoading(statusMsg, `Vendiendo ${AppFormat.formatParticipacion(participacionesAVender)} participaciones...`);
-
-        try {
-            const payload = {
-                accion: 'vender_fondo',
-                nombre_origen: nombreOrigen,
-                clave_p2p_origen: claveP2P,
-                participacionesAVender: participacionesAVender
-            };
-
-            const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.API_URL, {
-                method: 'POST',
-                body: JSON.stringify(payload), 
-            });
-
-            const result = await response.json();
-
-            if (result.success === true) {
-                AppTransacciones.setSuccess(statusMsg, result.message || "¡Venta exitosa!");
-                
-                // Limpiar campos
-                document.getElementById('fondo-vender-cantidad-participaciones').value = "";
-                document.getElementById('fondo-vender-clave').value = "";
-                document.getElementById('fondo-vender-calculo').innerHTML = '<span class="text-gray-400">Ingrese participaciones para ver el cálculo.</span>';
-                
-                AppData.cargarDatos(false); // Recargar todo
-                AppUI.updateFondoBalance(nombreOrigen); // Actualizar balance inmediatamente
-
-            } else {
-                throw new Error(result.message || "Error desconocido de la API.");
-            }
-
-        } catch (error) {
-            AppTransacciones.setError(statusMsg, error.message);
-        } finally {
-            AppTransacciones.setLoadingState(submitBtn, btnText, false, 'Vender Participaciones');
-        }
-    },
+    // --- ELIMINADO v0.4.1: FUNCIONES DEL FONDO ---
 
     // --- Utilidades de Fetch y Estado ---
 
