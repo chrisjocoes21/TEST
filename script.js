@@ -1423,14 +1423,15 @@ const AppUI = {
         
         const enRiesgo = possibleRiesgoStudents.sort((a, b) => a.pinceles - b.pinceles);
         
-        const top7Riesgo = enRiesgo.slice(0, 7); 
+        // CAMBIO: Reducido de 7 a 6
+        const top6Riesgo = enRiesgo.slice(0, 6); 
 
-        if (top7Riesgo.length === 0) {
+        if (top6Riesgo.length === 0) {
             lista.innerHTML = `<tr><td colspan="3" class="p-4 text-sm text-gray-500 text-center">No hay alumnos en riesgo por el momento.</td></tr>`;
             return;
         }
 
-        lista.innerHTML = top7Riesgo.map((student, index) => {
+        lista.innerHTML = top6Riesgo.map((student, index) => {
             const grupoNombre = student.grupoNombre || 'N/A';
             const pinceles = AppFormat.formatNumber(student.pinceles);
             const pincelesColor = student.pinceles <= 0 ? 'text-red-600' : 'text-gray-900';
@@ -1460,8 +1461,9 @@ const AppUI = {
         const pincelesPositivos = allStudents.filter(s => s.pinceles > 0).reduce((sum, user) => sum + user.pinceles, 0);
         const pincelesNegativos = allStudents.filter(s => s.pinceles < 0).reduce((sum, user) => sum + user.pinceles, 0);
         
+        // CAMBIO: Añadida la clase 'stat-item' para control de CSS
         const createStat = (label, value, valueClass = 'text-gray-900') => `
-            <div class="flex justify-between items-baseline text-sm py-2 border-b border-gray-100">
+            <div class="stat-item flex justify-between items-baseline text-sm py-2 border-b border-gray-100">
                 <span class="text-gray-600">${label}:</span>
                 <span class="font-semibold ${valueClass}">${value}</span>
             </div>
@@ -1470,7 +1472,6 @@ const AppUI = {
         statsList.innerHTML = `
             ${createStat('Alumnos Totales', totalAlumnos)}
             ${createStat('Alumnos en Cicla', totalEnCicla, 'text-red-600')}
-            ${createStat('Grupos Activos', grupos.filter(g => g.nombre !== 'Cicla').length)}
             ${createStat('Pincel Promedio', `${AppFormat.formatNumber(promedioPinceles.toFixed(0))} ℙ`)}
             ${createStat('Pinceles Positivos', `${AppFormat.formatNumber(pincelesPositivos)} ℙ`, 'text-green-600')}
             ${createStat('Pinceles Negativos', `${AppFormat.formatNumber(pincelesNegativos)} ℙ`, 'text-red-600')}
@@ -1487,7 +1488,8 @@ const AppUI = {
             ...AnunciosDB['ALERTA'].map(texto => ({ tipo: 'ALERTA', texto, bg: 'bg-red-100', text: 'text-red-700' }))
         ];
         
-        const anuncios = [...todosLosAnuncios].sort(() => 0.5 - Math.random()).slice(0, 6);
+        // CAMBIO: Reducido de 6 a 5
+        const anuncios = [...todosLosAnuncios].sort(() => 0.5 - Math.random()).slice(0, 5);
 
         lista.innerHTML = anuncios.map(anuncio => `
             <li class="flex items-start p-2 hover:bg-gray-50 rounded-lg transition-colors"> 
