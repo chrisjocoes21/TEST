@@ -10,9 +10,9 @@ const AppConfig = {
     MAX_RETRIES: 5,
     CACHE_DURATION: 300000,
     
-    // CAMBIO v0.5.2: Rediseño Layout Admin Bonos
+    // CAMBIO v0.5.4: Gestión Bonos v2 (Eliminar) y fixes
     APP_STATUS: 'Beta', 
-    APP_VERSION: 'v0.5.2 (Rediseño Layout Admin Bonos)', 
+    APP_VERSION: 'v0.5.4 (Gestión Bonos v2)', 
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -31,13 +31,8 @@ const AppState = {
         saldoTesoreria: 0,
         prestamosActivos: [],
         depositosActivos: [],
-        // NUEVO v0.5.0: Lista de bonos
-        bonosDisponibles: [], 
-        // NUEVO v0.5.0: Lista de bonos canjeados (solo los del usuario actual)
-        bonosCanjeadosUsuario: [], 
         allStudents: [] // Lista plana de todos los alumnos
     },
-    // ELIMINADO v0.4.1: Estado del Fondo de Inversión
     historialUsuarios: {}, 
     actualizacionEnProceso: false,
     retryCount: 0,
@@ -51,13 +46,19 @@ const AppState = {
     transaccionSelectAll: {}, 
     
     // CAMBIO v0.4.1: Eliminado 'fondoOrigen'
-    // CAMBIO v0.5.0: Añadido 'bonoAlumno'
     currentSearch: {
         prestamo: { query: '', selected: null },
         deposito: { query: '', selected: null },
         p2pOrigen: { query: '', selected: null },
         p2pDestino: { query: '', selected: null },
         bonoAlumno: { query: '', selected: null } // NUEVO v0.5.0
+    },
+    
+    // NUEVO v0.5.0: Estado de Bonos
+    bonos: {
+        disponibles: [], // Bonos que aún tienen usos
+        canjeados: [], // Bonos que el usuario actual (hipotético) ha canjeado
+        adminPanelUnlocked: false // Para el panel de admin
     }
 };
 
@@ -84,16 +85,15 @@ const AppAuth = {
 
 // --- NÚMEROS Y FORMATO ---
 const AppFormat = {
-    // CAMBIO v0.4.5 (Solicitado por usuario): Sin decimales para montos generales
+    // CAMBIO v0.4.4: Formato de Pinceles sin decimales
     formatNumber: (num) => new Intl.NumberFormat('es-DO', { maximumFractionDigits: 0 }).format(num),
-    // formatParticipacion: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(num),
-    // NUEVO v0.4.0: Formateo de Pinceles (2 decimales)
+    // formatNumber: (num) => new Intl.NumberFormat('es-DO').format(num), // <-- ORIGINAL
+    // NUEVO v0.4.0: Formateo de Pinceles (2 decimales) - REEMPLAZADO por formatNumber
     formatPincel: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)
 };
 
 // --- BASE DE DATOS DE ANUNCIOS ---
 // CAMBIO v0.4.1: Eliminados anuncios del fondo
-// CAMBIO v0.5.0: Añadidos anuncios de Bonos
 const AnunciosDB = {
     'AVISO': [
         "La tienda de fin de mes abre el último Jueves de cada mes.", 
@@ -101,7 +101,8 @@ const AnunciosDB = {
         "Recuerden: 'Ver Reglas' tiene información importante sobre la tienda." 
     ],
     'NUEVO': [
-        "¡Nuevo Portal de Bonos! Usa el botón 'Bonos' en la pantalla de inicio para canjear recompensas.",
+        // NUEVO v0.5.0: Anuncio de Bonos
+        "¡Nuevo Portal de Bonos! Canjea códigos por Pinceles ℙ.",
         "¡Nuevo Sistema Económico! Depósitos de admin limitados por la Tesorería.",
         "¡Nuevo Portal P2P! Transfiere pinceles a tus compañeros (con 10% de comisión).",
         "La Tesorería cobra un 0.5% diario de impuesto a saldos altos."
@@ -112,7 +113,9 @@ const AnunciosDB = {
         "¡Invierte! Usa los Depósitos a Plazo para obtener retornos fijos (Admin)."
     ],
     'ALERTA': [
-        "¡Cuidado! Saldos negativos (incluso -1 ℙ) te mueven a Cicla.",
+        // CAMBIO v0.5.5: Actualizado por Auto-Cicla
+        "¡Cuidado! Saldos negativos (incluso -1 ℙ) te moverán automáticamente a Cicla en el próximo ciclo diario.",
+        // "¡Cuidado! Saldos negativos (incluso -1 ℙ) te mueven a Cicla.", // <-- ORIGINAL
         "Alumnos en Cicla pueden solicitar préstamos de rescate (Admin).",
         "Si tienes un préstamo activo, NO puedes crear un Depósito a Plazo."
     ]
@@ -164,7 +167,8 @@ const AppData = {
                 }
                 
                 // CAMBIO V0.4.0: La API devuelve un objeto con más datos
-                AppState.datosActuales = AppData.procesarYMostrarDatos(data);
+                // CAMBIO v0.5.0: Procesa también los bonos
+                AppData.procesarYMostrarDatos(data); // Modifica AppState.datosActuales
                 AppState.cachedData = data;
                 AppState.lastCacheTime = Date.now();
                 AppState.retryCount = 0;
@@ -198,27 +202,26 @@ const AppData = {
         // ... (Tu lógica de detección de cambios si aplica)
     },
     
-    // CAMBIO v0.4.1: Eliminado procesamiento de datos del Fondo
-    // CAMBIO v0.5.0: Añadido procesamiento de Bonos
+    // CAMBIO v0.5.0: Modificado para aceptar Bonos
     procesarYMostrarDatos: function(data) {
         // 1. Separar Tesorería y Datos Adicionales
         AppState.datosAdicionales.saldoTesoreria = data.saldoTesoreria || 0;
         AppState.datosAdicionales.prestamosActivos = data.prestamosActivos || [];
         AppState.datosAdicionales.depositosActivos = data.depositosActivos || [];
-        
-        // NUEVO v0.5.0: Cargar datos de bonos
-        AppState.datosAdicionales.bonosDisponibles = data.bonosDisponibles || [];
-        AppState.datosAdicionales.bonosCanjeadosUsuario = data.bonosCanjeadosUsuario || [];
+
+        // 2. NUEVO v0.5.0: Procesar Bonos
+        AppState.bonos.disponibles = data.bonosDisponibles || [];
+        AppState.bonos.canjeados = data.bonosCanjeadosUsuario || []; // (Actualmente vacío, pero listo para el futuro)
 
         const allGroups = data.gruposData;
         
         let gruposOrdenados = Object.entries(allGroups).map(([nombre, info]) => ({ nombre, total: info.total || 0, usuarios: info.usuarios || [] }));
         
-        // 2. Separar Cicla (que viene en el array)
+        // 3. Separar Cicla (que viene en el array)
         const ciclaGroup = gruposOrdenados.find(g => g.nombre === 'Cicla');
         const activeGroups = gruposOrdenados.filter(g => g.nombre !== 'Cicla' && g.nombre !== 'Banco');
 
-        // 3. Crear lista plana de todos los alumnos
+        // 4. Crear lista plana de todos los alumnos
         AppState.datosAdicionales.allStudents = activeGroups.flatMap(g => g.usuarios).concat(ciclaGroup ? ciclaGroup.usuarios : []);
         
         // Asignar el nombre del grupo a cada alumno para fácil búsqueda
@@ -229,16 +232,16 @@ const AppData = {
             ciclaGroup.usuarios.forEach(u => u.grupoNombre = 'Cicla');
         }
 
-        // 4. Ordenar y filtrar
+        // 5. Ordenar y filtrar
         activeGroups.sort((a, b) => b.total - a.total);
         if (ciclaGroup) {
             activeGroups.push(ciclaGroup);
         }
         
-        // 5. Detectar cambios antes de actualizar el estado
+        // 6. Detectar cambios antes de actualizar el estado
         AppData.detectarCambios(activeGroups);
 
-        // 6. Actualizar UI
+        // 7. Actualizar UI
         AppUI.actualizarSidebar(activeGroups);
         
         if (AppState.selectedGrupo) {
@@ -255,13 +258,13 @@ const AppData = {
         
         AppUI.actualizarSidebarActivo();
         
-        // NUEVO v0.5.0: Refrescar modal de bonos si está abierto
+        // 8. NUEVO v0.5.0: Actualizar UI de Bonos (si está abierta)
         if (document.getElementById('bonos-modal').classList.contains('opacity-0') === false) {
-            AppUI.populateBonoListaUsuario();
-            AppUI.populateBonoListaAdmin();
+            AppUI.populateBonoList();
+            AppUI.populateBonoAdminList();
         }
 
-        return activeGroups; // Devuelve solo los grupos limpios y ordenados (con Cicla al final)
+        AppState.datosActuales = activeGroups; // Actualizar el estado al final
     }
 };
 
@@ -308,7 +311,30 @@ const AppUI = {
         document.getElementById('p2p-submit-btn').addEventListener('click', AppTransacciones.realizarTransferenciaP2P);
         document.getElementById('p2p-cantidad').addEventListener('input', AppUI.updateP2PCalculoImpuesto);
 
-        // ELIMINADO v0.4.1: Listeners Modal Fondo de Inversión
+        // NUEVO v0.5.0: Listeners Modal Bonos
+        document.getElementById('bonos-btn').addEventListener('click', () => AppUI.showBonoModal());
+        document.getElementById('bonos-modal-close').addEventListener('click', () => AppUI.hideModal('bonos-modal'));
+        document.getElementById('bonos-cancel-btn').addEventListener('click', () => AppUI.hideModal('bonos-modal'));
+        document.getElementById('bonos-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'bonos-modal') AppUI.hideModal('bonos-modal');
+        });
+        // Listeners Pestañas de Bonos
+        document.querySelectorAll('#bonos-modal .bono-tab-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const tabId = e.target.dataset.tab;
+                AppUI.changeBonoTab(tabId);
+            });
+        });
+        // Listeners Canje de Bono (Usuario)
+        document.getElementById('bono-submit-btn').addEventListener('click', AppTransacciones.canjearBono);
+        // Listeners Admin de Bonos
+        document.getElementById('bono-admin-unlock-btn').addEventListener('click', AppUI.toggleBonoAdminPanel);
+        document.getElementById('bono-admin-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            AppTransacciones.crearActualizarBono();
+        });
+        document.getElementById('bono-admin-clear-btn').addEventListener('click', AppUI.clearBonoAdminForm);
+
 
         // Listeners Modal Reglas
         document.getElementById('reglas-btn').addEventListener('click', () => AppUI.showModal('reglas-modal'));
@@ -323,30 +349,6 @@ const AppUI = {
         document.getElementById('anuncios-modal').addEventListener('click', (e) => {
             if (e.target.id === 'anuncios-modal') AppUI.hideModal('anuncios-modal');
         });
-
-        // Listeners Modal Bonos (NUEVO v0.5.0)
-        document.getElementById('bonos-btn').addEventListener('click', AppUI.showBonoModal);
-        document.getElementById('bonos-modal-close').addEventListener('click', () => AppUI.hideModal('bonos-modal'));
-        document.getElementById('bonos-cancel-btn').addEventListener('click', () => AppUI.hideModal('bonos-modal'));
-        document.getElementById('bonos-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'bonos-modal') AppUI.hideModal('bonos-modal');
-        });
-        document.getElementById('bono-submit-btn').addEventListener('click', AppTransacciones.canjearBono);
-        
-        // Listeners Admin Bonos (NUEVO v0.5.0)
-        // document.getElementById('bono-admin-toggle-btn').addEventListener('click', AppUI.toggleBonoAdminPanel); // ELIMINADO v0.5.1
-        document.getElementById('bono-admin-unlock-btn').addEventListener('click', AppUI.unlockBonoAdminPanel);
-        document.getElementById('bono-admin-form').addEventListener('submit', AppTransacciones.crearActualizarBono);
-        document.getElementById('bono-admin-clear-btn').addEventListener('click', AppUI.clearBonoAdminForm);
-        
-        // NUEVO v0.5.1: Listeners para Pestañas de Bonos
-        document.querySelectorAll('#bonos-modal .bono-tab-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const tabId = e.target.dataset.tab;
-                AppUI.changeBonoTab(tabId);
-            });
-        });
-
 
         // Listener Sidebar
         document.getElementById('toggle-sidebar-btn').addEventListener('click', AppUI.toggleSidebar);
@@ -375,10 +377,7 @@ const AppUI = {
         AppUI.setupSearchInput('deposito-alumno-search', 'deposito-search-results', 'deposito', AppUI.loadDepositoPaquetes);
         AppUI.setupSearchInput('p2p-search-origen', 'p2p-origen-results', 'p2pOrigen', AppUI.selectP2PStudent);
         AppUI.setupSearchInput('p2p-search-destino', 'p2p-destino-results', 'p2pDestino', AppUI.selectP2PStudent);
-        // NUEVO v0.5.0: Buscador de alumno en modal de Bonos
-        AppUI.setupSearchInput('bono-search-alumno', 'bono-search-results', 'bonoAlumno', AppUI.selectBonoStudent);
-        
-        // ELIMINADO v0.4.1: Listeners para buscadores del Fondo
+        AppUI.setupSearchInput('bono-search-alumno', 'bono-search-results', 'bonoAlumno', AppUI.selectBonoStudent); // NUEVO v0.5.0
 
 
         // Carga inicial
@@ -415,8 +414,7 @@ const AppUI = {
     },
 
     // CAMBIO v0.4.2: Añadida limpieza del cálculo de comisión admin
-    // CAMBIO v0.5.0: Añadida limpieza del modal de bonos
-    // CAMBIO v0.5.1: Actualizada limpieza de modal de bonos para pestañas
+    // CAMBIO v0.5.0: Añadida limpieza de modal de bonos
     hideModal: function(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -448,24 +446,26 @@ const AppUI = {
             document.getElementById('p2p-status-msg').textContent = "";
             AppTransacciones.setLoadingState(document.getElementById('p2p-submit-btn'), document.getElementById('p2p-btn-text'), false, 'Realizar Transferencia');
         }
-
+        
         // NUEVO v0.5.0: Limpiar campos de Bonos
         if (modalId === 'bonos-modal') {
+            // Pestaña Canjear
             AppUI.resetSearchInput('bonoAlumno');
             document.getElementById('bono-clave-p2p').value = "";
             document.getElementById('bono-clave-input').value = "";
             document.getElementById('bono-status-msg').textContent = "";
-            // Resetear panel de admin
-            document.getElementById('bono-admin-gate').classList.remove('hidden');
-            document.getElementById('bono-admin-panel').classList.add('hidden');
+            AppTransacciones.setLoadingState(document.getElementById('bono-submit-btn'), document.getElementById('bono-btn-text'), false, 'Canjear Bono');
+            
+            // Pestaña Admin
             document.getElementById('bono-admin-clave').value = "";
             AppUI.clearBonoAdminForm();
-            AppTransacciones.setLoadingState(document.getElementById('bono-submit-btn'), document.getElementById('bono-btn-text'), false, 'Canjear Bono');
-            // NUEVO v0.5.1: Resetear a la pestaña principal
-            AppUI.changeBonoTab('canjear');
+            document.getElementById('bono-admin-status-msg').textContent = "";
+            
+            // Ocultar panel de admin y resetear estado
+            document.getElementById('bono-admin-gate').classList.remove('hidden');
+            document.getElementById('bono-admin-panel').classList.add('hidden');
+            AppState.bonos.adminPanelUnlocked = false;
         }
-        
-        // ELIMINADO v0.4.1: Limpiar campos del Fondo
         
         if (modalId === 'gestion-modal') {
              document.getElementById('clave-input').value = "";
@@ -540,7 +540,14 @@ const AppUI = {
         }
 
         const lowerQuery = query.toLowerCase();
-        const filteredStudents = AppState.datosAdicionales.allStudents
+        // CAMBIO v0.5.0: Filtrar alumnos de Cicla de los buscadores (excepto P2P Destino)
+        let studentList = AppState.datosAdicionales.allStudents;
+        
+        if (stateKey !== 'p2pDestino') {
+            studentList = studentList.filter(s => s.grupoNombre !== 'Cicla');
+        }
+        
+        const filteredStudents = studentList
             .filter(s => s.nombre.toLowerCase().includes(lowerQuery))
             .sort((a, b) => a.nombre.localeCompare(b.nombre))
             .slice(0, 10); // Limitar a 10 resultados
@@ -568,12 +575,12 @@ const AppUI = {
     },
 
     // CAMBIO v0.4.1: Eliminada lógica del fondo
-    // CAMBIO v0.5.0: Añadida lógica de bonos
+    // CAMBIO v0.5.0: Añadido 'bono'
     resetSearchInput: function(stateKey) {
         let inputId = '';
         if (stateKey.includes('p2p')) {
              inputId = `${stateKey.replace('p2p', 'p2p-search-')}`;
-        } else if (stateKey === 'bonoAlumno') { // NUEVO v0.5.0
+        } else if (stateKey.includes('bono')) {
              inputId = 'bono-search-alumno';
         } else {
             inputId = `${stateKey}-alumno-search`;
@@ -625,7 +632,189 @@ const AppUI = {
     },
 
     // --- FIN FUNCIONES P2P ---
+
+    // --- NUEVO v0.5.0: FUNCIONES DE BONOS ---
     
+    showBonoModal: function() {
+        if (!AppState.datosActuales) return;
+        
+        // Resetear pestaña de canje
+        AppUI.resetSearchInput('bonoAlumno');
+        document.getElementById('bono-clave-p2p').value = "";
+        document.getElementById('bono-clave-input').value = "";
+        document.getElementById('bono-status-msg').textContent = "";
+        AppTransacciones.setLoadingState(document.getElementById('bono-submit-btn'), document.getElementById('bono-btn-text'), false, 'Canjear Bono');
+
+        // Resetear pestaña de admin
+        document.getElementById('bono-admin-clave').value = "";
+        AppUI.clearBonoAdminForm();
+        document.getElementById('bono-admin-status-msg').textContent = "";
+        document.getElementById('bono-admin-gate').classList.remove('hidden');
+        document.getElementById('bono-admin-panel').classList.add('hidden');
+        AppState.bonos.adminPanelUnlocked = false;
+        
+        // Resetear a la pestaña 1
+        AppUI.changeBonoTab('canjear');
+
+        // Poblar listas
+        AppUI.populateBonoList();
+        AppUI.populateBonoAdminList();
+        
+        AppUI.showModal('bonos-modal');
+    },
+
+    // Cambia entre pestañas en el modal de Bonos
+    changeBonoTab: function(tabId) {
+        document.querySelectorAll('#bonos-modal .bono-tab-btn').forEach(btn => {
+            btn.classList.remove('active-tab', 'border-blue-600', 'text-blue-600');
+            btn.classList.add('border-transparent', 'text-gray-600');
+        });
+
+        document.querySelectorAll('#bonos-modal .bono-tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+
+        const activeBtn = document.querySelector(`#bonos-modal [data-tab="${tabId}"]`);
+        activeBtn.classList.add('active-tab', 'border-blue-600', 'text-blue-600');
+        activeBtn.classList.remove('border-transparent', 'text-gray-600');
+        document.getElementById(`bono-tab-${tabId}`).classList.remove('hidden');
+
+        // CAMBIO v0.5.3: Ocultar/mostrar el botón de canje
+        const bonoSubmitBtn = document.getElementById('bono-submit-btn');
+        if (tabId === 'canjear') {
+            bonoSubmitBtn.classList.remove('hidden');
+        } else {
+            bonoSubmitBtn.classList.add('hidden');
+        }
+
+        // Limpiar mensajes
+        document.getElementById('bono-status-msg').textContent = "";
+        document.getElementById('bono-admin-status-msg').textContent = "";
+    },
+    
+    // Callback para el buscador de alumno en el modal de bonos
+    selectBonoStudent: function(studentName) {
+        // No se necesita acción extra, solo seleccionar
+    },
+
+    // Puebla la lista de bonos disponibles (Vista de Usuario)
+    populateBonoList: function() {
+        const container = document.getElementById('bonos-lista-disponible');
+        const bonos = AppState.bonos.disponibles;
+        
+        // CAMBIO v0.5.4: Filtrar bonos agotados de la vista de usuario
+        const bonosActivos = bonos.filter(b => b.usos_actuales < b.usos_totales);
+
+        if (bonosActivos.length === 0) {
+            container.innerHTML = `<p class="text-sm text-gray-500 text-center col-span-1 md:col-span-2">No hay bonos disponibles en este momento.</p>`;
+            return;
+        }
+
+        container.innerHTML = bonosActivos.map(bono => {
+            const recompensa = AppFormat.formatNumber(bono.recompensa);
+            const usosRestantes = bono.usos_totales - bono.usos_actuales;
+            
+            // Lógica de "canjeado" (a futuro, si la API lo soporta)
+            const isCanjeado = AppState.bonos.canjeados.includes(bono.clave);
+            const cardClass = isCanjeado ? 'bono-item-card canjeado' : 'bono-item-card';
+            const badge = isCanjeado ? 
+                `<span class="text-xs font-bold bg-green-100 text-green-700 rounded-full px-2 py-0.5">CANJEADO</span>` :
+                `<span class="text-xs font-bold bg-gray-100 text-gray-700 rounded-full px-2 py-0.5">DISPONIBLE</span>`;
+
+            return `
+                <div class="${cardClass}">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-500 truncate">${bono.clave}</span>
+                        ${badge}
+                    </div>
+                    <p class="text-base font-semibold text-gray-900 truncate">${bono.nombre}</p>
+                    <div class="flex justify-between items-baseline mt-3">
+                        <span class="text-xs text-gray-500">Quedan ${usosRestantes}</span>
+                        <span class="text-xl font-bold text-blue-600">${recompensa} ℙ</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+    
+    // --- Funciones del Panel de Admin de Bonos ---
+    
+    toggleBonoAdminPanel: function() {
+        const claveInput = document.getElementById('bono-admin-clave');
+        const gate = document.getElementById('bono-admin-gate');
+        const panel = document.getElementById('bono-admin-panel');
+        
+        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
+            AppState.bonos.adminPanelUnlocked = true;
+            gate.classList.add('hidden');
+            panel.classList.remove('hidden');
+            claveInput.value = ""; // Limpiar
+            claveInput.classList.remove('shake', 'border-red-500');
+        } else {
+            claveInput.classList.add('shake', 'border-red-500');
+            claveInput.focus();
+            setTimeout(() => {
+                claveInput.classList.remove('shake');
+            }, 500);
+        }
+    },
+    
+    // Puebla la tabla de bonos configurados (Vista de Admin)
+    // CAMBIO v0.5.4: Añadido botón Eliminar
+    populateBonoAdminList: function() {
+        const tbody = document.getElementById('bonos-admin-lista');
+        const bonos = AppState.bonos.disponibles; // La API (v13.6) envía todos (activos y agotados)
+
+        if (bonos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay bonos configurados.</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        bonos.forEach(bono => {
+            const recompensa = AppFormat.formatNumber(bono.recompensa);
+            const usos = `${bono.usos_actuales} / ${bono.usos_totales}`;
+            const isAgotado = bono.usos_actuales >= bono.usos_totales;
+            const rowClass = isAgotado ? 'opacity-60 bg-gray-50' : '';
+            
+            html += `
+                <tr class="${rowClass}">
+                    <td class="px-4 py-2 text-sm font-semibold text-gray-800">${bono.clave}</td>
+                    <td class="px-4 py-2 text-sm text-gray-600">${bono.nombre}</td>
+                    <td class="px-4 py-2 text-sm text-gray-800 text-right">${recompensa} ℙ</td>
+                    <td class="px-4 py-2 text-sm text-gray-600 text-right">${usos}</td>
+                    <td class="px-4 py-2 text-right text-sm">
+                        <button onclick="AppUI.handleEditBono('${bono.clave}', '${bono.nombre}', ${bono.recompensa}, ${bono.usos_totales})" class="font-medium text-blue-600 hover:text-blue-800 edit-bono-btn">Editar</button>
+                        <!-- NUEVO v0.5.4: Botón Eliminar -->
+                        <button onclick="AppTransacciones.eliminarBono('${bono.clave}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-bono-btn">Eliminar</button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    },
+    
+    // Carga los datos de un bono en el formulario de admin
+    handleEditBono: function(clave, nombre, recompensa, usosTotales) {
+        document.getElementById('bono-admin-clave-input').value = clave;
+        document.getElementById('bono-admin-nombre-input').value = nombre;
+        document.getElementById('bono-admin-recompensa-input').value = recompensa;
+        document.getElementById('bono-admin-usos-input').value = usosTotales;
+        
+        // Hacer scroll al formulario
+        document.getElementById('bono-admin-form-container').scrollIntoView({ behavior: 'smooth' });
+    },
+    
+    // Limpia el formulario de admin de bonos
+    clearBonoAdminForm: function() {
+        document.getElementById('bono-admin-form').reset();
+        document.getElementById('bono-admin-clave-input').disabled = false;
+        document.getElementById('bono-admin-status-msg').textContent = "";
+    },
+    
+    // --- FIN FUNCIONES DE BONOS ---
+    
+
     // --- NUEVO v0.4.2: Cálculo de Comisión Admin ---
     updateAdminDepositoCalculo: function() {
         const cantidadInput = document.getElementById('transaccion-cantidad-input');
@@ -930,183 +1119,6 @@ const AppUI = {
         container.innerHTML = html;
     },
 
-    // --- INICIO v0.5.0: FUNCIONES DEL PORTAL DE BONOS ---
-
-    // CAMBIO v0.5.1: Modificado para manejar pestañas
-    showBonoModal: function() {
-        if (!AppState.datosActuales) return;
-        
-        AppUI.resetSearchInput('bonoAlumno');
-        document.getElementById('bono-clave-p2p').value = "";
-        document.getElementById('bono-clave-input').value = "";
-        document.getElementById('bono-status-msg').textContent = "";
-        
-        // Ocultar panel de admin por defecto
-        document.getElementById('bono-admin-gate').classList.remove('hidden');
-        document.getElementById('bono-admin-panel').classList.add('hidden');
-        document.getElementById('bono-admin-clave').value = "";
-        AppUI.clearBonoAdminForm();
-        
-        // Poblar listas
-        AppUI.populateBonoListaUsuario();
-        AppUI.populateBonoListaAdmin(); // Poblar aunque esté oculto
-        
-        // Resetear a la pestaña 'canjear'
-        AppUI.changeBonoTab('canjear');
-        
-        AppUI.showModal('bonos-modal');
-    },
-
-    // NUEVO v0.5.1: Manejador de pestañas de Bonos
-    changeBonoTab: function(tabId) {
-        document.querySelectorAll('#bonos-modal .bono-tab-btn').forEach(btn => {
-            btn.classList.remove('active-tab', 'border-blue-600', 'text-blue-600');
-            btn.classList.add('border-transparent', 'text-gray-600');
-        });
-
-        document.querySelectorAll('#bonos-modal .bono-tab-content').forEach(content => {
-            content.classList.add('hidden');
-        });
-
-        document.querySelector(`#bonos-modal [data-tab="${tabId}"]`).classList.add('active-tab', 'border-blue-600', 'text-blue-600');
-        document.querySelector(`#bonos-modal [data-tab="${tabId}"]`).classList.remove('border-transparent', 'text-gray-600');
-        document.getElementById(`bono-tab-${tabId}`).classList.remove('hidden');
-    },
-
-    // Callback para el buscador de alumno en Bonos
-    selectBonoStudent: function(studentName) {
-        // Refrescar la lista de bonos para mostrar cuáles ha canjeado este usuario
-        AppUI.populateBonoListaUsuario();
-    },
-
-    populateBonoListaUsuario: function() {
-        const container = document.getElementById('bonos-lista-disponible');
-        const bonos = AppState.datosAdicionales.bonosDisponibles;
-        const alumnoSeleccionado = AppState.currentSearch.bonoAlumno.selected;
-        
-        if (!bonos || bonos.length === 0) {
-            container.innerHTML = '<p class="text-sm text-gray-500 text-center">No hay bonos disponibles en este momento.</p>';
-            return;
-        }
-
-        // Mapear los bonos canjeados por el usuario seleccionado (si hay)
-        const canjeadosMap = {};
-        if (alumnoSeleccionado) {
-            // La API (v0.5.1) ahora solo devuelve los bonos del usuario si se busca
-            // PERO, la API no sabe qué usuario estamos viendo.
-            // Necesitamos una lógica para pedirle a la API los bonos de este usuario.
-            // *** NOTA: La API v0.5.0 no soporta esto, `bonosCanjeadosUsuario` es una lista vacía.
-            // *** VOY A ASUMIR que la API futura (o una nueva llamada) debería traer esto.
-            // *** REVISIÓN: La API v0.5.0 SÍ devuelve `bonosCanjeadosUsuario` en `doGet`, PERO no
-            // *** se actualiza dinámicamente al buscar. Es una lista fija de los bonos del
-            // *** "usuario" que hace el GET (que es anónimo).
-            // *** SOLUCIÓN TEMPORAL: La lógica de 'yaCanjeado' no funcionará 100% en tiempo real
-            // *** hasta que la API `doGet` acepte un `?alumno=...` o `doPost` lo devuelva.
-            // *** Lo dejaremos así, la validación final la hace el backend.
-        }
-
-        container.innerHTML = bonos.map(bono => {
-            const usosRestantes = bono.usos_totales - bono.usos_actuales;
-            const recompensaF = AppFormat.formatNumber(bono.recompensa);
-            
-            let estadoClass = '';
-            let estadoTexto = `Usos restantes: ${usosRestantes}`;
-            
-            const yaCanjeado = false; // Ver nota arriba, esto no se puede saber 100% en cliente.
-            const agotado = usosRestantes <= 0;
-
-            if (yaCanjeado) {
-                // Esta lógica no se activará por ahora
-                estadoClass = 'canjeado';
-                estadoTexto = '¡Ya canjeado!';
-            } else if (agotado) {
-                estadoClass = 'agotado';
-                estadoTexto = '¡Agotado!';
-            }
-
-            return `
-                <div class="bono-item-card ${estadoClass}">
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-base font-semibold text-gray-800">${bono.nombre}</span>
-                        <span class="bono-recompensa">${recompensaF} ℙ</span>
-                    </div>
-                    <p class="text-sm text-gray-600">${estadoTexto}</p>
-                </div>
-            `;
-        }).join('');
-    },
-
-    // ELIMINADA v0.5.1 (Ya no es necesaria)
-    // toggleBonoAdminPanel: function() { ... }
-
-    unlockBonoAdminPanel: function() {
-        const claveInput = document.getElementById('bono-admin-clave');
-        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
-            document.getElementById('bono-admin-gate').classList.add('hidden');
-            document.getElementById('bono-admin-panel').classList.remove('hidden');
-            claveInput.value = "";
-            claveInput.classList.remove('shake', 'border-red-500');
-            AppUI.populateBonoListaAdmin(); // Cargar la lista de admin
-        } else {
-            claveInput.classList.add('shake', 'border-red-500');
-            setTimeout(() => claveInput.classList.remove('shake'), 500);
-        }
-    },
-
-    populateBonoListaAdmin: function() {
-        const tbody = document.getElementById('bonos-admin-lista');
-        const bonos = AppState.datosAdicionales.bonosDisponibles;
-
-        if (!bonos || bonos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay bonos configurados.</td></tr>';
-            return;
-        }
-
-        tbody.innerHTML = bonos.map(bono => {
-            const recompensaF = AppFormat.formatNumber(bono.recompensa);
-            const usos = `${bono.usos_actuales} / ${bono.usos_totales}`;
-            const claveEscapada = bono.clave.replace(/'/g, "\\'"); // Escapar comillas para JS
-            
-            return `
-                <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-2 text-sm font-medium text-gray-900">${bono.clave}</td>
-                    <td class="px-4 py-2 text-sm text-gray-700">${bono.nombre}</td>
-                    <td class="px-4 py-2 text-sm text-gray-800 font-semibold text-right">${recompensaF} ℙ</td>
-                    <td class="px-4 py-2 text-sm ${bono.usos_actuales >= bono.usos_totales ? 'text-red-600' : 'text-gray-700'} text-right">${usos}</td>
-                    <td class="px-4 py-2 text-right">
-                        <button class="edit-bono-btn" onclick="AppUI.loadBonoToForm('${claveEscapada}')">
-                            Editar
-                        </button>
-                    </td>
-                </tr>
-            `;
-        }).join('');
-    },
-
-    // Cargar un bono al formulario de admin para editarlo
-    loadBonoToForm: function(claveBono) {
-        const bono = AppState.datosAdicionales.bonosDisponibles.find(b => b.clave === claveBono);
-        if (!bono) return;
-
-        document.getElementById('bono-admin-clave-input').value = bono.clave;
-        document.getElementById('bono-admin-nombre-input').value = bono.nombre;
-        document.getElementById('bono-admin-recompensa-input').value = bono.recompensa;
-        document.getElementById('bono-admin-usos-input').value = bono.usos_totales;
-        
-        // Scroll to top of modal
-        document.querySelector('#bonos-modal .max-h-[80vh]').scrollTop = 0;
-        // Focus
-        document.getElementById('bono-admin-clave-input').focus();
-    },
-
-    clearBonoAdminForm: function() {
-        const form = document.getElementById('bono-admin-form');
-        form.reset();
-        document.getElementById('bono-admin-status-msg').textContent = "";
-    },
-
-    // --- FIN v0.5.0: FUNCIONES DEL PORTAL DE BONOS ---
-
 
     // --- Utilidades UI ---
     setConnectionStatus: function(status, title) {
@@ -1200,10 +1212,6 @@ const AppUI = {
             link.className = "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link";
             
             // ELIMINADO: Lógica de color de total
-            // let totalColor = "text-gray-600";
-            // if (grupo.total < 0) totalColor = "text-red-600";
-            // if (grupo.total > 0) totalColor = "text-green-600";
-
             // CAMBIO: Eliminado span de total
             link.innerHTML = `
                 <span class="truncate">${grupo.nombre}</span>
@@ -1242,7 +1250,7 @@ const AppUI = {
     /**
      * Muestra la vista de "Inicio"
      */
-    // CAMBIO v0.4.1: Revertida lógica de "Alumnos Destacados" para NO incluir Fondos
+    // CAMBIO v0.5.3: Simetría de tarjetas
     mostrarPantallaNeutral: function(grupos) {
         document.getElementById('main-header-title').textContent = "Bienvenido al Banco del Pincel Dorado";
         document.getElementById('page-subtitle').innerHTML = ''; 
@@ -1267,34 +1275,38 @@ const AppUI = {
         // Tarjeta de Tesorería
         const tesoreriaSaldo = AppState.datosAdicionales.saldoTesoreria;
         
+        // CAMBIO v0.5.3: Añadido h-full y flex flex-col justify-between
         bovedaHtml = `
-            <!-- CAMBIO: Padding 'p-4' -->
-            <div class="bg-white rounded-lg shadow-md p-4">
-                <!-- Fila 1: Título y Badge -->
-                <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-500 truncate">Total en Cuentas</span>
-                    <span class="text-xs font-bold bg-green-100 text-green-700 rounded-full px-2 py-0.5">BÓVEDA</span>
-                </div>
-                <!-- Fila 2: Subtítulo y Monto (Distribución Horizontal) -->
-                <div class="flex justify-between items-baseline mt-3">
-                    <p class="text-lg font-semibold text-gray-900 truncate">Pinceles Totales</p>
-                    <p class="text-3xl font-bold text-green-600">${AppFormat.formatNumber(totalGeneral)} ℙ</p>
+            <div class="bg-white rounded-lg shadow-md p-4 h-full flex flex-col justify-between">
+                <div>
+                    <!-- Fila 1: Título y Badge -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-gray-500 truncate">Total en Cuentas</span>
+                        <span class="text-xs font-bold bg-green-100 text-green-700 rounded-full px-2 py-0.5">BÓVEDA</span>
+                    </div>
+                    <!-- Fila 2: Subtítulo y Monto (Distribución Horizontal) -->
+                    <div class="flex justify-between items-baseline mt-3">
+                        <p class="text-lg font-semibold text-gray-900 truncate">Pinceles Totales</p>
+                        <p class="text-3xl font-bold text-green-600">${AppFormat.formatNumber(totalGeneral)} ℙ</p>
+                    </div>
                 </div>
             </div>
         `;
         
+        // CAMBIO v0.5.3: Añadido h-full y flex flex-col justify-between
         tesoreriaHtml = `
-            <!-- CAMBIO: Padding 'p-4' -->
-            <div class="bg-white rounded-lg shadow-md p-4">
-                <!-- Fila 1: Título y Badge -->
-                <div class="flex items-center justify-between">
-                    <span class="text-sm font-medium text-gray-500 truncate">Capital Operativo</span>
-                    <span class="text-xs font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">TESORERÍA</span>
-                </div>
-                <!-- Fila 2: Subtítulo y Monto (Distribución Horizontal) -->
-                <div class="flex justify-between items-baseline mt-3">
-                    <p class="text-lg font-semibold text-gray-900 truncate">Fondo del Banco</p>
-                    <p class="text-3xl font-bold text-blue-600">${AppFormat.formatNumber(tesoreriaSaldo)} ℙ</p>
+            <div class="bg-white rounded-lg shadow-md p-4 h-full flex flex-col justify-between">
+                <div>
+                    <!-- Fila 1: Título y Badge -->
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm font-medium text-gray-500 truncate">Capital Operativo</span>
+                        <span class="text-xs font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">TESORERÍA</span>
+                    </div>
+                    <!-- Fila 2: Subtítulo y Monto (Distribución Horizontal) -->
+                    <div class="flex justify-between items-baseline mt-3">
+                        <p class="text-lg font-semibold text-gray-900 truncate">Fondo del Banco</p>
+                        <p class="text-3xl font-bold text-blue-600">${AppFormat.formatNumber(tesoreriaSaldo)} ℙ</p>
+                    </div>
                 </div>
             </div>
         `;
@@ -1306,10 +1318,7 @@ const AppUI = {
         // 1. Obtener datos necesarios
         const allStudents = AppState.datosAdicionales.allStudents;
         const depositosActivos = AppState.datosAdicionales.depositosActivos;
-        // ELIMINADO v0.4.1
-        // const inversionesFondoActivas = AppState.datosAdicionales.inversionesFondoActivas;
-        // const valorParticipacion = AppState.fondoData.valorParticipacion;
-
+        
         // 2. Mapear alumnos para incluir su capital total
         const studentsWithCapital = allStudents.map(student => {
             // a) Calcular total en Depósitos (Lógica anterior)
@@ -1321,15 +1330,12 @@ const AppUI = {
                     return sum + montoNumerico;
                 }, 0);
             
-            // b) ELIMINADO v0.4.1: Calcular total en Fondo de Inversión
-            
             // c) Calcular Capital Total (REVERTIDO)
             const capitalTotal = student.pinceles + totalInvertidoDepositos;
 
             return {
                 ...student, 
                 totalInvertidoDepositos: totalInvertidoDepositos,
-                // totalInvertidoFondo: 0, // ELIMINADO v0.4.1
                 capitalTotal: capitalTotal
             };
         });
@@ -1623,8 +1629,6 @@ const AppUI = {
         // Buscar préstamos y depósitos
         const prestamoActivo = AppState.datosAdicionales.prestamosActivos.find(p => p.alumno === student.nombre);
         const depositoActivo = AppState.datosAdicionales.depositosActivos.find(d => d.alumno === student.nombre);
-        // ELIMINADO v0.4.1
-        // const inversionActiva = AppState.datosAdicionales.inversionesFondoActivas.find(i => i.alumno === student.nombre);
 
         const createStat = (label, value, valueClass = 'text-gray-900') => `
             <div class="bg-gray-50 p-4 rounded-lg text-center">
@@ -1642,7 +1646,6 @@ const AppUI = {
             const fechaString = `${vencimiento.getDate()}/${vencimiento.getMonth() + 1}`;
             extraHtml += `<p class="text-sm font-bold text-green-600 text-center mt-3 p-2 bg-green-50 rounded-lg">🏦 Depósito Activo (Vence: ${fechaString})</p>`;
         }
-        // ELIMINADO v0.4.1
         
         modalContent.innerHTML = `
             <div class="p-6">
@@ -1726,8 +1729,8 @@ const AppUI = {
 };
 
 // --- OBJETO TRANSACCIONES (Préstamos, Depósitos, P2P, Bonos) ---
-// CAMBIO v0.4.1: Eliminadas funciones del Fondo
-// CAMBIO v0.5.0: Añadidas funciones de Bonos
+// CAMBIO v0.5.0: Añadida lógica de Bonos
+// CAMBIO v0.5.4: Añadida lógica de Eliminar Bonos
 const AppTransacciones = {
 
     realizarTransaccionMultiple: async function() {
@@ -1952,41 +1955,39 @@ const AppTransacciones = {
             AppTransacciones.setLoadingState(submitBtn, btnText, false, 'Realizar Transferencia');
         }
     },
-    
-    // --- ELIMINADO v0.4.1: FUNCIONES DEL FONDO ---
-    
-    // --- INICIO v0.5.0: FUNCIONES DE BONOS ---
+
+    // --- NUEVO v0.5.0: LÓGICA DE BONOS ---
 
     canjearBono: async function() {
         const statusMsg = document.getElementById('bono-status-msg');
         const submitBtn = document.getElementById('bono-submit-btn');
         const btnText = document.getElementById('bono-btn-text');
-
-        const nombreAlumno = AppState.currentSearch.bonoAlumno.selected;
+        
+        const alumnoNombre = AppState.currentSearch.bonoAlumno.selected;
         const claveP2P = document.getElementById('bono-clave-p2p').value;
         const claveBono = document.getElementById('bono-clave-input').value.toUpperCase();
 
         let errorValidacion = "";
-        if (!nombreAlumno) {
-            errorValidacion = "Debes seleccionar tu nombre de la lista.";
+        if (!alumnoNombre) {
+            errorValidacion = "Debe seleccionar su nombre de la lista.";
         } else if (!claveP2P) {
-            errorValidacion = "Debes ingresar tu Clave P2P.";
+            errorValidacion = "Debe ingresar su Clave P2P.";
         } else if (!claveBono) {
-            errorValidacion = "Debes ingresar la clave del bono.";
+            errorValidacion = "Debe ingresar la clave del bono.";
         }
-
+        
         if (errorValidacion) {
             AppTransacciones.setError(statusMsg, errorValidacion);
             return;
         }
 
-        AppTransacciones.setLoadingState(submitBtn, btnText, true, 'Verificando...');
-        AppTransacciones.setLoading(statusMsg, `Canjeando bono "${claveBono}"...`);
+        AppTransacciones.setLoadingState(submitBtn, btnText, true, 'Canjeando...');
+        AppTransacciones.setLoading(statusMsg, `Procesando bono ${claveBono}...`);
 
         try {
             const payload = {
                 accion: 'canjear_bono',
-                alumnoNombre: nombreAlumno,
+                alumnoNombre: alumnoNombre,
                 claveP2P: claveP2P,
                 claveBono: claveBono
             };
@@ -2001,11 +2002,11 @@ const AppTransacciones = {
             if (result.success === true) {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Bono canjeado con éxito!");
                 
-                // Limpiar campos de canje
+                // Limpiar campos
                 document.getElementById('bono-clave-input').value = "";
                 
-                // Recargar datos para actualizar saldo y listas de bonos
-                AppData.cargarDatos(false); 
+                AppData.cargarDatos(false); // Recargar todos los datos
+
             } else {
                 throw new Error(result.message || "Error desconocido de la API.");
             }
@@ -2017,45 +2018,43 @@ const AppTransacciones = {
         }
     },
 
-    crearActualizarBono: async function(event) {
-        event.preventDefault(); // Prevenir envío de formulario
-        
+    crearActualizarBono: async function() {
         const statusMsg = document.getElementById('bono-admin-status-msg');
         const submitBtn = document.getElementById('bono-admin-submit-btn');
         
-        const claveBono = document.getElementById('bono-admin-clave-input').value.toUpperCase();
-        const nombreBono = document.getElementById('bono-admin-nombre-input').value;
+        const clave = document.getElementById('bono-admin-clave-input').value.toUpperCase();
+        const nombre = document.getElementById('bono-admin-nombre-input').value;
         const recompensa = parseInt(document.getElementById('bono-admin-recompensa-input').value, 10);
-        const usosTotales = parseInt(document.getElementById('bono-admin-usos-input').value, 10);
-
+        const usos_totales = parseInt(document.getElementById('bono-admin-usos-input').value, 10);
+        
         let errorValidacion = "";
-        if (!claveBono) {
-            errorValidacion = "La Clave (ID) es obligatoria.";
-        } else if (!nombreBono) {
-            errorValidacion = "El Nombre es obligatorio.";
+        if (!clave) {
+            errorValidacion = "La 'Clave' es obligatoria.";
+        } else if (!nombre) {
+            errorValidacion = "El 'Nombre' es obligatorio.";
         } else if (isNaN(recompensa) || recompensa <= 0) {
-            errorValidacion = "La Recompensa debe ser un número positivo.";
-        } else if (isNaN(usosTotales) || usosTotales <= 0) {
-            errorValidacion = "Los Usos Totales deben ser un número positivo.";
+            errorValidacion = "La 'Recompensa' debe ser un número positivo.";
+        } else if (isNaN(usos_totales) || usos_totales < 0) {
+            errorValidacion = "Los 'Usos Totales' deben ser un número (0 o más).";
         }
-
+        
         if (errorValidacion) {
             AppTransacciones.setError(statusMsg, errorValidacion);
             return;
         }
 
         AppTransacciones.setLoadingState(submitBtn, null, true, 'Guardando...');
-        AppTransacciones.setLoading(statusMsg, `Guardando bono "${claveBono}"...`);
+        AppTransacciones.setLoading(statusMsg, `Guardando bono ${clave}...`);
 
         try {
             const payload = {
                 accion: 'admin_crear_bono',
-                clave: AppConfig.CLAVE_MAESTRA, // Clave maestra de admin
+                clave: AppConfig.CLAVE_MAESTRA,
                 bono: {
-                    clave: claveBono,
-                    nombre: nombreBono,
+                    clave: clave,
+                    nombre: nombre,
                     recompensa: recompensa,
-                    usos_totales: usosTotales
+                    usos_totales: usos_totales
                 }
             };
 
@@ -2069,9 +2068,7 @@ const AppTransacciones = {
             if (result.success === true) {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Bono guardado con éxito!");
                 AppUI.clearBonoAdminForm();
-                
-                // Recargar datos para refrescar las listas
-                AppData.cargarDatos(false); 
+                AppData.cargarDatos(false); // Recargar todos los datos
             } else {
                 throw new Error(result.message || "Error al guardar el bono.");
             }
@@ -2083,7 +2080,48 @@ const AppTransacciones = {
         }
     },
     
-    // --- FIN v0.5.0: FUNCIONES DE BONOS ---
+    // NUEVO v0.5.4: Eliminar Bono
+    eliminarBono: async function(claveBono) {
+        // ADVERTENCIA: Esta función elimina directamente sin confirmación,
+        // ya que `window.confirm()` está prohibido.
+        // En una app real, aquí se llamaría a un modal de confirmación.
+
+        const statusMsg = document.getElementById('bono-admin-status-msg');
+        AppTransacciones.setLoading(statusMsg, `Eliminando bono ${claveBono}...`);
+        
+        // Deshabilitar todos los botones de eliminar para evitar doble clic
+        document.querySelectorAll('.delete-bono-btn').forEach(btn => btn.disabled = true);
+
+        try {
+            const payload = {
+                accion: 'admin_eliminar_bono',
+                clave: AppConfig.CLAVE_MAESTRA,
+                claveBono: claveBono
+            };
+
+            const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            const result = await response.json();
+
+            if (result.success === true) {
+                AppTransacciones.setSuccess(statusMsg, result.message || "¡Bono eliminado con éxito!");
+                AppData.cargarDatos(false); // Recargar todos los datos
+            } else {
+                throw new Error(result.message || "Error al eliminar el bono.");
+            }
+
+        } catch (error) {
+            AppTransacciones.setError(statusMsg, error.message);
+            // Rehabilitar botones solo si hay error
+            document.querySelectorAll('.delete-bono-btn').forEach(btn => btn.disabled = false);
+        } 
+        // No hay 'finally' para rehabilitar botones; si tiene éxito, la lista se recargará
+        // y los botones se rehabilitarán (o no existirán)
+    },
+    
 
     // --- Utilidades de Fetch y Estado ---
 
