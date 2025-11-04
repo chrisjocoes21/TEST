@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-gray-100">
+<!-- CAMBIO 1 (SCROLL): Añadido 'overflow-hidden' al HTML -->
+<html lang="es" class="h-full bg-gray-100 overflow-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,8 +16,10 @@
     <!-- CAMBIO v0.4.0: Versión actualizada -->
     <link rel="stylesheet" href="style.css?v=0.4.0">
 </head>
-<body class="h-full overflow-hidden"> <!-- v0.3.10: overflow-hidden -->
-    <div id="app-container" class="flex h-screen">
+<!-- CAMBIO 1 (SCROLL): 'overflow-hidden' ya estaba aquí (correcto) -->
+<body class="h-full overflow-hidden"> 
+    <!-- CAMBIO 1 (SCROLL): Reemplazado 'h-screen' por 'h-full' para que coincida con el HTML -->
+    <div id="app-container" class="flex h-full">
         <!-- 1. Barra Lateral de Navegación (Fija y Ocultable) -->
         <nav id="sidebar" class="fixed top-0 left-0 h-full z-30 flex flex-col bg-gray-50 w-64 border-r border-gray-200 flex-shrink-0 transition-transform duration-300 transform -translate-x-full">
             
@@ -153,10 +156,11 @@
                 </div>
                 
                 <!-- MÓDULOS DE HOME -->
+                <!-- CAMBIO 2 (GRID): Aplicada la nueva distribución (5-3-4) -->
                 <div id="home-modules-grid" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
                     
-                    <!-- Panel de "Alumnos en Riesgo" (col-span-4) -->
-                    <div id="riesgo-container" class="bg-white rounded-lg shadow-md lg:col-span-4">
+                    <!-- Panel de "Alumnos en Riesgo" (lg:col-span-5) -->
+                    <div id="riesgo-container" class="bg-white rounded-lg shadow-md lg:col-span-5">
                         <h3 class="text-base font-semibold text-gray-800 p-4 border-b border-gray-200">Alumnos en Riesgo</h3>
                         
                         <div class="overflow-x-auto">
@@ -178,8 +182,8 @@
                         </div>
                     </div>
 
-                    <!-- Panel de "Estadísticas Rápidas" (col-span-2) -->
-                    <div id="quick-stats-container" class="bg-white rounded-lg shadow-md lg:col-span-2">
+                    <!-- Panel de "Estadísticas Rápidas" (lg:col-span-3) -->
+                    <div id="quick-stats-container" class="bg-white rounded-lg shadow-md lg:col-span-3">
                         <h3 class="text-base font-semibold text-gray-800 p-4 border-b border-gray-200">Estadísticas</h3>
                         <div id="quick-stats-list" class="p-4 space-y-3">
                             <!-- Stats will be injected here -->
@@ -187,8 +191,8 @@
                         </div>
                     </div>
 
-                    <!-- Tablón de Anuncios (col-span-6) -->
-                    <div id="anuncios-container" class="bg-white rounded-lg shadow-md lg:col-span-6">
+                    <!-- Tablón de Anuncios (lg:col-span-4) -->
+                    <div id="anuncios-container" class="bg-white rounded-lg shadow-md lg:col-span-4">
                         <div class="flex justify-between items-center p-4 border-b border-gray-200">
                             <h3 class="text-base font-semibold text-gray-800">Tablón de Anuncios</h3>
                             <button id="anuncios-modal-btn" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Ver Todos</button>
@@ -529,74 +533,90 @@
 
     <!-- Modal de Reglas -->
     <div id="reglas-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- Contenido... (ACTUALIZADO) -->
+        <!-- CAMBIO 3 (REGLAS): Contenido completamente rediseñado -->
         <div class="bg-white rounded-lg shadow-xl w-full max-w-5xl transform scale-95 transition-transform duration-300">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold text-gray-900">Reglas y Economía del Banco</h2>
+            <div class="p-6 md:p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold text-gray-900">Reglas y Economía del Banco</h2>
                     <button id="reglas-modal-close" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
                 </div>
-                <div class="space-y-6 max-h-[70vh] overflow-y-auto pr-4 text-gray-700 no-scrollbar text-base text-justify">
-                    <div class="p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
-                        <h4 class="font-bold text-blue-800 text-left">Economía Cerrada y Tesorería</h4>
-                        <ul class="mt-2 text-base list-disc pl-5 space-y-1 text-gray-700">
-                            <li>El Banco (Tesorería) es la única fuente de creación de Pinceles.</li>
-                            <li>Todas las acciones del administrador (otorgar préstamos, depósitos a grupos) están <strong>limitadas</strong> por el saldo disponible en la Tesorería.</li>
-                            <li>La Tesorería genera ingresos a través de:
-                                <ul class="list-[circle] pl-4 mt-1 space-y-0.5">
-                                    <li>Impuesto Pasivo Diario (0.5% a saldos > 100 ℙ).</li>
-                                    <li>Comisión por Transferencia P2P (10%).</li>
-                                    <li>Cobro de cuotas e intereses (regulares y por mora) de préstamos.</li>
-                                    <li>Multas (retiros de pinceles) impuestas por el administrador.</li>
-                                    <li>Ingreso Pasivo Diario (simulación de crecimiento económico).</li>
-                                    <!-- NUEVO -->
-                                    <li>Comisiones e impuestos del Fondo de Inversión.</li>
-                                </ul>
-                            </li>
-                        </ul>
+                
+                <!-- Contenedor scrollable con nuevo layout -->
+                <div class="space-y-6 max-h-[70vh] overflow-y-auto pr-4 text-gray-700 no-scrollbar">
+
+                    <!-- Sección 1: Tesorería -->
+                    <div class="space-y-3">
+                        <h4 class="text-lg font-semibold text-gray-800 border-b pb-2">Economía Cerrada y Tesorería</h4>
+                        <p class="text-gray-600 text-justify">
+                            El Banco (Tesorería) es la única entidad que puede crear Pinceles. Todas las acciones del administrador que implican entregar Pinceles (como otorgar préstamos o pagar intereses de depósitos) están estrictamente limitadas por el saldo disponible en la Tesorería.
+                        </p>
+                        <p class="text-gray-600 text-justify">
+                            La Tesorería genera ingresos (ganancias) a través de múltiples fuentes automatizadas para mantener la economía saludable:
+                        </p>
+                        <!-- Bloque de Ingresos de Tesorería -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-2">
+                            <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Impuestos P2P:</strong> Comisión del 10% sobre todas las transferencias entre alumnos.</p>
+                            <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Comisiones del Fondo:</strong> Comisiones de bróker (1%) e impuestos a la ganancia (10%) en el Fondo de Inversión.</p>
+                            <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Intereses de Préstamos:</strong> Ganancias recibidas por el pago de cuotas e intereses de préstamos.</p>
+                            <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Impuesto Pasivo:</strong> Cobro diario del 0.5% a saldos superiores a 100 ℙ.</p>
+                            <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Impuesto a Depósitos:</strong> Cobro del 5% sobre los intereses generados por los depósitos a plazo.</p>
+                            <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Ingreso Pasivo:</strong> Simulación de crecimiento económico que inyecta fondos diariamente.</p>
+                        </div>
                     </div>
-                    <!-- NUEVO: Reglas del Fondo de Inversión -->
-                    <div class="pt-4 border-t border-gray-100">
-                        <h4 class="font-semibold text-gray-800 text-left">Fondo de Inversión BPD (Riesgo Alto)</h4>
-                        <ul class="mt-2 text-base list-disc pl-5 space-y-1">
-                            <li>Permite a los alumnos invertir en un fondo con **retorno variable** (puede ganar o perder).</li>
-                            <li>El **Valor de la Participación** cambia cada noche basado en una simulación de mercado.</li>
-                            <li>**Comisión de Compra (Bróker - 1%):** Al comprar, se cobra un 1% sobre el monto total en Pinceles. El 99% restante se usa para comprar participaciones.</li>
-                            <li>**Comisiones de Venta (Doble):** Al vender, se aplican dos comisiones sobre el valor total de la venta:
-                                <ul class="list-[circle] pl-4 mt-1 space-y-0.5">
-                                    <li>**Comisión de Venta (Bróker - 1%):** Se cobra un 1% sobre el total vendido (gane o pierda).</li>
-                                    <li>**Impuesto a la Ganancia (10%):** Se cobra un 10% *solo sobre la ganancia neta* (plusvalía). Si vende con pérdidas, este impuesto es 0.</li>
-                                </ul>
-                            </li>
-                            <li>**Comisión de Administración (0.01% diario):** El banco cobra esta comisión *directamente al fondo* cada noche. Es invisible para el alumno, pero afecta el rendimiento diario del valor de la participación.</li>
-                        </ul>
+
+                    <!-- Sección 2: Fondo de Inversión -->
+                    <div class="space-y-3 pt-4 border-t">
+                        <h4 class="text-lg font-semibold text-gray-800">Fondo de Inversión BPD (Riesgo Alto)</h4>
+                        <p class="text-gray-600 text-justify">
+                            Permite a los alumnos invertir en un fondo con retorno variable, lo que significa que su valor puede subir o bajar. El Valor de la Participación se actualiza cada noche basado en una simulación de mercado.
+                        </p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Comprar -->
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <h5 class="font-semibold text-gray-800 mb-1">Al Comprar Participaciones</h5>
+                                <p class="text-sm text-gray-600">Se cobra una <strong class="text-gray-900">Comisión de Bróker del 1%</strong> sobre el monto total en Pinceles. El 99% restante se utiliza para adquirir las participaciones.</p>
+                            </div>
+                            <!-- Vender -->
+                            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <h5 class="font-semibold text-gray-800 mb-1">Al Vender Participaciones</h5>
+                                <p class="text-sm text-gray-600">Se aplica una <strong class="text-gray-900">Comisión de Bróker del 1%</strong> sobre el valor total de la venta. Adicionalmente, se cobra un <strong class="text-gray-900">Impuesto a la Ganancia del 10%</strong>, que aplica *únicamente* sobre la ganancia neta (plusvalía). Si se vende con pérdidas, este impuesto es cero.</p>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <h4 class="font-semibold text-gray-800 text-left">Préstamos Bancarios (Admin)</h4>
-                        <ul class="mt-2 text-base list-disc pl-5 space-y-1">
-                            <li>El préstamo se paga automáticamente en cuotas diarias según el plazo (7, 14 o 21 días).</li>
-                            <li class="text-red-700 font-semibold"><strong>Penalización por Mora (Al vencer el plazo):</strong> Si el préstamo vence y aún tiene un monto pendiente, la deuda pendiente <strong>aumentará un 1% CADA DÍA</strong> y el sistema intentará cobrar un <strong>20% del saldo actual</strong> del alumno.</li>
-                            <li>Requisito: Un alumno no puede solicitar un préstamo si ya tiene uno 'Activo' o 'Vencido'.</li>
-                            <li>Paquete Rescate (7 días): Universal, siempre que no tenga préstamo activo.</li>
-                            <li>Paquetes Estándar (14 días) e Inversión (21 días): Requieren saldo positivo y que el préstamo no supere el 50% del saldo actual.</li>
-                        </ul>
+
+                    <!-- Sección 3: Préstamos -->
+                    <div class="space-y-3 pt-4 border-t">
+                        <h4 class="text-lg font-semibold text-gray-800">Préstamos Bancarios (Admin)</h4>
+                        <p class="text-gray-600 text-justify">
+                            Los préstamos se otorgan desde la Tesorería y se pagan automáticamente en cuotas diarias (7, 14 o 21 días). Un alumno no puede solicitar un préstamo si ya tiene uno activo.
+                        </p>
+                        <div class="bg-red-50 p-4 rounded-lg border border-red-200">
+                            <h5 class="font-semibold text-red-800 mb-1">Penalización por Mora (Préstamo Vencido)</h5>
+                            <p class="text-sm text-red-700">Si el préstamo vence y aún hay deuda, la deuda pendiente <strong class="text-red-900">aumentará un 1% CADA DÍA</strong>. Además, el sistema intentará cobrar automáticamente un 20% del saldo actual del alumno diariamente hasta saldar la deuda.</p>
+                        </div>
                     </div>
-                    <div class="pt-4 border-t border-gray-100">
-                        <h4 class="font-semibold text-gray-800 text-left">Depósitos a Plazo (Admin - Riesgo Cero)</h4>
-                        <ul class="mt-2 text-base list-disc pl-5 space-y-1">
-                            <li>Permite a los alumnos invertir sus pinceles para ganar **intereses fijos y garantizados**.</li>
-                            <li>Requisito: No debe tener ningún préstamo activo y debe tener el saldo exacto del paquete.</li>
-                            <li>Al vencer el plazo, la Tesorería paga al alumno el monto original MÁS el interés ganado.</li>
-                            <li class="text-red-700">Se aplica un impuesto del 5% sobre los intereses (ganancias) generados.</li>
-                        </ul>
+
+                    <!-- Sección 4: Depósitos -->
+                    <div class="space-y-3 pt-4 border-t">
+                        <h4 class="text-lg font-semibold text-gray-800">Depósitos a Plazo (Admin - Riesgo Cero)</h4>
+                        <p class="text-gray-600 text-justify">
+                            Permiten a los alumnos bloquear sus Pinceles para ganar intereses fijos y garantizados. Al vencer el plazo, la Tesorería paga el monto original más el interés neto.
+                        </p>
+                        <p class="text-gray-600 text-justify">
+                            <strong class="font-medium text-gray-800">Requisitos:</strong> El alumno no debe tener préstamos activos y debe poseer el saldo exacto del paquete de depósito.
+                        </p>
                     </div>
-                    <div class="pt-4 border-t border-gray-100">
-                        <h4 class="font-semibold text-gray-800 text-left">Transferencias P2P (Alumno-Alumno)</h4>
-                        <ul class="mt-2 text-base list-disc pl-5 space-y-1">
-                            <li>Los alumnos pueden transferir pinceles entre ellos usando el "Portal P2P" y su clave P2P.</li>
-                            <li><strong>Comisión (Impuesto):</strong> Cada transferencia tiene una comisión fija del <strong>10%</strong> sobre el monto enviado.</li>
-                            <li>El impuesto se suma al costo total para el remitente. (Ej: Para enviar 1,000 ℙ, necesita 1,100 ℙ).</li>
-                        </ul>
+
+                    <!-- Sección 5: P2P -->
+                    <div class="space-y-3 pt-4 border-t">
+                        <h4 class="text-lg font-semibold text-gray-800">Transferencias P2P (Alumno-Alumno)</h4>
+                        <p class="text-gray-600 text-justify">
+                            Los alumnos pueden transferirse Pinceles entre ellos usando el "Portal P2P" y su clave personal.
+                        </p>
+                        <p class="text-gray-600 text-justify">
+                            <strong class="font-medium text-gray-800">Comisión:</strong> Cada transferencia tiene un impuesto fijo del <strong class="text-gray-900">10%</strong> sobre el monto enviado. Este impuesto se suma al costo total para el remitente (Ej: Para enviar 1,000 ℙ, se debitarán 1,100 ℙ de la cuenta origen).
+                        </p>
                     </div>
                 </div>
             </div>
