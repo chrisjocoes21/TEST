@@ -10,9 +10,9 @@ const AppConfig = {
     MAX_RETRIES: 5,
     CACHE_DURATION: 300000,
     
-    // CAMBIO v0.4.2: Versión y Estado (Comisión Admin)
+    // CAMBIO v0.5.0: Versión y Estado (Portal de Bonos)
     APP_STATUS: 'Beta', 
-    APP_VERSION: 'v0.4.2 (Comisión Admin)', 
+    APP_VERSION: 'v0.5.0 (Portal de Bonos)', 
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -31,7 +31,10 @@ const AppState = {
         saldoTesoreria: 0,
         prestamosActivos: [],
         depositosActivos: [],
-        // inversionesFondoActivas: [], // ELIMINADO v0.4.1
+        // NUEVO v0.5.0: Lista de bonos
+        bonosDisponibles: [], 
+        // NUEVO v0.5.0: Lista de bonos canjeados (solo los del usuario actual)
+        bonosCanjeadosUsuario: [], 
         allStudents: [] // Lista plana de todos los alumnos
     },
     // ELIMINADO v0.4.1: Estado del Fondo de Inversión
@@ -48,12 +51,13 @@ const AppState = {
     transaccionSelectAll: {}, 
     
     // CAMBIO v0.4.1: Eliminado 'fondoOrigen'
+    // CAMBIO v0.5.0: Añadido 'bonoAlumno'
     currentSearch: {
         prestamo: { query: '', selected: null },
         deposito: { query: '', selected: null },
         p2pOrigen: { query: '', selected: null },
-        p2pDestino: { query: '', selected: null }
-        // fondoOrigen: { query: '', selected: null } // ELIMINADO v0.4.1
+        p2pDestino: { query: '', selected: null },
+        bonoAlumno: { query: '', selected: null } // NUEVO v0.5.0
     }
 };
 
@@ -80,16 +84,16 @@ const AppAuth = {
 
 // --- NÚMEROS Y FORMATO ---
 const AppFormat = {
-    // CAMBIO: Añadido 'maximumFractionDigits: 0' para eliminar decimales en todos los montos principales.
+    // CAMBIO v0.4.5 (Solicitado por usuario): Sin decimales para montos generales
     formatNumber: (num) => new Intl.NumberFormat('es-DO', { maximumFractionDigits: 0 }).format(num),
-    // ELIMINADO v0.4.1: Formateo para participaciones
     // formatParticipacion: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(num),
-    // NUEVO v0.4.0: Formateo de Pinceles (2 decimales) - Esta función no parece estar en uso activo.
+    // NUEVO v0.4.0: Formateo de Pinceles (2 decimales)
     formatPincel: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)
 };
 
 // --- BASE DE DATOS DE ANUNCIOS ---
 // CAMBIO v0.4.1: Eliminados anuncios del fondo
+// CAMBIO v0.5.0: Añadidos anuncios de Bonos
 const AnunciosDB = {
     'AVISO': [
         "La tienda de fin de mes abre el último Jueves de cada mes.", 
@@ -97,15 +101,14 @@ const AnunciosDB = {
         "Recuerden: 'Ver Reglas' tiene información importante sobre la tienda." 
     ],
     'NUEVO': [
+        "¡Nuevo Portal de Bonos! Usa el botón 'Bonos' en la pantalla de inicio para canjear recompensas.",
         "¡Nuevo Sistema Económico! Depósitos de admin limitados por la Tesorería.",
         "¡Nuevo Portal P2P! Transfiere pinceles a tus compañeros (con 10% de comisión).",
-        // "¡NUEVO! Fondo de Inversión BPD. ¡Compra participaciones y arriésgate a ganar (o perder)!", // ELIMINADO v0.4.1
         "La Tesorería cobra un 0.5% diario de impuesto a saldos altos."
     ],
     'CONSEJO': [
         "Usa el botón '»' en la esquina para abrir y cerrar la barra lateral.",
         "Haz clic en el nombre de un alumno en la tabla para ver sus estadísticas.",
-        // "El Fondo de Inversión tiene riesgo. Su valor puede bajar. Invierte con cuidado.", // ELIMINADO v0.4.1
         "¡Invierte! Usa los Depósitos a Plazo para obtener retornos fijos (Admin)."
     ],
     'ALERTA': [
@@ -196,18 +199,16 @@ const AppData = {
     },
     
     // CAMBIO v0.4.1: Eliminado procesamiento de datos del Fondo
+    // CAMBIO v0.5.0: Añadido procesamiento de Bonos
     procesarYMostrarDatos: function(data) {
         // 1. Separar Tesorería y Datos Adicionales
         AppState.datosAdicionales.saldoTesoreria = data.saldoTesoreria || 0;
         AppState.datosAdicionales.prestamosActivos = data.prestamosActivos || [];
         AppState.datosAdicionales.depositosActivos = data.depositosActivos || [];
-        // ELIMINADO v0.4.1: Datos del Fondo
-        // AppState.datosAdicionales.inversionesFondoActivas = data.inversionesFondoActivas || [];
-        // AppState.fondoData.valorParticipacion = data.valorParticipacionActual || 0;
-        // if (data.tasasFondo) {
-        //     AppState.fondoData.tasas.broker = data.tasasFondo.broker || 0.01;
-        //     AppState.fondoData.tasas.plusvalia = data.tasasFondo.plusvalia || 0.10;
-        // }
+        
+        // NUEVO v0.5.0: Cargar datos de bonos
+        AppState.datosAdicionales.bonosDisponibles = data.bonosDisponibles || [];
+        AppState.datosAdicionales.bonosCanjeadosUsuario = data.bonosCanjeadosUsuario || [];
 
         const allGroups = data.gruposData;
         
@@ -254,10 +255,11 @@ const AppData = {
         
         AppUI.actualizarSidebarActivo();
         
-        // ELIMINADO v0.4.1: Actualizar info del fondo
-        // if (document.getElementById('fondo-inversion-modal').classList.contains('opacity-0') === false) {
-        //     AppUI.updateFondoInfo();
-        // }
+        // NUEVO v0.5.0: Refrescar modal de bonos si está abierto
+        if (document.getElementById('bonos-modal').classList.contains('opacity-0') === false) {
+            AppUI.populateBonoListaUsuario();
+            AppUI.populateBonoListaAdmin();
+        }
 
         return activeGroups; // Devuelve solo los grupos limpios y ordenados (con Cicla al final)
     }
@@ -322,6 +324,21 @@ const AppUI = {
             if (e.target.id === 'anuncios-modal') AppUI.hideModal('anuncios-modal');
         });
 
+        // Listeners Modal Bonos (NUEVO v0.5.0)
+        document.getElementById('bonos-btn').addEventListener('click', AppUI.showBonoModal);
+        document.getElementById('bonos-modal-close').addEventListener('click', () => AppUI.hideModal('bonos-modal'));
+        document.getElementById('bonos-cancel-btn').addEventListener('click', () => AppUI.hideModal('bonos-modal'));
+        document.getElementById('bonos-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'bonos-modal') AppUI.hideModal('bonos-modal');
+        });
+        document.getElementById('bono-submit-btn').addEventListener('click', AppTransacciones.canjearBono);
+        
+        // Listeners Admin Bonos (NUEVO v0.5.0)
+        document.getElementById('bono-admin-toggle-btn').addEventListener('click', AppUI.toggleBonoAdminPanel);
+        document.getElementById('bono-admin-unlock-btn').addEventListener('click', AppUI.unlockBonoAdminPanel);
+        document.getElementById('bono-admin-form').addEventListener('submit', AppTransacciones.crearActualizarBono);
+        document.getElementById('bono-admin-clear-btn').addEventListener('click', AppUI.clearBonoAdminForm);
+
         // Listener Sidebar
         document.getElementById('toggle-sidebar-btn').addEventListener('click', AppUI.toggleSidebar);
         
@@ -349,6 +366,8 @@ const AppUI = {
         AppUI.setupSearchInput('deposito-alumno-search', 'deposito-search-results', 'deposito', AppUI.loadDepositoPaquetes);
         AppUI.setupSearchInput('p2p-search-origen', 'p2p-origen-results', 'p2pOrigen', AppUI.selectP2PStudent);
         AppUI.setupSearchInput('p2p-search-destino', 'p2p-destino-results', 'p2pDestino', AppUI.selectP2PStudent);
+        // NUEVO v0.5.0: Buscador de alumno en modal de Bonos
+        AppUI.setupSearchInput('bono-search-alumno', 'bono-search-results', 'bonoAlumno', AppUI.selectBonoStudent);
         
         // ELIMINADO v0.4.1: Listeners para buscadores del Fondo
 
@@ -387,6 +406,7 @@ const AppUI = {
     },
 
     // CAMBIO v0.4.2: Añadida limpieza del cálculo de comisión admin
+    // CAMBIO v0.5.0: Añadida limpieza del modal de bonos
     hideModal: function(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -417,6 +437,20 @@ const AppUI = {
             document.getElementById('p2p-calculo-impuesto').textContent = "";
             document.getElementById('p2p-status-msg').textContent = "";
             AppTransacciones.setLoadingState(document.getElementById('p2p-submit-btn'), document.getElementById('p2p-btn-text'), false, 'Realizar Transferencia');
+        }
+
+        // NUEVO v0.5.0: Limpiar campos de Bonos
+        if (modalId === 'bonos-modal') {
+            AppUI.resetSearchInput('bonoAlumno');
+            document.getElementById('bono-clave-p2p').value = "";
+            document.getElementById('bono-clave-input').value = "";
+            document.getElementById('bono-status-msg').textContent = "";
+            // Resetear panel de admin
+            document.getElementById('bono-admin-gate').classList.remove('hidden');
+            document.getElementById('bono-admin-panel').classList.add('hidden');
+            document.getElementById('bono-admin-clave').value = "";
+            AppUI.clearBonoAdminForm();
+            AppTransacciones.setLoadingState(document.getElementById('bono-submit-btn'), document.getElementById('bono-btn-text'), false, 'Canjear Bono');
         }
         
         // ELIMINADO v0.4.1: Limpiar campos del Fondo
@@ -522,12 +556,13 @@ const AppUI = {
     },
 
     // CAMBIO v0.4.1: Eliminada lógica del fondo
+    // CAMBIO v0.5.0: Añadida lógica de bonos
     resetSearchInput: function(stateKey) {
         let inputId = '';
         if (stateKey.includes('p2p')) {
              inputId = `${stateKey.replace('p2p', 'p2p-search-')}`;
-        // } else if (stateKey.includes('fondo')) {
-            // ELIMINADO
+        } else if (stateKey === 'bonoAlumno') { // NUEVO v0.5.0
+             inputId = 'bono-search-alumno';
         } else {
             inputId = `${stateKey}-alumno-search`;
         }
@@ -882,6 +917,166 @@ const AppUI = {
         
         container.innerHTML = html;
     },
+
+    // --- INICIO v0.5.0: FUNCIONES DEL PORTAL DE BONOS ---
+
+    showBonoModal: function() {
+        if (!AppState.datosActuales) return;
+        
+        AppUI.resetSearchInput('bonoAlumno');
+        document.getElementById('bono-clave-p2p').value = "";
+        document.getElementById('bono-clave-input').value = "";
+        document.getElementById('bono-status-msg').textContent = "";
+        
+        // Ocultar panel de admin por defecto
+        document.getElementById('bono-admin-gate').classList.remove('hidden');
+        document.getElementById('bono-admin-panel').classList.add('hidden');
+        document.getElementById('bono-admin-clave').value = "";
+        AppUI.clearBonoAdminForm();
+        
+        // Poblar listas
+        AppUI.populateBonoListaUsuario();
+        AppUI.populateBonoListaAdmin(); // Poblar aunque esté oculto
+        
+        AppUI.showModal('bonos-modal');
+    },
+
+    // Callback para el buscador de alumno en Bonos
+    selectBonoStudent: function(studentName) {
+        // Refrescar la lista de bonos para mostrar cuáles ha canjeado este usuario
+        AppUI.populateBonoListaUsuario();
+    },
+
+    populateBonoListaUsuario: function() {
+        const container = document.getElementById('bonos-lista-disponible');
+        const bonos = AppState.datosAdicionales.bonosDisponibles;
+        const alumnoSeleccionado = AppState.currentSearch.bonoAlumno.selected;
+        
+        if (!bonos || bonos.length === 0) {
+            container.innerHTML = '<p class="text-sm text-gray-500 text-center">No hay bonos disponibles en este momento.</p>';
+            return;
+        }
+
+        // Mapear los bonos canjeados por el usuario seleccionado (si hay)
+        const canjeadosMap = {};
+        if (alumnoSeleccionado) {
+            const bonosDelUsuario = AppState.datosAdicionales.bonosCanjeadosUsuario
+                .filter(b => b.alumno === alumnoSeleccionado);
+            bonosDelUsuario.forEach(b => canjeadosMap[b.clave_bono] = true);
+        }
+
+        container.innerHTML = bonos.map(bono => {
+            const usosRestantes = bono.usos_totales - bono.usos_actuales;
+            const recompensaF = AppFormat.formatNumber(bono.recompensa);
+            
+            let estadoClass = '';
+            let estadoTexto = `Usos restantes: ${usosRestantes}`;
+            
+            const yaCanjeado = alumnoSeleccionado && canjeadosMap[bono.clave];
+            const agotado = usosRestantes <= 0;
+
+            if (yaCanjeado) {
+                estadoClass = 'canjeado';
+                estadoTexto = '¡Ya canjeado!';
+            } else if (agotado) {
+                estadoClass = 'agotado';
+                estadoTexto = '¡Agotado!';
+            }
+
+            return `
+                <div class="bono-item-card ${estadoClass}">
+                    <div class="flex justify-between items-center mb-1">
+                        <span class="text-base font-semibold text-gray-800">${bono.nombre}</span>
+                        <span class="bono-recompensa">${recompensaF} ℙ</span>
+                    </div>
+                    <p class="text-sm text-gray-600">${estadoTexto}</p>
+                </div>
+            `;
+        }).join('');
+    },
+
+    toggleBonoAdminPanel: function() {
+        const gate = document.getElementById('bono-admin-gate');
+        const panel = document.getElementById('bono-admin-panel');
+        
+        if (panel.classList.contains('hidden')) {
+            // Si está oculto, mostrar el gate
+            gate.classList.remove('hidden');
+        } else {
+            // Si está visible, ocultarlo y mostrar el gate
+            gate.classList.remove('hidden');
+            panel.classList.add('hidden');
+            document.getElementById('bono-admin-clave').value = "";
+        }
+    },
+
+    unlockBonoAdminPanel: function() {
+        const claveInput = document.getElementById('bono-admin-clave');
+        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
+            document.getElementById('bono-admin-gate').classList.add('hidden');
+            document.getElementById('bono-admin-panel').classList.remove('hidden');
+            claveInput.value = "";
+            claveInput.classList.remove('shake', 'border-red-500');
+            AppUI.populateBonoListaAdmin(); // Cargar la lista de admin
+        } else {
+            claveInput.classList.add('shake', 'border-red-500');
+            setTimeout(() => claveInput.classList.remove('shake'), 500);
+        }
+    },
+
+    populateBonoListaAdmin: function() {
+        const tbody = document.getElementById('bonos-admin-lista');
+        const bonos = AppState.datosAdicionales.bonosDisponibles;
+
+        if (!bonos || bonos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay bonos configurados.</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = bonos.map(bono => {
+            const recompensaF = AppFormat.formatNumber(bono.recompensa);
+            const usos = `${bono.usos_actuales} / ${bono.usos_totales}`;
+            const claveEscapada = bono.clave.replace(/'/g, "\\'"); // Escapar comillas para JS
+            
+            return `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-2 text-sm font-medium text-gray-900">${bono.clave}</td>
+                    <td class="px-4 py-2 text-sm text-gray-700">${bono.nombre}</td>
+                    <td class="px-4 py-2 text-sm text-gray-800 font-semibold text-right">${recompensaF} ℙ</td>
+                    <td class="px-4 py-2 text-sm ${bono.usos_actuales >= bono.usos_totales ? 'text-red-600' : 'text-gray-700'} text-right">${usos}</td>
+                    <td class="px-4 py-2 text-right">
+                        <button class="edit-bono-btn" onclick="AppUI.loadBonoToForm('${claveEscapada}')">
+                            Editar
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    },
+
+    // Cargar un bono al formulario de admin para editarlo
+    loadBonoToForm: function(claveBono) {
+        const bono = AppState.datosAdicionales.bonosDisponibles.find(b => b.clave === claveBono);
+        if (!bono) return;
+
+        document.getElementById('bono-admin-clave-input').value = bono.clave;
+        document.getElementById('bono-admin-nombre-input').value = bono.nombre;
+        document.getElementById('bono-admin-recompensa-input').value = bono.recompensa;
+        document.getElementById('bono-admin-usos-input').value = bono.usos_totales;
+        
+        // Scroll to top of modal
+        document.querySelector('#bonos-modal .max-h-[80vh]').scrollTop = 0;
+        // Focus
+        document.getElementById('bono-admin-clave-input').focus();
+    },
+
+    clearBonoAdminForm: function() {
+        const form = document.getElementById('bono-admin-form');
+        form.reset();
+        document.getElementById('bono-admin-status-msg').textContent = "";
+    },
+
+    // --- FIN v0.5.0: FUNCIONES DEL PORTAL DE BONOS ---
 
 
     // --- Utilidades UI ---
@@ -1501,8 +1696,9 @@ const AppUI = {
     }
 };
 
-// --- OBJETO TRANSACCIONES (Préstamos, Depósitos, P2P) ---
+// --- OBJETO TRANSACCIONES (Préstamos, Depósitos, P2P, Bonos) ---
 // CAMBIO v0.4.1: Eliminadas funciones del Fondo
+// CAMBIO v0.5.0: Añadidas funciones de Bonos
 const AppTransacciones = {
 
     realizarTransaccionMultiple: async function() {
@@ -1729,6 +1925,136 @@ const AppTransacciones = {
     },
     
     // --- ELIMINADO v0.4.1: FUNCIONES DEL FONDO ---
+    
+    // --- INICIO v0.5.0: FUNCIONES DE BONOS ---
+
+    canjearBono: async function() {
+        const statusMsg = document.getElementById('bono-status-msg');
+        const submitBtn = document.getElementById('bono-submit-btn');
+        const btnText = document.getElementById('bono-btn-text');
+
+        const nombreAlumno = AppState.currentSearch.bonoAlumno.selected;
+        const claveP2P = document.getElementById('bono-clave-p2p').value;
+        const claveBono = document.getElementById('bono-clave-input').value.toUpperCase();
+
+        let errorValidacion = "";
+        if (!nombreAlumno) {
+            errorValidacion = "Debes seleccionar tu nombre de la lista.";
+        } else if (!claveP2P) {
+            errorValidacion = "Debes ingresar tu Clave P2P.";
+        } else if (!claveBono) {
+            errorValidacion = "Debes ingresar la clave del bono.";
+        }
+
+        if (errorValidacion) {
+            AppTransacciones.setError(statusMsg, errorValidacion);
+            return;
+        }
+
+        AppTransacciones.setLoadingState(submitBtn, btnText, true, 'Verificando...');
+        AppTransacciones.setLoading(statusMsg, `Canjeando bono "${claveBono}"...`);
+
+        try {
+            const payload = {
+                accion: 'canjear_bono',
+                alumnoNombre: nombreAlumno,
+                claveP2P: claveP2P,
+                claveBono: claveBono
+            };
+
+            const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            const result = await response.json();
+
+            if (result.success === true) {
+                AppTransacciones.setSuccess(statusMsg, result.message || "¡Bono canjeado con éxito!");
+                
+                // Limpiar campos de canje
+                document.getElementById('bono-clave-input').value = "";
+                
+                // Recargar datos para actualizar saldo y listas de bonos
+                AppData.cargarDatos(false); 
+            } else {
+                throw new Error(result.message || "Error desconocido de la API.");
+            }
+
+        } catch (error) {
+            AppTransacciones.setError(statusMsg, error.message);
+        } finally {
+            AppTransacciones.setLoadingState(submitBtn, btnText, false, 'Canjear Bono');
+        }
+    },
+
+    crearActualizarBono: async function(event) {
+        event.preventDefault(); // Prevenir envío de formulario
+        
+        const statusMsg = document.getElementById('bono-admin-status-msg');
+        const submitBtn = document.getElementById('bono-admin-submit-btn');
+        
+        const claveBono = document.getElementById('bono-admin-clave-input').value.toUpperCase();
+        const nombreBono = document.getElementById('bono-admin-nombre-input').value;
+        const recompensa = parseInt(document.getElementById('bono-admin-recompensa-input').value, 10);
+        const usosTotales = parseInt(document.getElementById('bono-admin-usos-input').value, 10);
+
+        let errorValidacion = "";
+        if (!claveBono) {
+            errorValidacion = "La Clave (ID) es obligatoria.";
+        } else if (!nombreBono) {
+            errorValidacion = "El Nombre es obligatorio.";
+        } else if (isNaN(recompensa) || recompensa <= 0) {
+            errorValidacion = "La Recompensa debe ser un número positivo.";
+        } else if (isNaN(usosTotales) || usosTotales <= 0) {
+            errorValidacion = "Los Usos Totales deben ser un número positivo.";
+        }
+
+        if (errorValidacion) {
+            AppTransacciones.setError(statusMsg, errorValidacion);
+            return;
+        }
+
+        AppTransacciones.setLoadingState(submitBtn, null, true, 'Guardando...');
+        AppTransacciones.setLoading(statusMsg, `Guardando bono "${claveBono}"...`);
+
+        try {
+            const payload = {
+                accion: 'admin_crear_bono',
+                clave: AppConfig.CLAVE_MAESTRA, // Clave maestra de admin
+                bono: {
+                    clave: claveBono,
+                    nombre: nombreBono,
+                    recompensa: recompensa,
+                    usos_totales: usosTotales
+                }
+            };
+
+            const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            const result = await response.json();
+
+            if (result.success === true) {
+                AppTransacciones.setSuccess(statusMsg, result.message || "¡Bono guardado con éxito!");
+                AppUI.clearBonoAdminForm();
+                
+                // Recargar datos para refrescar las listas
+                AppData.cargarDatos(false); 
+            } else {
+                throw new Error(result.message || "Error al guardar el bono.");
+            }
+
+        } catch (error) {
+            AppTransacciones.setError(statusMsg, error.message);
+        } finally {
+            AppTransacciones.setLoadingState(submitBtn, null, false, 'Crear / Actualizar Bono');
+        }
+    },
+    
+    // --- FIN v0.5.0: FUNCIONES DE BONOS ---
 
     // --- Utilidades de Fetch y Estado ---
 
