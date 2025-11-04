@@ -195,3 +195,19 @@ scrollbar-width: none;  /* Firefox */
     background-color: #e2e8f0; /* bg-slate-200 */
     color: #1e293b; /* text-slate-800 */
 }
+
+/* =================================================================== */
+/* NUEVO (v0.5.1): Estilos para Pestañas del Modal de Bonos */
+/* =================================================================== */
+.bono-tab-btn {
+    border-radius: 0;
+    margin-right: 0.5rem;
+}
+#bonos-modal .bono-tab-btn.active-tab {
+    border-bottom-color: #3b82f6 !important; /* blue-600 */
+    color: #3b82f6 !important;
+}
+.bono-tab-content {
+    /* Mantenemos una altura mínima para evitar saltos */
+    min-height: 450px; 
+}
