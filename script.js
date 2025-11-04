@@ -10,9 +10,9 @@ const AppConfig = {
     MAX_RETRIES: 5,
     CACHE_DURATION: 300000,
     
-    // CAMBIO v0.5.0: Versión y Estado (Portal de Bonos)
+    // CAMBIO v0.5.2: Rediseño Layout Admin Bonos
     APP_STATUS: 'Beta', 
-    APP_VERSION: 'v0.5.0 (Portal de Bonos)', 
+    APP_VERSION: 'v0.5.2 (Rediseño Layout Admin Bonos)', 
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -334,10 +334,19 @@ const AppUI = {
         document.getElementById('bono-submit-btn').addEventListener('click', AppTransacciones.canjearBono);
         
         // Listeners Admin Bonos (NUEVO v0.5.0)
-        document.getElementById('bono-admin-toggle-btn').addEventListener('click', AppUI.toggleBonoAdminPanel);
+        // document.getElementById('bono-admin-toggle-btn').addEventListener('click', AppUI.toggleBonoAdminPanel); // ELIMINADO v0.5.1
         document.getElementById('bono-admin-unlock-btn').addEventListener('click', AppUI.unlockBonoAdminPanel);
         document.getElementById('bono-admin-form').addEventListener('submit', AppTransacciones.crearActualizarBono);
         document.getElementById('bono-admin-clear-btn').addEventListener('click', AppUI.clearBonoAdminForm);
+        
+        // NUEVO v0.5.1: Listeners para Pestañas de Bonos
+        document.querySelectorAll('#bonos-modal .bono-tab-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const tabId = e.target.dataset.tab;
+                AppUI.changeBonoTab(tabId);
+            });
+        });
+
 
         // Listener Sidebar
         document.getElementById('toggle-sidebar-btn').addEventListener('click', AppUI.toggleSidebar);
@@ -407,6 +416,7 @@ const AppUI = {
 
     // CAMBIO v0.4.2: Añadida limpieza del cálculo de comisión admin
     // CAMBIO v0.5.0: Añadida limpieza del modal de bonos
+    // CAMBIO v0.5.1: Actualizada limpieza de modal de bonos para pestañas
     hideModal: function(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -451,6 +461,8 @@ const AppUI = {
             document.getElementById('bono-admin-clave').value = "";
             AppUI.clearBonoAdminForm();
             AppTransacciones.setLoadingState(document.getElementById('bono-submit-btn'), document.getElementById('bono-btn-text'), false, 'Canjear Bono');
+            // NUEVO v0.5.1: Resetear a la pestaña principal
+            AppUI.changeBonoTab('canjear');
         }
         
         // ELIMINADO v0.4.1: Limpiar campos del Fondo
@@ -920,6 +932,7 @@ const AppUI = {
 
     // --- INICIO v0.5.0: FUNCIONES DEL PORTAL DE BONOS ---
 
+    // CAMBIO v0.5.1: Modificado para manejar pestañas
     showBonoModal: function() {
         if (!AppState.datosActuales) return;
         
@@ -938,7 +951,26 @@ const AppUI = {
         AppUI.populateBonoListaUsuario();
         AppUI.populateBonoListaAdmin(); // Poblar aunque esté oculto
         
+        // Resetear a la pestaña 'canjear'
+        AppUI.changeBonoTab('canjear');
+        
         AppUI.showModal('bonos-modal');
+    },
+
+    // NUEVO v0.5.1: Manejador de pestañas de Bonos
+    changeBonoTab: function(tabId) {
+        document.querySelectorAll('#bonos-modal .bono-tab-btn').forEach(btn => {
+            btn.classList.remove('active-tab', 'border-blue-600', 'text-blue-600');
+            btn.classList.add('border-transparent', 'text-gray-600');
+        });
+
+        document.querySelectorAll('#bonos-modal .bono-tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+
+        document.querySelector(`#bonos-modal [data-tab="${tabId}"]`).classList.add('active-tab', 'border-blue-600', 'text-blue-600');
+        document.querySelector(`#bonos-modal [data-tab="${tabId}"]`).classList.remove('border-transparent', 'text-gray-600');
+        document.getElementById(`bono-tab-${tabId}`).classList.remove('hidden');
     },
 
     // Callback para el buscador de alumno en Bonos
@@ -960,9 +992,17 @@ const AppUI = {
         // Mapear los bonos canjeados por el usuario seleccionado (si hay)
         const canjeadosMap = {};
         if (alumnoSeleccionado) {
-            const bonosDelUsuario = AppState.datosAdicionales.bonosCanjeadosUsuario
-                .filter(b => b.alumno === alumnoSeleccionado);
-            bonosDelUsuario.forEach(b => canjeadosMap[b.clave_bono] = true);
+            // La API (v0.5.1) ahora solo devuelve los bonos del usuario si se busca
+            // PERO, la API no sabe qué usuario estamos viendo.
+            // Necesitamos una lógica para pedirle a la API los bonos de este usuario.
+            // *** NOTA: La API v0.5.0 no soporta esto, `bonosCanjeadosUsuario` es una lista vacía.
+            // *** VOY A ASUMIR que la API futura (o una nueva llamada) debería traer esto.
+            // *** REVISIÓN: La API v0.5.0 SÍ devuelve `bonosCanjeadosUsuario` en `doGet`, PERO no
+            // *** se actualiza dinámicamente al buscar. Es una lista fija de los bonos del
+            // *** "usuario" que hace el GET (que es anónimo).
+            // *** SOLUCIÓN TEMPORAL: La lógica de 'yaCanjeado' no funcionará 100% en tiempo real
+            // *** hasta que la API `doGet` acepte un `?alumno=...` o `doPost` lo devuelva.
+            // *** Lo dejaremos así, la validación final la hace el backend.
         }
 
         container.innerHTML = bonos.map(bono => {
@@ -972,10 +1012,11 @@ const AppUI = {
             let estadoClass = '';
             let estadoTexto = `Usos restantes: ${usosRestantes}`;
             
-            const yaCanjeado = alumnoSeleccionado && canjeadosMap[bono.clave];
+            const yaCanjeado = false; // Ver nota arriba, esto no se puede saber 100% en cliente.
             const agotado = usosRestantes <= 0;
 
             if (yaCanjeado) {
+                // Esta lógica no se activará por ahora
                 estadoClass = 'canjeado';
                 estadoTexto = '¡Ya canjeado!';
             } else if (agotado) {
@@ -995,20 +1036,8 @@ const AppUI = {
         }).join('');
     },
 
-    toggleBonoAdminPanel: function() {
-        const gate = document.getElementById('bono-admin-gate');
-        const panel = document.getElementById('bono-admin-panel');
-        
-        if (panel.classList.contains('hidden')) {
-            // Si está oculto, mostrar el gate
-            gate.classList.remove('hidden');
-        } else {
-            // Si está visible, ocultarlo y mostrar el gate
-            gate.classList.remove('hidden');
-            panel.classList.add('hidden');
-            document.getElementById('bono-admin-clave').value = "";
-        }
-    },
+    // ELIMINADA v0.5.1 (Ya no es necesaria)
+    // toggleBonoAdminPanel: function() { ... }
 
     unlockBonoAdminPanel: function() {
         const claveInput = document.getElementById('bono-admin-clave');
