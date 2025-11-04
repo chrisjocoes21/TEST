@@ -13,8 +13,8 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏦</text></svg>">
 
     <!-- Archivo de estilos personalizados -->
-    <!-- CAMBIO v0.5.2: Rediseño Layout Admin Bonos -->
-    <link rel="stylesheet" href="style.css?v=0.5.2">
+    <!-- CAMBIO v0.5.1: Versión actualizada para layout bonos -->
+    <link rel="stylesheet" href="style.css?v=0.5.1">
 </head>
 <!-- CAMBIO 1 (SCROLL): 'overflow-hidden' ya estaba aquí (correcto) -->
 <body class="h-full overflow-hidden"> 
@@ -123,7 +123,8 @@
                         </div>
                         
                         <!-- Fila 2, Col 2: Contador/Botones -->
-                        <div class="flex flex-wrap items-center justify-between gap-4 px-3 bg-white rounded-lg shadow-md p-3 h-full">
+                        <!-- CAMBIO v0.5.2: Re-estructuración de botones para anchos iguales -->
+                        <div class="flex flex-col justify-between gap-4 px-3 bg-white rounded-lg shadow-md p-3 h-full">
                             <!-- Timer -->
                             <div id="countdown-timer" class="flex-shrink-0 text-sm font-medium text-gray-700 flex items-baseline gap-2">
                                 <span id="days" class="text-xl font-bold text-blue-600 w-8 text-right">00</span><span class="text-xs text-gray-500 uppercase -ml-1">Días</span>
@@ -135,13 +136,13 @@
                             <div id="store-message" class="hidden w-full text-center text-green-600 font-semibold">
                                 ¡La tienda está abierta!
                             </div>
-                            
-                            <!-- CAMBIO v0.5.2: Botones con flex-1 para mismo tamaño -->
-                            <div class="flex gap-3 flex-shrink-0 w-full justify-center">
+                            <!-- Botones -->
+                            <div class="flex gap-3 flex-shrink-0 w-full">
                                 <button id="reglas-btn" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
                                     Ver Reglas
                                 </button>
-                                <button id="bonos-btn" class="flex-1 px-4 py-2 bg-yellow-500 text-white text-sm font-medium rounded-lg hover:bg-yellow-600 transition-colors shadow-sm">
+                                <!-- NUEVO v0.5.0: Botón de Bonos -->
+                                <button id="bonos-btn" class="flex-1 px-4 py-2 bg-yellow-400 text-yellow-900 text-sm font-medium rounded-lg hover:bg-yellow-500 transition-colors shadow-sm">
                                     Bonos
                                 </button>
                                 <button id="tienda-btn" disabled class="flex-1 px-4 py-2 bg-gray-400 text-white text-sm font-medium rounded-lg transition-colors shadow-sm cursor-not-allowed">
@@ -516,18 +517,21 @@
         </div>
     </div>
 
+
     <!-- =================================================================== -->
-    <!-- MODAL BONOS (v0.5.2): REDISEÑO DE LAYOUT ADMIN -->
+    <!-- NUEVO MODAL (v0.5.0): PORTAL DE BONOS -->
+    <!-- CAMBIO v0.5.1: Añadidas pestañas -->
+    <!-- CAMBIO v0.5.2: Ancho a max-w-6xl y layout de columnas -->
     <!-- =================================================================== -->
     <div id="bonos-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- CAMBIO: Aumentado a max-w-5xl para el layout horizontal -->
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-5xl transform scale-95 transition-transform duration-300 overflow-hidden"> 
+        <!-- CAMBIO v0.5.2: Ancho aumentado a max-w-6xl -->
+        <div id="bonos-modal-dialog" class="bg-white rounded-lg shadow-xl w-full max-w-6xl transform scale-95 transition-transform duration-300 overflow-hidden">
             
-            <!-- Encabezado del Modal con Pestañas -->
+            <!-- Encabezado y Pestañas -->
             <div class="bg-gray-50 border-b border-gray-200">
                 <div class="flex justify-between items-center p-4">
                     <h2 class="text-lg font-semibold text-gray-900">
-                        Portal de Bonos Canjeables
+                        Portal de Bonos
                     </h2>
                     <button id="bonos-modal-close" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
                 </div>
@@ -536,156 +540,161 @@
                     <button data-tab="canjear" class="bono-tab-btn active-tab px-4 py-2 text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors hover:bg-gray-100">
                         Canjear Bono
                     </button>
-                    <button data-tab="config" class="bono-tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-600 transition-colors hover:bg-gray-100">
+                    <button data-tab="admin" class="bono-tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-600 transition-colors hover:bg-gray-100">
                         Configuración (Admin)
                     </button>
                 </div>
             </div>
-            
-            <!-- Contenido Principal del Modal (Canje y Admin) -->
+
+            <!-- Contenedor de Pestañas (Scrollable) -->
             <div class="p-6 max-h-[80vh] overflow-y-auto">
-                
-                <!-- Sección 1: Canjear Bono (Vista de Usuario) -->
-                <div id="bono-tab-canjear" class="bono-tab-content active">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- PESTAÑA 1: CANJEAR BONO (USUARIO) -->
+                <!-- CAMBIO v0.5.2: Layout de 2 columnas (Form | Lista) -->
+                <div id="bono-tab-canjear" class="bono-tab-content">
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
                         
-                        <!-- Columna Izquierda: Formulario de Canje -->
-                        <div class="space-y-4">
-                            <h3 class="text-base font-semibold text-gray-800">Canjear un Bono</h3>
-                            
+                        <!-- Columna de Canje (Formulario) -->
+                        <div class="lg:col-span-2 space-y-4">
+                            <h3 class="text-lg font-semibold text-gray-900">Canjear Bono</h3>
+                            <!-- 1. Buscador de Alumno -->
                             <div class="relative">
                                 <label for="bono-search-alumno" class="block text-sm font-medium text-gray-700 mb-1">Tu Nombre</label>
                                 <input type="text" id="bono-search-alumno" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                                 <div id="bono-search-results" class="search-results-container hidden absolute z-20 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
+                                    <!-- Resultados de búsqueda -->
                                 </div>
                             </div>
-                            
+                            <!-- 2. Clave P2P -->
                             <div>
                                 <label for="bono-clave-p2p" class="block text-sm font-medium text-gray-700 mb-1">Tu Clave P2P</label>
                                 <input type="password" id="bono-clave-p2p" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                             </div>
-                            
+                            <!-- 3. Clave del Bono -->
                             <div>
                                 <label for="bono-clave-input" class="block text-sm font-medium text-gray-700 mb-1">Clave del Bono</label>
                                 <input type="text" id="bono-clave-input" placeholder="Ej: BIENVENIDA2025" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase">
                             </div>
-
-                            <button id="bono-submit-btn" class="w-full px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-                                <span id="bono-btn-text">Canjear Bono</span>
-                            </button>
-                            
-                            <div id="bono-status-msg" class="text-sm text-center font-medium px-2 pt-2 h-auto min-h-[1rem]">
-                                <!-- Mensajes de estado (éxito/error) aparecerán aquí -->
-                            </div>
                         </div>
                         
-                        <!-- Columna Derecha: Lista de Bonos Disponibles -->
-                        <div>
-                            <h3 class="text-base font-semibold text-gray-800 mb-4">Bonos Disponibles</h3>
-                            <div id="bonos-lista-disponible" class="space-y-3 max-h-72 overflow-y-auto pr-2">
-                                <!-- La lista de bonos se cargará aquí -->
-                                <p class="text-sm text-gray-500">Cargando bonos...</p>
+                        <!-- Columna de Lista de Bonos -->
+                        <div class="lg:col-span-3">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Bonos Disponibles</h3>
+                            <div id="bonos-lista-disponible" class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2 no-scrollbar">
+                                <p class="text-sm text-gray-500 text-center col-span-2">Cargando bonos...</p>
+                                <!-- Bonos se insertan aquí -->
                             </div>
                         </div>
+
                     </div>
                 </div>
-                
-                <!-- Sección 2: Configuración de Bonos (Vista de Admin) -->
-                <div id="bono-tab-config" class="bono-tab-content hidden">
-                    <!-- Puerta de Acceso de Admin -->
-                    <div id="bono-admin-gate">
-                        <h3 class="text-base font-semibold text-gray-800 mb-3">Acceso de Administrador</h3>
-                        <div class="flex items-end gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200 max-w-md mx-auto">
-                            <div class="flex-1">
-                                <label for="bono-admin-clave" class="block text-sm font-medium text-gray-700 mb-1">Clave Maestra</label>
-                                <input type="password" id="bono-admin-clave" placeholder="Ingresa la clave maestra" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            </div>
-                            <button id="bono-admin-unlock-btn" class="px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors">
+
+                <!-- PESTAÑA 2: CONFIGURACIÓN (ADMIN) -->
+                <div id="bono-tab-admin" class="bono-tab-content hidden space-y-6">
+                    
+                    <!-- 1. Reja de Seguridad (Gate) -->
+                    <div id="bono-admin-gate" class="w-full max-w-md mx-auto">
+                        <h3 class="text-lg font-semibold text-gray-900 text-center">Acceso de Administrador</h3>
+                        <p class="text-sm text-gray-600 text-center mb-4">Ingresa la clave maestra para gestionar los bonos.</p>
+                        <div class="flex items-center gap-3">
+                            <input type="password" id="bono-admin-clave" placeholder="Clave Maestra" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <button id="bono-admin-unlock-btn" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
                                 Desbloquear
                             </button>
                         </div>
                     </div>
-                    
-                    <!-- Panel de Configuración (Oculto hasta desbloquear) -->
-                    <!-- CAMBIO v0.5.2: Rediseñado con grid horizontal -->
-                    <div id="bono-admin-panel" class="hidden">
+
+                    <!-- 2. Panel de Administración (Oculto por defecto) -->
+                    <!-- CAMBIO v0.5.2: Layout de 2 columnas (Form | Tabla) -->
+                    <div id="bono-admin-panel" class="hidden grid grid-cols-1 lg:grid-cols-5 gap-6">
                         
-                        <!-- Grid de 2 columnas: Formulario a la izq, Tabla a la der -->
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            
-                            <!-- Columna 1: Formulario de Creación/Edición -->
-                            <div class="space-y-4">
-                                <h3 class="text-base font-semibold text-gray-800">Crear / Actualizar Bono</h3>
-                                
-                                <form id="bono-admin-form" class="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                    <div>
-                                        <label for="bono-admin-clave-input" class="block text-sm font-medium text-gray-700 mb-1">Clave (ID Único)</label>
-                                        <input type="text" id="bono-admin-clave-input" placeholder="BIENVENIDA2025" class="w-full px-3 py-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase">
-                                    </div>
-                                    <div>
-                                        <label for="bono-admin-nombre-input" class="block text-sm font-medium text-gray-700 mb-1">Nombre Descriptivo</label>
-                                        <input type="text" id="bono-admin-nombre-input" placeholder="Bono de Bienvenida" class="w-full px-3 py-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                    </div>
-                                    
-                                    <div class="grid grid-cols-2 gap-4">
-                                        <div>
-                                            <label for="bono-admin-recompensa-input" class="block text-sm font-medium text-gray-700 mb-1">Recompensa (ℙ)</label>
-                                            <input type="number" id="bono-admin-recompensa-input" placeholder="5000" class="w-full px-3 py-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        </div>
-                                        <div>
-                                            <label for="bono-admin-usos-input" class="block text-sm font-medium text-gray-700 mb-1">Usos Totales</label>
-                                            <input type="number" id="bono-admin-usos-input" placeholder="100" class="w-full px-3 py-2 border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-                                        </div>
-                                    </div>
-
-                                    <div class="flex justify-end gap-3 pt-2">
-                                        <button type="button" id="bono-admin-clear-btn" class="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-colors">Limpiar</button>
-                                        <button type="submit" id="bono-admin-submit-btn" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 shadow-sm">Crear / Actualizar Bono</button>
-                                    </div>
-                                </form>
-                                <div id="bono-admin-status-msg" class="text-sm text-center font-medium"></div>
-                            </div>
-                            
-                            <!-- Columna 2: Lista de Bonos Configurados -->
-                            <div class="space-y-4">
-                                <h3 class="text-base font-semibold text-gray-800">Bonos Configurados</h3>
-                                <div class="overflow-x-auto border rounded-lg max-h-[400px] overflow-y-auto">
-                                    <table class="min-w-full divide-y divide-gray-200">
-                                        <thead class="bg-gray-50 sticky top-0">
-                                            <tr>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Clave</th>
-                                                <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Recompensa</th>
-                                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Usos</th>
-                                                <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Acción</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="bonos-admin-lista" class="bg-white divide-y divide-gray-200">
-                                            <!-- Lista de bonos para admin se cargará aquí -->
-                                            <tr><td colspan="5" class="p-4 text-center text-gray-500">Cargando...</td></tr>
-                                        </tbody>
-                                    </table>
+                        <!-- Columna 1: Formulario de Creación/Edición -->
+                        <div id="bono-admin-form-container" class="lg:col-span-2">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Crear / Actualizar Bono</h3>
+                            <form id="bono-admin-form" class="space-y-4">
+                                <div>
+                                    <label for="bono-admin-clave-input" class="block text-sm font-medium text-gray-700 mb-1">Clave (ID Único)</label>
+                                    <input type="text" id="bono-admin-clave-input" placeholder="Ej: BONONUEVO" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 uppercase">
+                                    <p class="text-xs text-gray-500 mt-1">Si la clave ya existe, se actualizará el bono.</p>
                                 </div>
-                            </div>
-
+                                <div>
+                                    <label for="bono-admin-nombre-input" class="block text-sm font-medium text-gray-700 mb-1">Nombre Descriptivo</label>
+                                    <input type="text" id="bono-admin-nombre-input" placeholder="Ej: Bono de Bienvenida" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label for="bono-admin-recompensa-input" class="block text-sm font-medium text-gray-700 mb-1">Recompensa (Pinceles)</label>
+                                    <input type="number" id="bono-admin-recompensa-input" placeholder="Ej: 5000" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div>
+                                    <label for="bono-admin-usos-input" class="block text-sm font-medium text-gray-700 mb-1">Usos Totales (Lote)</label>
+                                    <input type="number" id="bono-admin-usos-input" placeholder="Ej: 100" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                </div>
+                                <div class="flex items-center justify-end gap-3 pt-2">
+                                    <button type="button" id="bono-admin-clear-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                                        Limpiar
+                                    </button>
+                                    <button type="submit" id="bono-admin-submit-btn" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                                        Crear / Actualizar Bono
+                                    </button>
+                                </div>
+                                <div id="bono-admin-status-msg" class="text-sm text-center font-medium pt-2 h-auto min-h-[1rem]">
+                                    <!-- Mensajes de estado de admin -->
+                                </div>
+                            </form>
                         </div>
+
+                        <!-- Columna 2: Lista de Bonos Configurados -->
+                        <div id="bonos-admin-lista-container" class="lg:col-span-3">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Bonos Configurados</h3>
+                            <div class="max-h-[400px] overflow-y-auto border border-gray-200 rounded-lg">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50 sticky top-0">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Clave</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Recompensa</th>
+                                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Usos</th>
+                                            <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="bonos-admin-lista" class="bg-white divide-y divide-gray-200">
+                                        <tr>
+                                            <td colspan="5" class="p-4 text-center text-gray-500">Cargando bonos...</td>
+                                        </tr>
+                                        <!-- Filas de bonos de admin -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
             </div>
-            
-            <!-- Footer del Modal -->
-            <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-end items-center gap-3 flex-shrink-0">
-                <button id="bonos-cancel-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
-                    Cerrar
-                </button>
+
+            <!-- Footer del Modal de Bonos -->
+            <div id="bonos-modal-footer" class="bg-gray-50 p-4 border-t border-gray-200 flex justify-between gap-3 flex-shrink-0">
+                <!-- Mensaje de estado principal -->
+                <div id="bono-status-msg" class="text-sm text-left font-medium text-red-600 h-auto min-h-[1rem] flex-1 items-center flex">
+                    <!-- Mensajes de estado de canje -->
+                </div>
+                <!-- Botones -->
+                <div class="flex gap-3">
+                    <button id="bonos-cancel-btn" class="px-4 py-2 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors">
+                        Cerrar
+                    </button>
+                    <button id="bono-submit-btn" class="px-4 py-2 bg-yellow-500 text-yellow-900 text-sm font-medium rounded-lg hover:bg-yellow-600 transition-colors shadow-sm">
+                        <span id="bono-btn-text">Canjear Bono</span>
+                    </button>
+                </div>
             </div>
+
         </div>
     </div>
 
 
     <!-- Lógica de la Aplicación -->
-    <!-- CAMBIO v0.5.2: Rediseño Layout Admin Bonos -->
+    <!-- CAMBIO v0.5.2: Versión actualizada para layout bonos -->
     <script src="script.js?v=0.5.2" type="module" defer></script>
 </body>
 </html>
