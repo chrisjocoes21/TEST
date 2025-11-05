@@ -27,6 +27,13 @@ const AppConfig = {
     TASA_ITBIS: 0.18, // 18%
 };
 
+// --- CORRECCIÓN BUG ONCLICK: Función de utilidad para escapar comillas ---
+function escapeHTML(str) {
+    if (typeof str !== 'string') return str;
+    // Escapa comillas simples y dobles para ser seguras en atributos HTML
+    return str.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+}
+
 // --- ESTADO DE LA APLICACIÓN ---
 const AppState = {
     datosActuales: null, // Grupos y alumnos (limpios, sin Cicla/Banco)
@@ -103,19 +110,6 @@ const AppFormat = {
     // NUEVO v0.4.0: Formateo de Pinceles (2 decimales) - REEMPLAZADO por formatNumber
     formatPincel: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)
 };
-
-// --- INICIO CORRECCIÓN BUG TIENDA: Función de Utilidad ---
-/**
- * Escapa las comillas simples y dobles para su uso seguro en atributos HTML onclick.
- * @param {string} str El texto a escapar.
- * @returns {string} El texto saneado.
- */
-function escapeHTML(str) {
-    if (typeof str !== 'string') return str;
-    // Escapa comillas simples (para '...') y comillas dobles (para &quot;)
-    return str.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-}
-// --- FIN CORRECCIÓN BUG TIENDA ---
 
 // --- BASE DE DATOS DE ANUNCIOS ---
 const AnunciosDB = {
@@ -292,8 +286,17 @@ const AppData = {
 
         // 10. NUEVO v16.0: Actualizar UI de Tienda (si está abierta)
         if (document.getElementById('tienda-modal').classList.contains('opacity-0') === false) {
-            // Optimización v16.0: Solo actualiza los estados de los botones, no reconstruye todo.
-            AppUI.updateTiendaButtonStates(); 
+            // CORRECCIÓN BUG "Cargando...": Si la tienda se actualiza mientras está abierta,
+            // forzamos el re-renderizado si aún estaba en "Cargando..."
+            const container = document.getElementById('tienda-items-container');
+            const isLoading = container.innerHTML.includes('Cargando artículos...');
+            
+            if (isLoading) {
+                AppUI.renderTiendaItems();
+            } else {
+                // Optimización v16.0: Solo actualiza los estados de los botones, no reconstruye todo.
+                AppUI.updateTiendaButtonStates(); 
+            }
             AppUI.populateTiendaAdminList();
         }
 
@@ -536,10 +539,8 @@ const AppUI = {
             AppUI.resetSearchInput('tiendaAlumno');
             document.getElementById('tienda-clave-p2p').value = "";
             
-            // --- INICIO CORRECCIÓN OPTIMIZACIÓN TIENDA ---
-            // Se elimina la línea que borraba los artículos para optimizar la carga.
-            // document.getElementById('tienda-items-container').innerHTML = ''; 
-            // --- FIN CORRECCIÓN OPTIMIZACIÓN TIENDA ---
+            // CORRECCIÓN BUG "Cargando...": Resetear al estado inicial para forzar recarga
+            document.getElementById('tienda-items-container').innerHTML = '<p class="text-sm text-gray-500 text-center col-span-2">Cargando artículos...</p>';
             
             document.getElementById('tienda-status-msg').textContent = "";
             AppState.tienda.currentItemToConfirm = null;
@@ -882,8 +883,7 @@ const AppUI = {
             const isAgotado = bono.usos_actuales >= bono.usos_totales;
             const rowClass = isAgotado ? 'opacity-60 bg-gray-50' : '';
             
-            // CAMBIO v16.0: Escapar comillas en el nombre para `handleEditBono`
-            // CORRECCIÓN BUG TIENDA: Usar la función escapeHTML
+            // CORRECCIÓN BUG ONCLICK: Escapar comillas
             const nombreEscapado = escapeHTML(bono.nombre);
             const claveEscapada = escapeHTML(bono.clave);
 
@@ -946,20 +946,19 @@ const AppUI = {
         // Resetear a la pestaña 1
         AppUI.changeTiendaTab('comprar');
 
-        // --- INICIO CORRECCIÓN OPTIMIZACIÓN TIENDA ---
         // Poblar listas
-        // Optimización v16.0: Renderizar las tarjetas de la tienda SOLO UNA VEZ
         const container = document.getElementById('tienda-items-container');
-        if (!container.innerHTML.trim()) {
-            // Solo renderizar si está vacío
+        // CORRECCIÓN BUG "Cargando...": Revisar si el contenedor solo tiene el placeholder
+        const isLoading = container.innerHTML.includes('Cargando artículos...');
+        
+        // Si está "cargando" (o vacío), renderizar. Si no, solo actualizar botones.
+        if (isLoading) {
             AppUI.renderTiendaItems();
         } else {
-            // Si ya está renderizado, solo actualizar los botones
             AppUI.updateTiendaButtonStates();
         }
-        // --- FIN CORRECCIÓN OPTIMIZACIÓN TIENDA ---
         
-        // Poblar la lista de admin (esta sí se actualiza siempre)
+        // Poblar la lista de admin
         AppUI.populateTiendaAdminList();
         
         AppUI.showModal('tienda-modal');
@@ -1009,7 +1008,7 @@ const AppUI = {
             const item = items[itemId];
             const costoFinal = Math.round(item.precio * (1 + AppConfig.TASA_ITBIS));
             
-            // CORRECCIÓN BUG TIENDA: Escapar descripción y ID
+            // CORRECCIÓN BUG ONCLICK: Escapar descripción y ID
             const descripcionEscapada = escapeHTML(item.descripcion);
             const itemIdEscapado = escapeHTML(itemId);
 
@@ -1171,15 +1170,15 @@ const AppUI = {
             const stock = item.stock;
             const rowClass = (stock <= 0 && itemId !== 'filantropo') ? 'opacity-60 bg-gray-50' : '';
             
-            // CORRECCIÓN BUG TIENDA: Escapar datos para los botones
+            // CORRECCIÓN BUG ONCLICK: Escapar datos para los botones
+            const itemIdEscapado = escapeHTML(itemId);
             const nombreEscapado = escapeHTML(item.nombre);
             const descEscapada = escapeHTML(item.descripcion);
             const tipoEscapado = escapeHTML(item.tipo);
-            const itemIdEscapado = escapeHTML(itemId);
 
             html += `
                 <tr class="${rowClass}">
-                    <td class="px-4 py-2 text-sm font-semibold text-gray-800">${itemId}</td>
+                    <td class="px-4 py-2 text-sm font-semibold text-gray-800">${item.ItemID}</td>
                     <td class="px-4 py-2 text-sm text-gray-600 truncate" title="${item.nombre}">${item.nombre}</td>
                     <td class="px-4 py-2 text-sm text-gray-800 text-right">${precio} ℙ</td>
                     <td class="px-4 py-2 text-sm text-gray-600 text-right">${stock}</td>
@@ -1429,10 +1428,10 @@ const AppUI = {
             const buttonClass = isEligible ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed';
             const buttonDisabled = !isEligible ? 'disabled' : '';
             
-            // CORRECCIÓN BUG TIENDA: Escapar variables para onclick
-            const studentEscapado = escapeHTML(selectedStudentName);
+            // CORRECCIÓN BUG ONCLICK: Escapar nombres
+            const studentNameEscapado = escapeHTML(selectedStudentName);
             const tipoEscapado = escapeHTML(tipo);
-            const action = isEligible ? `AppTransacciones.realizarPrestamo('${studentEscapado}', '${tipoEscapado}')` : '';
+            const action = isEligible ? `AppTransacciones.realizarPrestamo('${studentNameEscapado}', '${tipoEscapado}')` : '';
 
             html += `
                 <div class="flex justify-between items-center p-3 border-b border-blue-100">
@@ -1501,10 +1500,10 @@ const AppUI = {
             const buttonClass = isEligible ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed';
             const buttonDisabled = !isEligible ? 'disabled' : '';
             
-            // CORRECCIÓN BUG TIENDA: Escapar variables para onclick
-            const studentEscapado = escapeHTML(selectedStudentName);
+            // CORRECCIÓN BUG ONCLICK: Escapar nombres
+            const studentNameEscapado = escapeHTML(selectedStudentName);
             const tipoEscapado = escapeHTML(tipo);
-            const action = isEligible ? `AppTransacciones.realizarDeposito('${studentEscapado}', '${tipoEscapado}')` : '';
+            const action = isEligible ? `AppTransacciones.realizarDeposito('${studentNameEscapado}', '${tipoEscapado}')` : '';
 
             html += `
                 <div class="flex justify-between items-center p-3 border-b border-green-100">
@@ -1835,13 +1834,13 @@ const AppUI = {
             if (pos === 2) rankBg = 'bg-gray-200 text-gray-700';
             if (pos === 3) rankBg = 'bg-orange-100 text-orange-600';
             if (grupo.nombre === "Cicla") rankBg = 'bg-red-100 text-red-600';
-            
-            // CORRECCIÓN BUG TIENDA: Escapar variables para onclick
-            const grupoEscapado = escapeHTML(grupo.nombre);
-            const usuarioEscapado = escapeHTML(usuario.nombre);
+
+            // CORRECCIÓN BUG ONCLICK: Escapar nombres
+            const grupoNombreEscapado = escapeHTML(grupo.nombre);
+            const usuarioNombreEscapado = escapeHTML(usuario.nombre);
 
             return `
-                <tr class="hover:bg-gray-50 cursor-pointer" onclick="AppUI.showStudentModal('${grupoEscapado}', '${usuarioEscapado}', ${pos})">
+                <tr class="hover:bg-gray-50 cursor-pointer" onclick="AppUI.showStudentModal('${grupoNombreEscapado}', '${usuarioNombreEscapado}', ${pos})">
                     <td class="px-4 py-3 text-center">
                         <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${rankBg}">
                             ${pos}
@@ -2075,6 +2074,8 @@ const AppUI = {
         const messageEl = document.getElementById('store-message'); 
         const tiendaBtn = document.getElementById('tienda-btn');
         const tiendaTimerStatus = document.getElementById('tienda-timer-status'); // NUEVO v16.0
+        
+        const f = (val) => String(val).padStart(2, '0');
 
         if (now >= storeOpen && now <= storeClose) { 
             timerEl.classList.add('hidden');
@@ -2092,14 +2093,6 @@ const AppUI = {
             timerEl.classList.remove('hidden');
             messageEl.classList.add('hidden');
             
-            // NUEVO v16.0: Actualizar estado de la tienda
-            if (tiendaTimerStatus) {
-                tiendaTimerStatus.innerHTML = `<span class="text-red-600 font-bold">TIENDA CERRADA.</span> Próxima apertura en:`;
-                tiendaTimerStatus.classList.remove('bg-green-50', 'text-green-700');
-                tiendaTimerStatus.classList.add('bg-red-50', 'text-red-700');
-            }
-            AppState.tienda.isStoreOpen = false;
-
             let targetDate = storeOpen; 
             if (now > storeClose) { 
                 targetDate = getLastThursday(currentYear, currentMonth + 1);
@@ -2107,12 +2100,30 @@ const AppUI = {
             }
 
             const distance = targetDate - now;
-            const f = (val) => String(val).padStart(2, '0');
             
-            document.getElementById('days').textContent = f(Math.floor(distance / (1000 * 60 * 60 * 24)));
-            document.getElementById('hours').textContent = f(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
-            document.getElementById('minutes').textContent = f(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)));
-            document.getElementById('seconds').textContent = f(Math.floor((distance % (1000 * 60)) / 1000));
+            const days = f(Math.floor(distance / (1000 * 60 * 60 * 24)));
+            const hours = f(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
+            const minutes = f(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)));
+            const seconds = f(Math.floor((distance % (1000 * 60)) / 1000));
+            
+            document.getElementById('days').textContent = days;
+            document.getElementById('hours').textContent = hours;
+            document.getElementById('minutes').textContent = minutes;
+            document.getElementById('seconds').textContent = seconds;
+
+            // CORRECCIÓN BUG TIMER: Actualizar también el timer del modal
+            if (tiendaTimerStatus) {
+                tiendaTimerStatus.innerHTML = `<span class="text-red-600 font-bold">TIENDA CERRADA.</span> Próxima apertura en:
+                    <div class="flex items-baseline justify-center gap-2 mt-2">
+                        <span class="text-xl font-bold text-blue-600 w-8 text-right">${days}</span><span class="text-xs text-gray-500 uppercase -ml-1">Días</span>
+                        <span class="text-xl font-bold text-blue-600 w-8 text-right">${hours}</span><span class="text-xs text-gray-500 uppercase -ml-1">Horas</span>
+                        <span class="text-xl font-bold text-blue-600 w-8 text-right">${minutes}</span><span class="text-xs text-gray-500 uppercase -ml-1">Minutos</span>
+                    </div>
+                `;
+                tiendaTimerStatus.classList.remove('bg-green-50', 'text-green-700');
+                tiendaTimerStatus.classList.add('bg-red-50', 'text-red-700');
+            }
+            AppState.tienda.isStoreOpen = false;
         }
 
         // NUEVO v16.0: Actualizar estado de botones si la tienda está visible
@@ -2618,7 +2629,8 @@ const AppTransacciones = {
                 item: item // El backend espera este objeto
             };
 
-            const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.API_URL, {
+            // CORRECCIÓN BUG ADMIN: Usar la URL de TRANSACCION
+            const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.TRANSACCION_API_URL, {
                 method: 'POST',
                 body: JSON.stringify(payload),
             });
@@ -2653,7 +2665,8 @@ const AppTransacciones = {
                 itemId: itemId
             };
 
-            const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.API_URL, {
+            // CORRECCIÓN BUG ADMIN: Usar la URL de TRANSACCION
+            const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.TRANSACCION_API_URL, {
                 method: 'POST',
                 body: JSON.stringify(payload),
             });
@@ -2664,7 +2677,7 @@ const AppTransacciones = {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Artículo eliminado con éxito!");
                 AppData.cargarDatos(false); // Recargar todos los datos
             } else {
-                throw new Error(result.message || "Error al eliminar el bono.");
+                throw new Error(result.message || "Error al eliminar el artículo.");
             }
 
         } catch (error) {
