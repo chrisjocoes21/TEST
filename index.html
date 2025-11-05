@@ -813,6 +813,31 @@
                                     <!-- Mensajes de estado de admin -->
                                 </div>
                             </form>
+                            
+                            <!-- NUEVO: Controles Manuales de la Tienda -->
+                            <div id="tienda-admin-controls-container" class="mt-6 pt-6 border-t border-gray-200">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Control Manual</h3>
+                                <p class="text-sm text-gray-600 mb-3">
+                                    Anula el temporizador para forzar la apertura o cierre de la tienda para pruebas.
+                                </p>
+                                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-3">
+                                    <span class="text-sm text-gray-700">Estado Actual:</span>
+                                    <!-- El JS actualizará este texto y color -->
+                                    <span id="tienda-admin-status-label" class="text-sm font-bold text-blue-600">Cargando...</span> 
+                                </div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button type="button" id="tienda-force-open-btn" onclick="AppTransacciones.toggleStoreManual('open')" class="px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+                                        Forzar Apertura
+                                    </button>
+                                    <button type="button" id="tienda-force-close-btn" onclick="AppTransacciones.toggleStoreManual('closed')" class="px-3 py-2 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors shadow-sm">
+                                        Forzar Cierre
+                                    </button>
+                                    <button type="button" id="tienda-force-auto-btn" onclick="AppTransacciones.toggleStoreManual('auto')" class="px-3 py-2 bg-blue-600 text-white text-xs font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                                        Modo Automático
+                                    </button>
+                                </div>
+                            </div>
+                            
                         </div>
 
                         <!-- Columna 2: Lista de Artículos Configurados -->
