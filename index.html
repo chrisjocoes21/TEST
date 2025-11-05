@@ -18,12 +18,14 @@
 
     <!--
       VARIABLES DE CONFIGURACIÓN DE FIREBASE (PROVISTAS POR EL USUARIO)
-      *** CONFIGURACIÓN CORREGIDA POR EL USUARIO ***
+      *** CONFIGURACIÓN CORREGIDA POR EL USUARIO - CLAVE API ELIMINADA ***
     -->
     <script>
       // Esta configuración se obtiene de tu proyecto 'login-bpd-5a76a'
       const firebaseConfig = {
-        apiKey: "AIzaSyCrlde0uy7wr_1HRS42UePhsyh1mZS-_lI",
+        // CLAVE API ELIMINADA POR RAZONES DE SEGURIDAD. 
+        // El entorno de Canvas provee la clave a través de la variable __firebase_config
+        // apiKey: "AIzaSyCrlde0uy7wr_1HRS42UePhsyh1mZS-_lI", <-- ELIMINADA
         authDomain: "login-bpd-5a76a.firebaseapp.com",
         projectId: "login-bpd-5a76a",
         storageBucket: "login-bpd-5a76a.firebasestorage.app",
@@ -32,6 +34,7 @@
       };
       
       // Declaramos las variables globales que el script espera
+      // NOTA: Estas variables deben ser provistas por el entorno de ejecución (Canvas).
       var __firebase_config = JSON.stringify(firebaseConfig);
       var __initial_auth_token = undefined; // No se usa en este caso, se mantiene
       // Usamos el ID de proyecto como appId, necesario para la ruta en Firestore: /artifacts/{appId}/public/...
