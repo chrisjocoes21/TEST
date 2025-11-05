@@ -1,9 +1,33 @@
-// --- CONFIGURACIÓN ---
+// --- CONFIGURACIÓN DE FIREBASE (GLOBALES DISPONIBLES EN EL ENTORNO) ---
+// Estas variables y funciones se cargarán desde index.html
+const {
+    initializeApp,
+    getAuth,
+    signInWithEmailAndPassword,
+    onAuthStateChanged,
+    getFirestore,
+    doc,
+    getDoc,
+    setLogLevel,
+    signInAnonymously,
+    signInWithCustomToken // Mantenemos por si el entorno lo usa
+} = window.firebase;
+
+// --- VARIABLES GLOBALES DE FIREBASE ---
+let db, auth;
+// Obtenemos las variables globales que el entorno provee (o un valor por defecto)
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+
+// --- CONFIGURACIÓN DE LA APLICACIÓN ---
 const AppConfig = {
     // CAMBIO V0.3.0: URL de tu API actualizada (con P2P)
     API_URL: 'https://script.google.com/macros/s/AKfycbyhPHZuRmC7_t9z20W4h-VPqVFk0z6qKFG_W-YXMgnth4BMRgi8ibAfjeOtIeR5OrFPXw/exec',
     TRANSACCION_API_URL: 'https://script.google.com/macros/s/AKfycbyhPHZuRmC7_t9z20W4h-VPqVFk0z6qKFG_W-YXMgnth4BMRgi8ibAfjeOtIeR5OrFPXw/exec',
-    CLAVE_MAESTRA: 'PinceladasM25-26',
+    
+    // --- CAMBIO FIREBASE: La clave maestra ahora se carga desde Firestore ---
+    CLAVE_MAESTRA: null, // Se rellenará después del inicio de sesión de admin
+    
     SPREADSHEET_URL: 'https://docs.google.com/spreadsheets/d/1GArB7I19uGum6awiRN6qK8HtmTWGcaPGWhOzGCdhbcs/edit?usp=sharing',
     INITIAL_RETRY_DELAY: 1000,
     MAX_RETRY_DELAY: 30000,
@@ -12,7 +36,8 @@ const AppConfig = {
     
     // CAMBIO v16.1: Actualización de versión
     APP_STATUS: 'Beta', 
-    APP_VERSION: 'v17.1 (Tienda Limpia)', // ACTUALIZADO A v17.1
+    // CAMBIO v17.1: Nueva versión para reflejar el cambio de Auth y corrección de SDK
+    APP_VERSION: 'v17.2 (Firebase Auth Corregido)', 
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -78,36 +103,182 @@ const AppState = {
         adminPanelUnlocked: false,
         isStoreOpen: false, // Controlado por updateCountdown
         storeManualStatus: 'auto', // NUEVO v16.1 (Problema 3): Control manual (auto, open, closed)
-        // currentItemToConfirm: null ELIMINADO V17.0
-    }
+    },
+    
+    // NUEVO FIREBASE: Estado de autenticación
+    isAdminLoggedIn: false,
+    isAuthInitialized: false
 };
 
-// --- AUTENTICACIÓN ---
+// --- AUTENTICACIÓN (REDISEÑADO PARA FIREBASE) ---
 const AppAuth = {
-    verificarClave: function() {
-        const claveInput = document.getElementById('clave-input');
-        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
+    
+    /**
+     * Inicializa Firebase y establece el listener de autenticación.
+     * Se llama desde AppUI.init()
+     */
+    setupAuthListener: async () => {
+        const authStatusEl = document.getElementById('auth-status');
+        const firebaseConfig = JSON.parse(__firebase_config);
+        
+        try {
+            // 1. Inicializar Firebase
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            setLogLevel('debug');
             
+            // 2. Intentar loguearse de forma anónima (para cumplir con reglas de seguridad)
+            await signInAnonymously(auth);
+            
+            // 3. Establecer el listener de estado
+            onAuthStateChanged(auth, async (user) => {
+                AppState.isAuthInitialized = true;
+                
+                if (user && !user.isAnonymous) {
+                    // Usuario es un admin logueado (Email/Pass)
+                    console.log("Admin user signed in:", user.email);
+                    AppState.isAdminLoggedIn = true;
+                    if (authStatusEl) {
+                        authStatusEl.textContent = "Admin Conectado";
+                        authStatusEl.className = "text-xs font-medium text-green-600";
+                    }
+                    
+                    // Si el admin está logueado, intentamos cargar la clave maestra
+                    if (!AppConfig.CLAVE_MAESTRA) {
+                        await AppAuth.fetchAdminKey();
+                    }
+                } else if (user && user.isAnonymous) {
+                    // Usuario es anónimo (estado por defecto)
+                    console.log("Anonymous user signed in.");
+                    AppState.isAdminLoggedIn = false;
+                    if (authStatusEl) {
+                        authStatusEl.textContent = "Conectado";
+                        authStatusEl.className = "text-xs font-medium text-gray-500";
+                    }
+                    AppConfig.CLAVE_MAESTRA = null; // Limpiar clave si no es admin
+                } else {
+                    // No hay usuario (debería ser raro)
+                    console.log("User is signed out.");
+                    AppState.isAdminLoggedIn = false;
+                    if (authStatusEl) {
+                        authStatusEl.textContent = "Desconectado";
+                        authStatusEl.className = "text-xs font-medium text-red-500";
+                    }
+                    AppConfig.CLAVE_MAESTRA = null;
+                }
+                
+                // Actualizar paneles de admin (Bonos y Tienda)
+                AppUI.updateAdminPanels();
+            });
+
+        } catch (error) {
+            console.error("Firebase Auth Error (Initial Setup):", error);
+            if (authStatusEl) authStatusEl.textContent = "Error de Auth";
+            AppState.isAuthInitialized = true; // Permite que el resto de la app continúe
+        }
+    },
+
+    /**
+     * Intenta iniciar sesión como administrador usando Email y Contraseña.
+     * Se llama desde el botón "Acceder" del modal de gestión.
+     */
+    signInAdmin: async () => {
+        const emailInput = document.getElementById('email-input');
+        const passwordInput = document.getElementById('password-input');
+        const errorMsgEl = document.getElementById('auth-error-msg');
+        const submitBtn = document.getElementById('modal-submit');
+        
+        errorMsgEl.textContent = "";
+        emailInput.classList.remove('shake', 'border-red-500');
+        passwordInput.classList.remove('shake', 'border-red-500');
+
+        const email = emailInput.value;
+        const password = passwordInput.value;
+
+        if (!email || !password) {
+            errorMsgEl.textContent = "Ingrese email y contraseña.";
+            emailInput.classList.add('shake', 'border-red-500');
+            passwordInput.classList.add('shake', 'border-red-500');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Accediendo...';
+
+        try {
+            // Esto dispara onAuthStateChanged si es exitoso
+            await signInWithEmailAndPassword(auth, email, password);
+            
+            // Si el login es exitoso, onAuthStateChanged se encarga del resto
             AppUI.hideModal('gestion-modal');
-            AppUI.showTransaccionModal('transaccion'); // Abrir en la pestaña 'transaccion'
             
-            claveInput.value = '';
-            claveInput.classList.remove('shake', 'border-red-500');
-        } else {
-            claveInput.classList.add('shake', 'border-red-500');
-            claveInput.focus();
+            // Forzamos la apertura del modal de transacciones después de un pequeño delay 
+            // para dar tiempo a fetchAdminKey()
             setTimeout(() => {
-                claveInput.classList.remove('shake');
-            }, 500);
+                 if (AppConfig.CLAVE_MAESTRA) {
+                    AppUI.showTransaccionModal('transaccion');
+                 } else {
+                    console.warn("Clave no cargada, no abriendo modal de transacciones.");
+                 }
+            }, 1000);
+
+
+        } catch (error) {
+            let userMessage = "Error de inicio de sesión. Credenciales incorrectas.";
+            console.error("Firebase Sign-in Error:", error.code, error.message);
+
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                userMessage = "Email o contraseña incorrectos.";
+            } else if (error.code === 'auth/invalid-email') {
+                userMessage = "Formato de email inválido.";
+            }
+            
+            errorMsgEl.textContent = userMessage;
+            passwordInput.classList.add('shake', 'border-red-500');
+            passwordInput.focus();
+            
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Acceder';
+        }
+    },
+    
+    /**
+     * Obtiene la clave maestra del documento de Firestore (colección/documento: config/admin).
+     * Solo se llama si un admin ha iniciado sesión.
+     * @returns {void}
+     */
+    fetchAdminKey: async () => {
+        if (!db) return;
+
+        // La ruta de la clave maestra: /artifacts/{appId}/public/data/config/admin
+        const claveDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'config', 'admin');
+        
+        try {
+            const docSnap = await getDoc(claveDocRef);
+
+            if (docSnap.exists() && docSnap.data().masterKey) {
+                AppConfig.CLAVE_MAESTRA = docSnap.data().masterKey;
+                console.log("Master Key loaded securely from Firestore.");
+                AppUI.updateAdminPanels(); // Desbloquear Paneles
+            } else {
+                console.error("Firestore Error: Documento 'config/admin' o campo 'masterKey' no encontrado.");
+                AppConfig.CLAVE_MAESTRA = null; // Falla silenciosamente, el admin no podrá usar la API
+            }
+        } catch (error) {
+            console.error("Error fetching admin key from Firestore:", error);
+            AppConfig.CLAVE_MAESTRA = null;
         }
     }
+    
+    // NOTA: Se elimina AppAuth.verificarClave, ya no es necesaria
 };
 
 // --- NÚMEROS Y FORMATO ---
 const AppFormat = {
     // CAMBIO v0.4.4: Formato de Pinceles sin decimales
     formatNumber: (num) => new Intl.NumberFormat('es-DO', { maximumFractionDigits: 0 }).format(num),
-    // formatNumber: (num) => new Intl.NumberFormat('es-DO').format(num), // <-- ORIGINAL
     // NUEVO v0.4.0: Formateo de Pinceles (2 decimales) - REEMPLAZADO por formatNumber
     formatPincel: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)
 };
@@ -308,10 +479,15 @@ const AppUI = {
     init: function() {
         console.log("AppUI.init() comenzando.");
         
-        // Listeners Modales de Gestión (Clave)
+        // --- NUEVO FIREBASE: Setup de Auth Listener (primero) ---
+        // Esto inicializa Firebase, intenta sign-in anónimo y establece el listener.
+        AppAuth.setupAuthListener();
+        
+        // Listeners Modales de Gestión (Login)
         document.getElementById('gestion-btn').addEventListener('click', () => AppUI.showModal('gestion-modal'));
         document.getElementById('modal-cancel').addEventListener('click', () => AppUI.hideModal('gestion-modal'));
-        document.getElementById('modal-submit').addEventListener('click', AppAuth.verificarClave);
+        // CAMBIO FIREBASE: Usar AppAuth.signInAdmin
+        document.getElementById('modal-submit').addEventListener('click', AppAuth.signInAdmin);
         document.getElementById('gestion-modal').addEventListener('click', (e) => {
             if (e.target.id === 'gestion-modal') AppUI.hideModal('gestion-modal');
         });
@@ -362,7 +538,8 @@ const AppUI = {
         // Listeners Canje de Bono (Usuario)
         document.getElementById('bono-submit-btn').addEventListener('click', AppTransacciones.canjearBono);
         // Listeners Admin de Bonos
-        document.getElementById('bono-admin-unlock-btn').addEventListener('click', AppUI.toggleBonoAdminPanel);
+        // CAMBIO FIREBASE: Eliminar Listener de desbloqueo, se hace con el estado global
+        // document.getElementById('bono-admin-unlock-btn').addEventListener('click', AppUI.toggleBonoAdminPanel);
         document.getElementById('bono-admin-form').addEventListener('submit', (e) => {
             e.preventDefault();
             AppTransacciones.crearActualizarBono();
@@ -384,7 +561,8 @@ const AppUI = {
             });
         });
         // Listeners Admin de Tienda
-        document.getElementById('tienda-admin-unlock-btn').addEventListener('click', AppUI.toggleTiendaAdminPanel);
+        // CAMBIO FIREBASE: Eliminar Listener de desbloqueo, se hace con el estado global
+        // document.getElementById('tienda-admin-unlock-btn').addEventListener('click', AppUI.toggleTiendaAdminPanel);
         document.getElementById('tienda-admin-form').addEventListener('submit', (e) => {
             e.preventDefault();
             AppTransacciones.crearActualizarItem();
@@ -393,9 +571,6 @@ const AppUI = {
         
         // NUEVO v16.1: Listeners para Control Manual de Tienda
         // Los listeners ya están en el HTML con onclick="AppTransacciones.toggleStoreManual('status')"
-
-        // --- ELIMINADO v17.0: Listeners para Modal Confirmación de Compra ---
-
 
         // Listeners Modal Reglas
         document.getElementById('reglas-btn').addEventListener('click', () => AppUI.showModal('reglas-modal'));
@@ -449,6 +624,58 @@ const AppUI = {
         setInterval(AppUI.updateCountdown, 1000);
         
         AppUI.poblarModalAnuncios();
+    },
+    
+    // NUEVO FIREBASE: Función para actualizar el estado de los paneles de Admin
+    updateAdminPanels: function() {
+        const isReady = AppState.isAdminLoggedIn && AppConfig.CLAVE_MAESTRA;
+        
+        // --- Panel de Bonos ---
+        const bonoGate = document.getElementById('bono-admin-gate');
+        const bonoPanel = document.getElementById('bono-admin-panel');
+        
+        if (bonoGate && bonoPanel) {
+            if (isReady) {
+                bonoGate.classList.add('hidden');
+                bonoPanel.classList.remove('hidden');
+                AppState.bonos.adminPanelUnlocked = true;
+                // Forzar un re-render de la lista de bonos
+                if (!document.getElementById('bonos-modal').classList.contains('opacity-0')) {
+                    AppUI.populateBonoAdminList();
+                }
+            } else {
+                bonoGate.classList.remove('hidden');
+                bonoPanel.classList.add('hidden');
+                AppState.bonos.adminPanelUnlocked = false;
+            }
+        }
+        
+        // --- Panel de Tienda ---
+        const tiendaGate = document.getElementById('tienda-admin-gate');
+        const tiendaPanel = document.getElementById('tienda-admin-panel');
+        
+        if (tiendaGate && tiendaPanel) {
+            if (isReady) {
+                tiendaGate.classList.add('hidden');
+                tiendaPanel.classList.remove('hidden');
+                AppState.tienda.adminPanelUnlocked = true;
+                // Forzar un re-render de la lista de tienda
+                if (!document.getElementById('tienda-modal').classList.contains('opacity-0')) {
+                    AppUI.populateTiendaAdminList();
+                }
+            } else {
+                tiendaGate.classList.remove('hidden');
+                tiendaPanel.classList.add('hidden');
+                AppState.tienda.adminPanelUnlocked = false;
+            }
+        }
+        
+        // --- Botón de Administración principal ---
+        const gestionBtn = document.getElementById('gestion-btn');
+        if (gestionBtn) {
+            gestionBtn.querySelector('span').textContent = isReady ? 'Administración' : 'Login Admin';
+        }
+        
     },
 
     showLoading: function() {
@@ -518,14 +745,9 @@ const AppUI = {
             AppTransacciones.setLoadingState(document.getElementById('bono-submit-btn'), document.getElementById('bono-btn-text'), false, 'Canjear Bono');
             
             // Pestaña Admin
-            document.getElementById('bono-admin-clave').value = "";
+            // CAMBIO FIREBASE: Se elimina el reset de clave del admin aquí
             AppUI.clearBonoAdminForm();
             document.getElementById('bono-admin-status-msg').textContent = "";
-            
-            // Ocultar panel de admin y resetear estado
-            document.getElementById('bono-admin-gate').classList.remove('hidden');
-            document.getElementById('bono-admin-panel').classList.add('hidden');
-            AppState.bonos.adminPanelUnlocked = false;
         }
 
         // NUEVO v16.0: Limpiar campos de Tienda
@@ -540,21 +762,18 @@ const AppUI = {
             document.getElementById('tienda-status-msg').textContent = "";
             
             // Pestaña Admin
-            document.getElementById('tienda-admin-clave').value = "";
+            // CAMBIO FIREBASE: Se elimina el reset de clave del admin aquí
             AppUI.clearTiendaAdminForm();
             document.getElementById('tienda-admin-status-msg').textContent = "";
-            
-            // Ocultar panel de admin
-            document.getElementById('tienda-admin-gate').classList.remove('hidden');
-            document.getElementById('tienda-admin-panel').classList.add('hidden');
-            AppState.tienda.adminPanelUnlocked = false;
         }
         
-        // --- ELIMINADO v17.0: Limpieza de modal de confirmación ---
-        
+        // CAMBIO FIREBASE: Limpiar campos del Login de Admin
         if (modalId === 'gestion-modal') {
-             document.getElementById('clave-input').value = "";
-             document.getElementById('clave-input').classList.remove('shake', 'border-red-500');
+             document.getElementById('email-input').value = "";
+             document.getElementById('password-input').value = "";
+             document.getElementById('auth-error-msg').textContent = "";
+             document.getElementById('email-input').classList.remove('shake', 'border-red-500');
+             document.getElementById('password-input').classList.remove('shake', 'border-red-500');
         }
     },
     
@@ -739,12 +958,10 @@ const AppUI = {
         AppTransacciones.setLoadingState(document.getElementById('bono-submit-btn'), document.getElementById('bono-btn-text'), false, 'Canjear Bono');
 
         // Resetear pestaña de admin
-        document.getElementById('bono-admin-clave').value = "";
+        // CAMBIO FIREBASE: Se elimina el reset de clave
         AppUI.clearBonoAdminForm();
         document.getElementById('bono-admin-status-msg').textContent = "";
-        document.getElementById('bono-admin-gate').classList.remove('hidden');
-        document.getElementById('bono-admin-panel').classList.add('hidden');
-        AppState.bonos.adminPanelUnlocked = false;
+        // CAMBIO FIREBASE: Se elimina el control del gate, se hace con updateAdminPanels
         
         // Resetear a la pestaña 1
         AppUI.changeBonoTab('canjear');
@@ -783,6 +1000,11 @@ const AppUI = {
         // Limpiar mensajes
         document.getElementById('bono-status-msg').textContent = "";
         document.getElementById('bono-admin-status-msg').textContent = "";
+        
+        // CAMBIO FIREBASE: Si cambia a admin, actualizar el estado del panel
+        if (tabId === 'admin') {
+            AppUI.updateAdminPanels(); 
+        }
     },
     
     // CAMBIO v16.0: La firma de la función cambió (recibe objeto)
@@ -832,25 +1054,7 @@ const AppUI = {
     
     // --- Funciones del Panel de Admin de Bonos ---
     
-    toggleBonoAdminPanel: function() {
-        const claveInput = document.getElementById('bono-admin-clave');
-        const gate = document.getElementById('bono-admin-gate');
-        const panel = document.getElementById('bono-admin-panel');
-        
-        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
-            AppState.bonos.adminPanelUnlocked = true;
-            gate.classList.add('hidden');
-            panel.classList.remove('hidden');
-            claveInput.value = ""; // Limpiar
-            claveInput.classList.remove('shake', 'border-red-500');
-        } else {
-            claveInput.classList.add('shake', 'border-red-500');
-            claveInput.focus();
-            setTimeout(() => {
-                claveInput.classList.remove('shake');
-            }, 500);
-        }
-    },
+    // CAMBIO FIREBASE: Eliminar toggleBonoAdminPanel, ya se gestiona con updateAdminPanels
     
     // Puebla la tabla de bonos configurados (Vista de Admin)
     populateBonoAdminList: function() {
@@ -924,12 +1128,10 @@ const AppUI = {
         document.getElementById('tienda-status-msg').textContent = "";
         
         // Resetear pestaña de admin
-        document.getElementById('tienda-admin-clave').value = "";
+        // CAMBIO FIREBASE: Se elimina el reset de clave
         AppUI.clearTiendaAdminForm();
         document.getElementById('tienda-admin-status-msg').textContent = "";
-        document.getElementById('tienda-admin-gate').classList.remove('hidden');
-        document.getElementById('tienda-admin-panel').classList.add('hidden');
-        AppState.tienda.adminPanelUnlocked = false;
+        // CAMBIO FIREBASE: Se elimina el control del gate, se hace con updateAdminPanels
         
         // Resetear a la pestaña 1
         AppUI.changeTiendaTab('comprar');
@@ -973,6 +1175,11 @@ const AppUI = {
         // Limpiar mensajes
         document.getElementById('tienda-status-msg').textContent = "";
         document.getElementById('tienda-admin-status-msg').textContent = "";
+        
+        // CAMBIO FIREBASE: Si cambia a admin, actualizar el estado del panel
+        if (tabId === 'admin') {
+            AppUI.updateAdminPanels(); 
+        }
     },
 
     // Callback para el buscador de alumno en la tienda
@@ -1088,25 +1295,7 @@ const AppUI = {
 
     // --- Funciones del Panel de Admin de Tienda ---
     
-    toggleTiendaAdminPanel: function() {
-        const claveInput = document.getElementById('tienda-admin-clave');
-        const gate = document.getElementById('tienda-admin-gate');
-        const panel = document.getElementById('tienda-admin-panel');
-        
-        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
-            AppState.tienda.adminPanelUnlocked = true;
-            gate.classList.add('hidden');
-            panel.classList.remove('hidden');
-            claveInput.value = ""; // Limpiar
-            claveInput.classList.remove('shake', 'border-red-500');
-        } else {
-            claveInput.classList.add('shake', 'border-red-500');
-            claveInput.focus();
-            setTimeout(() => {
-                claveInput.classList.remove('shake');
-            }, 500);
-        }
-    },
+    // CAMBIO FIREBASE: Eliminar toggleTiendaAdminPanel, ya se gestiona con updateAdminPanels
     
     // NUEVO v16.1 (Problema 3): Actualiza la etiqueta de estado en el panel de admin
     // CAMBIO v17.1: Se eliminan las etiquetas "(Control Manual)"
@@ -1259,13 +1448,14 @@ const AppUI = {
     },
 
 
-    // --- ELIMINADO v0.4.1: FUNCIONES FONDO DE INVERSIÓN ---
-
-    // --- FIN FUNCIONES FONDO DE INVERSIÓN ---
-
-
     // --- FUNCIÓN CENTRAL: Mostrar Modal de Administración y pestaña inicial ---
     showTransaccionModal: function(tab) {
+        // CAMBIO FIREBASE: Comprobar el estado global
+        if (!AppState.isAdminLoggedIn || !AppConfig.CLAVE_MAESTRA) {
+            AppUI.showModal('gestion-modal');
+            return;
+        }
+        
         if (!AppState.datosActuales) {
             return;
         }
@@ -1955,7 +2145,7 @@ const AppUI = {
             `;
         }).join('');
     },
-    
+
     // ===================================================================
     // FUNCIÓN CORREGIDA (Estadísticas v17.0)
     // ===================================================================
@@ -2223,6 +2413,12 @@ const AppUI = {
 const AppTransacciones = {
 
     realizarTransaccionMultiple: async function() {
+        // CAMBIO FIREBASE: Comprobar clave antes de empezar
+        if (!AppConfig.CLAVE_MAESTRA) {
+            AppTransacciones.setError(document.getElementById('transaccion-status-msg'), "Acceso denegado. No se encontró la clave maestra. Vuelva a iniciar sesión.");
+            return;
+        }
+
         const cantidadInput = document.getElementById('transaccion-cantidad-input');
         const statusMsg = document.getElementById('transaccion-status-msg');
         const submitBtn = document.getElementById('transaccion-submit-btn');
@@ -2300,6 +2496,12 @@ const AppTransacciones = {
     },
     
     realizarPrestamo: async function(alumnoNombre, tipoPrestamo) {
+        // CAMBIO FIREBASE: Comprobar clave antes de empezar
+        if (!AppConfig.CLAVE_MAESTRA) {
+            AppTransacciones.setError(document.getElementById('transaccion-status-msg'), "Acceso denegado. No se encontró la clave maestra. Vuelva a iniciar sesión.");
+            return;
+        }
+
         const modalDialog = document.getElementById('transaccion-modal-dialog');
         const submitBtn = modalDialog.querySelector(`button[onclick*="realizarPrestamo('${escapeHTML(alumnoNombre)}', '${escapeHTML(tipoPrestamo)}')"]`);
         const statusMsg = document.getElementById('transaccion-status-msg');
@@ -2339,6 +2541,12 @@ const AppTransacciones = {
     },
     
     realizarDeposito: async function(alumnoNombre, tipoDeposito) {
+        // CAMBIO FIREBASE: Comprobar clave antes de empezar
+        if (!AppConfig.CLAVE_MAESTRA) {
+            AppTransacciones.setError(document.getElementById('transaccion-status-msg'), "Acceso denegado. No se encontró la clave maestra. Vuelva a iniciar sesión.");
+            return;
+        }
+
         const modalDialog = document.getElementById('transaccion-modal-dialog');
         const submitBtn = modalDialog.querySelector(`button[onclick*="realizarDeposito('${escapeHTML(alumnoNombre)}', '${escapeHTML(tipoDeposito)}')"]`);
         const statusMsg = document.getElementById('transaccion-status-msg');
@@ -2508,6 +2716,12 @@ const AppTransacciones = {
     },
 
     crearActualizarBono: async function() {
+        // CAMBIO FIREBASE: Comprobar clave antes de empezar
+        if (!AppConfig.CLAVE_MAESTRA) {
+            AppTransacciones.setError(document.getElementById('bono-admin-status-msg'), "Acceso denegado. No se encontró la clave maestra. Vuelva a iniciar sesión.");
+            return;
+        }
+
         const statusMsg = document.getElementById('bono-admin-status-msg');
         const submitBtn = document.getElementById('bono-admin-submit-btn');
         
@@ -2571,6 +2785,12 @@ const AppTransacciones = {
     
     // NUEVO v0.5.4: Eliminar Bono
     eliminarBono: async function(claveBono) {
+        // CAMBIO FIREBASE: Comprobar clave antes de empezar
+        if (!AppConfig.CLAVE_MAESTRA) {
+            AppTransacciones.setError(document.getElementById('bono-admin-status-msg'), "Acceso denegado. No se encontró la clave maestra. Vuelva a iniciar sesión.");
+            return;
+        }
+        
         // ADVERTENCIA: Esta función elimina directamente sin confirmación,
         // ya que `window.confirm()` está prohibido.
 
@@ -2673,6 +2893,12 @@ const AppTransacciones = {
     },
 
     crearActualizarItem: async function() {
+        // CAMBIO FIREBASE: Comprobar clave antes de empezar
+        if (!AppConfig.CLAVE_MAESTRA) {
+            AppTransacciones.setError(document.getElementById('tienda-admin-status-msg'), "Acceso denegado. No se encontró la clave maestra. Vuelva a iniciar sesión.");
+            return;
+        }
+
         const statusMsg = document.getElementById('tienda-admin-status-msg');
         const submitBtn = document.getElementById('tienda-admin-submit-btn');
         
@@ -2736,6 +2962,12 @@ const AppTransacciones = {
     
     // CAMBIO v17.0: Esta función ahora es llamada por el botón "Confirmar" en la tabla.
     eliminarItem: async function(itemId) {
+        // CAMBIO FIREBASE: Comprobar clave antes de empezar
+        if (!AppConfig.CLAVE_MAESTRA) {
+            AppTransacciones.setError(document.getElementById('tienda-admin-status-msg'), "Acceso denegado. No se encontró la clave maestra. Vuelva a iniciar sesión.");
+            return;
+        }
+        
         const statusMsg = document.getElementById('tienda-admin-status-msg');
         AppTransacciones.setLoading(statusMsg, `Eliminando artículo ${itemId}...`);
         
@@ -2773,6 +3005,12 @@ const AppTransacciones = {
     
     // NUEVO v16.1 (Problema 3): Control Manual de la Tienda
     toggleStoreManual: async function(status) {
+        // CAMBIO FIREBASE: Comprobar clave antes de empezar
+        if (!AppConfig.CLAVE_MAESTRA) {
+            AppTransacciones.setError(document.getElementById('tienda-admin-status-msg'), "Acceso denegado. No se encontró la clave maestra. Vuelva a iniciar sesión.");
+            return;
+        }
+        
         const statusMsg = document.getElementById('tienda-admin-status-msg');
         AppTransacciones.setLoading(statusMsg, `Cambiando estado a: ${status}...`);
         
