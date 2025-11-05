@@ -12,7 +12,7 @@ const AppConfig = {
     
     // CAMBIO v16.1: Actualización de versión
     APP_STATUS: 'Beta', 
-    APP_VERSION: 'v16.1 (Control Tienda)',
+    APP_VERSION: 'v17.0 (Tienda Optimizada)', // ACTUALIZADO
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -72,13 +72,13 @@ const AppState = {
         adminPanelUnlocked: false // Para el panel de admin
     },
 
-    // NUEVO v16.0: Estado de Tienda
+    // CAMBIO v17.0: Simplificación de Tienda
     tienda: {
         items: {}, // Almacenará los artículos de la API
         adminPanelUnlocked: false,
         isStoreOpen: false, // Controlado por updateCountdown
         storeManualStatus: 'auto', // NUEVO v16.1 (Problema 3): Control manual (auto, open, closed)
-        currentItemToConfirm: null // Para el modal de confirmación (factura)
+        // currentItemToConfirm: null ELIMINADO V17.0
     }
 };
 
@@ -394,13 +394,7 @@ const AppUI = {
         // NUEVO v16.1: Listeners para Control Manual de Tienda
         // Los listeners ya están en el HTML con onclick="AppTransacciones.toggleStoreManual('status')"
 
-        // Listeners Modal Confirmación de Compra (Factura)
-        document.getElementById('tienda-confirm-close-btn').addEventListener('click', () => AppUI.hideModal('tienda-confirm-modal'));
-        document.getElementById('tienda-confirm-cancel-btn').addEventListener('click', () => AppUI.hideModal('tienda-confirm-modal'));
-        document.getElementById('tienda-confirm-submit-btn').addEventListener('click', AppTransacciones.comprarItem);
-        document.getElementById('tienda-confirm-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'tienda-confirm-modal') AppUI.hideModal('tienda-confirm-modal');
-        });
+        // --- ELIMINADO v17.0: Listeners para Modal Confirmación de Compra ---
 
 
         // Listeners Modal Reglas
@@ -544,7 +538,6 @@ const AppUI = {
             document.getElementById('tienda-items-container').innerHTML = '<p class="text-sm text-gray-500 text-center col-span-2">Cargando artículos...</p>';
             
             document.getElementById('tienda-status-msg').textContent = "";
-            AppState.tienda.currentItemToConfirm = null;
             
             // Pestaña Admin
             document.getElementById('tienda-admin-clave').value = "";
@@ -557,12 +550,7 @@ const AppUI = {
             AppState.tienda.adminPanelUnlocked = false;
         }
         
-        // NUEVO v16.0: Limpiar modal de confirmación
-        if (modalId === 'tienda-confirm-modal') {
-            document.getElementById('tienda-confirm-content').innerHTML = '<p class="text-gray-500 text-center">Cargando detalles...</p>';
-            AppTransacciones.setLoadingState(document.getElementById('tienda-confirm-submit-btn'), document.getElementById('tienda-confirm-btn-text'), false, 'Confirmar Compra');
-            AppState.tienda.currentItemToConfirm = null;
-        }
+        // --- ELIMINADO v17.0: Limpieza de modal de confirmación ---
         
         if (modalId === 'gestion-modal') {
              document.getElementById('clave-input').value = "";
@@ -934,8 +922,7 @@ const AppUI = {
         AppUI.resetSearchInput('tiendaAlumno');
         document.getElementById('tienda-clave-p2p').value = "";
         document.getElementById('tienda-status-msg').textContent = "";
-        AppState.tienda.currentItemToConfirm = null;
-
+        
         // Resetear pestaña de admin
         document.getElementById('tienda-admin-clave').value = "";
         AppUI.clearTiendaAdminForm();
@@ -949,7 +936,7 @@ const AppUI = {
 
         // Poblar listas
         const container = document.getElementById('tienda-items-container');
-        // CORRECCIÓN BUG "Cargando..." (Problema 2): Revisar si el contenedor solo tiene el placeholder
+        // CORRECCIÓN BUG "Cargando...": Revisar si el contenedor solo tiene el placeholder
         const isLoading = container.innerHTML.includes('Cargando artículos...');
         
         // Si está "cargando" (o vacío), renderizar. Si no, solo actualizar botones.
@@ -1044,11 +1031,13 @@ const AppUI = {
                     <!-- Footer (Precio y Botón) -->
                     <div class="flex justify-between items-center mt-auto pt-4">
                         <span class="text-xl font-bold text-blue-600">${AppFormat.formatNumber(costoFinal)} ℙ</span>
+                        
+                        <!-- CAMBIO v17.0: Botón de compra simplificado -->
                         <button id="buy-btn-${itemIdEscapado}" 
                                 data-item-id="${itemIdEscapado}"
-                                onclick="AppUI.showTiendaConfirmModal('${itemIdEscapado}')"
-                                class="tienda-buy-btn bg-blue-600 text-white hover:bg-blue-700 w-auto">
-                            Comprar
+                                onclick="AppTransacciones.comprarItem('${itemIdEscapado}', this)"
+                                class="tienda-buy-btn bg-blue-600 text-white hover:bg-blue-700 w-auto min-w-[90px] text-center">
+                            <span class="btn-text">Comprar</span>
                         </button>
                     </div>
                 </div>
@@ -1062,6 +1051,7 @@ const AppUI = {
     },
 
     // Optimización v16.0: Solo actualiza el estado de los botones
+    // CAMBIO v17.0: Actualiza el .btn-text interno
     updateTiendaButtonStates: function() {
         const items = AppState.tienda.items;
         const student = AppState.currentSearch.tiendaAlumno.info;
@@ -1071,67 +1061,42 @@ const AppUI = {
             const item = items[itemId];
             const btn = document.getElementById(`buy-btn-${item.ItemID}`);
             if (!btn) return;
+            
+            const btnText = btn.querySelector('.btn-text');
+            if (!btnText) return; // Si el botón aún no se ha renderizado
 
             const costoFinal = Math.round(item.precio * (1 + AppConfig.TASA_ITBIS));
             
             // Reset clases
             btn.classList.remove('disabled-gray', 'sin-fondos-btn', 'agotado-btn', 'bg-blue-600', 'hover:bg-blue-700');
             btn.disabled = false;
-            btn.textContent = "Comprar";
+            btnText.textContent = "Comprar";
 
             if (item.stock <= 0 && item.ItemID !== 'filantropo') { // Usar ItemID real
                 btn.classList.add('agotado-btn');
-                btn.textContent = "Agotado";
+                btnText.textContent = "Agotado";
                 btn.disabled = true;
             } else if (!isStoreOpen) {
                 btn.classList.add('disabled-gray');
+                btnText.textContent = "Comprar";
                 btn.disabled = true;
             } else if (!student) {
                 btn.classList.add('disabled-gray');
+                btnText.textContent = "Comprar";
                 btn.disabled = true;
-            } else if (student.pinceles < costoFinal) {
+            } else if (student && student.pinceles < costoFinal) { // Añadir chequeo de 'student'
                 btn.classList.add('sin-fondos-btn');
+                btnText.textContent = "Comprar"; // No mostrar "Sin Fondos" para no exponer
                 btn.disabled = true;
             } else {
                 // Estado por defecto (Habilitado)
                 btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+                btnText.textContent = "Comprar";
             }
         });
     },
 
-    // Muestra el modal de confirmación (factura)
-    showTiendaConfirmModal: function(itemId) {
-        const item = AppState.tienda.items[itemId];
-        if (!item) return;
-
-        AppState.tienda.currentItemToConfirm = itemId;
-        const container = document.getElementById('tienda-confirm-content');
-        
-        const precioBase = item.precio;
-        const itbis = Math.round(precioBase * AppConfig.TASA_ITBIS);
-        const costoTotal = precioBase + itbis;
-
-        container.innerHTML = `
-            <h3 class="text-lg font-semibold text-gray-900">${item.nombre}</h3>
-            <p class="text-sm text-gray-600">${item.descripcion}</p>
-            <div class="mt-4 pt-4 border-t border-gray-200 space-y-2">
-                <div class="flex justify-between text-sm">
-                    <span class="text-gray-500">Precio Base:</span>
-                    <span class="font-medium text-gray-700">${AppFormat.formatNumber(precioBase)} ℙ</span>
-                </div>
-                <div class="flex justify-between text-sm">
-                    <span class="text-gray-500">ITBIS (18%):</span>
-                    <span class="font-medium text-gray-700">${AppFormat.formatNumber(itbis)} ℙ</span>
-                </div>
-                <div class="flex justify-between text-lg">
-                    <span class="font-semibold text-gray-900">Costo Total:</span>
-                    <span class="font-bold text-blue-600">${AppFormat.formatNumber(costoTotal)} ℙ</span>
-                </div>
-            </div>
-        `;
-        
-        AppUI.showModal('tienda-confirm-modal');
-    },
+    // --- ELIMINADO v17.0: showTiendaConfirmModal ---
 
     // --- Funciones del Panel de Admin de Tienda ---
     
@@ -1179,6 +1144,45 @@ const AppUI = {
         }
     },
 
+    // --- NUEVAS FUNCIONES DE CONFIRMACIÓN DE BORRADO (v17.0) ---
+    handleDeleteConfirmation: function(itemId) {
+        const row = document.getElementById(`tienda-item-row-${itemId}`);
+        if (!row) return;
+
+        const actionCell = row.cells[4];
+        
+        // CORRECCIÓN BUG ONCLICK: Escapar ID para el onclick
+        const itemIdEscapado = escapeHTML(itemId);
+
+        actionCell.innerHTML = `
+            <button onclick="AppTransacciones.eliminarItem('${itemIdEscapado}')" class="font-medium text-red-600 hover:text-red-800 confirm-delete-btn">Confirmar</button>
+            <button onclick="AppUI.cancelDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-gray-600 hover:text-gray-800">Cancelar</button>
+        `;
+    },
+
+    cancelDeleteConfirmation: function(itemId) {
+        const item = AppState.tienda.items[itemId];
+        if (!item) return;
+
+        const row = document.getElementById(`tienda-item-row-${itemId}`);
+        if (!row) return;
+
+        const actionCell = row.cells[4];
+        
+        // Revertir a los botones originales
+        const nombreEscapado = escapeHTML(item.nombre);
+        const descEscapada = escapeHTML(item.descripcion);
+        const tipoEscapado = escapeHTML(item.tipo);
+        const itemIdEscapado = escapeHTML(item.ItemID); 
+
+        actionCell.innerHTML = `
+            <button onclick="AppUI.handleEditItem('${itemIdEscapado}', '${nombreEscapado}', '${descEscapada}', '${tipoEscapado}', ${item.precio}, ${item.stock})" class="font-medium text-blue-600 hover:text-blue-800 edit-item-btn">Editar</button>
+            <button onclick="AppUI.handleDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-item-btn">Eliminar</button>
+        `;
+    },
+    // --- FIN FUNCIONES DE CONFIRMACIÓN ---
+
+
     populateTiendaAdminList: function() {
         const tbody = document.getElementById('tienda-admin-lista');
         const items = AppState.tienda.items;
@@ -1205,14 +1209,14 @@ const AppUI = {
             const tipoEscapado = escapeHTML(item.tipo);
 
             html += `
-                <tr class="${rowClass}">
+                <tr id="tienda-item-row-${itemIdEscapado}" class="${rowClass}">
                     <td class="px-4 py-2 text-sm font-semibold text-gray-800">${item.ItemID}</td>
                     <td class="px-4 py-2 text-sm text-gray-600 truncate" title="${item.nombre}">${item.nombre}</td>
                     <td class="px-4 py-2 text-sm text-gray-800 text-right">${precio} ℙ</td>
                     <td class="px-4 py-2 text-sm text-gray-600 text-right">${stock}</td>
                     <td class="px-4 py-2 text-right text-sm">
                         <button onclick="AppUI.handleEditItem('${itemIdEscapado}', '${nombreEscapado}', '${descEscapada}', '${tipoEscapado}', ${item.precio}, ${item.stock})" class="font-medium text-blue-600 hover:text-blue-800 edit-item-btn">Editar</button>
-                        <button onclick="AppTransacciones.eliminarItem('${itemIdEscapado}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-item-btn">Eliminar</button>
+                        <button onclick="AppUI.handleDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-item-btn">Eliminar</button>
                     </td>
                 </tr>
             `;
@@ -1220,6 +1224,7 @@ const AppUI = {
         tbody.innerHTML = html;
     },
     
+    // CAMBIO v17.0: Deshabilita ItemID al editar y cambia texto del botón.
     handleEditItem: function(itemId, nombre, descripcion, tipo, precio, stock) {
         document.getElementById('tienda-admin-itemid-input').value = itemId;
         document.getElementById('tienda-admin-nombre-input').value = nombre;
@@ -1228,13 +1233,20 @@ const AppUI = {
         document.getElementById('tienda-admin-precio-input').value = precio;
         document.getElementById('tienda-admin-stock-input').value = stock;
         
+        // OPTIMIZACIÓN ADMIN 1: Deshabilitar ItemID al editar
+        document.getElementById('tienda-admin-itemid-input').disabled = true;
+        document.getElementById('tienda-admin-submit-btn').textContent = 'Guardar Cambios';
+
         // Hacer scroll al formulario
         document.getElementById('tienda-admin-form-container').scrollIntoView({ behavior: 'smooth' });
     },
     
+    // CAMBIO v17.0: Habilita ItemID y resetea texto del botón.
     clearTiendaAdminForm: function() {
         document.getElementById('tienda-admin-form').reset();
+        // OPTIMIZACIÓN ADMIN 1: Habilitar ItemID y resetear botón al limpiar
         document.getElementById('tienda-admin-itemid-input').disabled = false;
+        document.getElementById('tienda-admin-submit-btn').textContent = 'Crear / Actualizar';
         document.getElementById('tienda-admin-status-msg').textContent = "";
     },
     
@@ -1701,7 +1713,6 @@ const AppUI = {
         // CORRECCIÓN 1: BÓVEDA (Total en Cuentas)
         // Calculamos la bóveda sumando solo los pinceles positivos de todos
         // los alumnos, para que coincida con la estadística "Pinceles Positivos".
-        // La definición de 'allStudents' se movió aquí desde más abajo.
         // ===================================================================
         const allStudents = AppState.datosAdicionales.allStudents;
         
@@ -1751,7 +1762,6 @@ const AppUI = {
         // Lógica "Alumnos Destacados"
         // ===================================================================
         
-        // const allStudents = AppState.datosAdicionales.allStudents; // <-- Esta línea se movió arriba
         const depositosActivos = AppState.datosAdicionales.depositosActivos;
         
         const studentsWithCapital = allStudents.map(student => {
@@ -1920,19 +1930,15 @@ const AppUI = {
     },
 
     // ===================================================================
-    // FUNCIÓN CORREGIDA
+    // FUNCIÓN CORREGIDA (Estadísticas v16.2)
     // ===================================================================
     actualizarAlumnosEnRiesgo: function() {
         const lista = document.getElementById('riesgo-lista');
         if (!lista) return;
 
-        // CORRECCIÓN: No filtrar a los de Cicla (s.grupoNombre !== 'Cicla'),
-        // ya que ellos son los de más alto riesgo y deben aparecer.
+        // CORRECCIÓN: Ahora incluye a TODOS los alumnos (incluyendo Cicla)
+        // y los ordena de menor a mayor saldo para mostrar el verdadero riesgo.
         const allStudents = AppState.datosAdicionales.allStudents;
-        
-        // CORRECCIÓN: Eliminar el filtro 's.pinceles >= 0'.
-        // Queremos a los alumnos con los saldos MÁS BAJOS,
-        // que incluye saldos negativos (Cicla) y saldos positivos bajos.
         
         // Ordenar a TODOS los alumnos por sus pinceles, de menor a mayor.
         // Usamos [...allStudents] para no modificar el array original.
@@ -1960,10 +1966,10 @@ const AppUI = {
             `;
         }).join('');
     },
-    // ===================================================================
-    // FIN DE LA CORRECCIÓN
-    // ===================================================================
     
+    // ===================================================================
+    // FUNCIÓN CORREGIDA (Estadísticas v17.0)
+    // ===================================================================
     actualizarEstadisticasRapidas: function(grupos) {
         const statsList = document.getElementById('quick-stats-list');
         if (!statsList) return;
@@ -1971,23 +1977,18 @@ const AppUI = {
         const allStudents = AppState.datosAdicionales.allStudents;
         const ciclaGrupo = grupos.find(g => g.nombre === 'Cicla');
         
-        // ===================================================================
         // CORRECCIÓN 2: ESTADÍSTICAS RÁPIDAS
-        // Definimos "Alumnos Activos" (excluyendo Cicla) y calculamos
-        // el promedio basándonos solo en ellos y los pinceles positivos.
-        // ===================================================================
         
+        // Alumnos Activos (sin Cicla)
         const alumnosActivos = allStudents.filter(s => s.grupoNombre !== 'Cicla');
         const totalAlumnosActivos = alumnosActivos.length;
         const totalEnCicla = ciclaGrupo ? ciclaGrupo.usuarios.length : 0;
         
-        // Ya no usamos totalBoveda (neto) para el promedio.
-        // const totalBoveda = grupos.reduce((acc, g) => acc + g.total, 0); 
-        
+        // Pinceles Positivos (el valor que debe cuadrar con la Bóveda)
         const pincelesPositivos = allStudents.filter(s => s.pinceles > 0).reduce((sum, user) => sum + user.pinceles, 0);
         const pincelesNegativos = allStudents.filter(s => s.pinceles < 0).reduce((sum, user) => sum + user.pinceles, 0);
         
-        // El promedio ahora es (Pinceles Positivos / Alumnos Activos)
+        // Pincel Promedio: Pinceles Positivos divididos entre Alumnos Activos (más útil)
         const promedioPinceles = totalAlumnosActivos > 0 ? (pincelesPositivos / totalAlumnosActivos) : 0;
         
         const createStat = (label, value, valueClass = 'text-gray-900') => `
@@ -2617,15 +2618,17 @@ const AppTransacciones = {
 
     // --- LÓGICA DE TIENDA (NUEVO v16.0) ---
 
-    // Llamado desde el botón "Confirmar Compra" en el modal de factura
-    comprarItem: async function() {
-        const statusMsg = document.getElementById('tienda-status-msg');
-        const submitBtn = document.getElementById('tienda-confirm-submit-btn');
-        const btnText = document.getElementById('tienda-confirm-btn-text');
+    // CAMBIO v17.0: Simplificado. Se llama directamente desde el botón Comprar.
+    // Acepta el elemento del botón para mostrar el estado de carga.
+    comprarItem: async function(itemId, btnElement) {
+        const statusMsg = document.getElementById('tienda-status-msg'); // Mensaje en el footer del modal
+        const btnText = btnElement ? btnElement.querySelector('.btn-text') : null;
         
         const alumnoNombre = AppState.currentSearch.tiendaAlumno.selected;
         const claveP2P = document.getElementById('tienda-clave-p2p').value;
-        const itemId = AppState.tienda.currentItemToConfirm;
+
+        // Limpiar mensajes de error anteriores
+        statusMsg.textContent = ""; 
 
         let errorValidacion = "";
         if (!alumnoNombre) {
@@ -2637,15 +2640,12 @@ const AppTransacciones = {
         }
         
         if (errorValidacion) {
-            AppUI.hideModal('tienda-confirm-modal');
             AppTransacciones.setError(statusMsg, errorValidacion);
             return;
         }
 
-        AppTransacciones.setLoadingState(submitBtn, btnText, true, 'Procesando...');
-        // Limpiar el mensaje de error principal mientras se procesa
-        statusMsg.textContent = ""; 
-
+        AppTransacciones.setLoadingState(btnElement, btnText, true, '...');
+        
         try {
             const payload = {
                 accion: 'comprar_item_tienda',
@@ -2664,22 +2664,21 @@ const AppTransacciones = {
             if (result.success === true) {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Compra exitosa!");
                 
-                // Cerrar ambos modales
-                AppUI.hideModal('tienda-confirm-modal');
-                AppUI.hideModal('tienda-modal');
-                
-                AppData.cargarDatos(false); // Recargar todos los datos
+                // NO cerrar el modal, solo recargar datos
+                // Esto actualizará el stock y el saldo del alumno (si está visible)
+                AppData.cargarDatos(false); 
 
             } else {
                 throw new Error(result.message || "Error desconocido de la API.");
             }
 
         } catch (error) {
-            // Mostrar error en el modal de confirmación
-            const confirmStatusMsg = document.getElementById('tienda-confirm-content');
-            confirmStatusMsg.innerHTML += `<p class="text-sm text-center font-medium text-red-600 mt-4">Error: ${error.message}</p>`;
+            AppTransacciones.setError(statusMsg, error.message);
         } finally {
-            AppTransacciones.setLoadingState(submitBtn, btnText, false, 'Confirmar Compra');
+            // El estado de carga se reinicia automáticamente cuando 
+            // AppData.cargarDatos() llama a AppUI.updateTiendaButtonStates()
+            // Si la carga de datos falla, el estado se resetea aquí.
+            AppTransacciones.setLoadingState(btnElement, btnText, false, 'Comprar');
         }
     },
 
@@ -2745,11 +2744,13 @@ const AppTransacciones = {
         }
     },
     
+    // CAMBIO v17.0: Esta función ahora es llamada por el botón "Confirmar" en la tabla.
     eliminarItem: async function(itemId) {
         const statusMsg = document.getElementById('tienda-admin-status-msg');
         AppTransacciones.setLoading(statusMsg, `Eliminando artículo ${itemId}...`);
         
-        document.querySelectorAll('.delete-item-btn').forEach(btn => btn.disabled = true);
+        // Deshabilitar todos los botones de la fila durante el proceso
+        document.getElementById(`tienda-item-row-${itemId}`).querySelectorAll('button').forEach(btn => btn.disabled = true);
 
         try {
             const payload = {
@@ -2775,7 +2776,8 @@ const AppTransacciones = {
 
         } catch (error) {
             AppTransacciones.setError(statusMsg, error.message);
-            document.querySelectorAll('.delete-item-btn').forEach(btn => btn.disabled = false);
+            // Si hay un error, al menos reactivar la interfaz global (aunque la fila quede mal)
+            AppData.cargarDatos(false); 
         } 
     },
     
@@ -2839,9 +2841,10 @@ const AppTransacciones = {
         throw new Error('Failed to fetch after multiple retries.');
     },
 
+    // CAMBIO v17.0: Texto de carga modificado
     setLoadingState: function(btn, btnTextEl, isLoading, defaultText) {
         if (isLoading) {
-            if (btnTextEl) btnTextEl.textContent = 'Procesando...';
+            if (btnTextEl) btnTextEl.textContent = '...'; // Texto de carga más corto
             if (btn) btn.disabled = true;
         } else {
             if (btnTextEl && defaultText) btnTextEl.textContent = defaultText;
@@ -2880,11 +2883,15 @@ window.AppTransacciones = AppTransacciones;
 // NUEVO v16.0: Exponer funciones de admin al scope global para onclick=""
 window.AppUI.handleEditBono = AppUI.handleEditBono;
 window.AppTransacciones.eliminarBono = AppTransacciones.eliminarBono;
-window.AppUI.showTiendaConfirmModal = AppUI.showTiendaConfirmModal;
 window.AppUI.handleEditItem = AppUI.handleEditItem;
+// CAMBIO v17.0: Exponer funciones de confirmación de borrado
+window.AppUI.handleDeleteConfirmation = AppUI.handleDeleteConfirmation;
+window.AppUI.cancelDeleteConfirmation = AppUI.cancelDeleteConfirmation;
 window.AppTransacciones.eliminarItem = AppTransacciones.eliminarItem;
 // NUEVO v16.1 (Problema 3): Exponer control manual de la tienda
 window.AppTransacciones.toggleStoreManual = AppTransacciones.toggleStoreManual;
+// CAMBIO v17.0: Exponer la nueva función de compra
+window.AppTransacciones.comprarItem = AppTransacciones.comprarItem;
 
 
 window.onload = function() {
