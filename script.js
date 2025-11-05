@@ -1909,16 +1909,26 @@ const AppUI = {
         document.getElementById('home-modules-grid').classList.add('hidden');
     },
 
+    // ===================================================================
+    // FUNCIÓN CORREGIDA
+    // ===================================================================
     actualizarAlumnosEnRiesgo: function() {
         const lista = document.getElementById('riesgo-lista');
         if (!lista) return;
 
-        const allStudents = AppState.datosAdicionales.allStudents.filter(s => s.grupoNombre !== 'Cicla');
+        // CORRECCIÓN: No filtrar a los de Cicla (s.grupoNombre !== 'Cicla'),
+        // ya que ellos son los de más alto riesgo y deben aparecer.
+        const allStudents = AppState.datosAdicionales.allStudents;
         
-        const possibleRiesgoStudents = allStudents.filter(s => s.pinceles >= 0);
+        // CORRECCIÓN: Eliminar el filtro 's.pinceles >= 0'.
+        // Queremos a los alumnos con los saldos MÁS BAJOS,
+        // que incluye saldos negativos (Cicla) y saldos positivos bajos.
         
-        const enRiesgo = possibleRiesgoStudents.sort((a, b) => a.pinceles - b.pinceles);
+        // Ordenar a TODOS los alumnos por sus pinceles, de menor a mayor.
+        // Usamos [...allStudents] para no modificar el array original.
+        const enRiesgo = [...allStudents].sort((a, b) => a.pinceles - b.pinceles);
         
+        // Tomar los 6 con saldos más bajos.
         const top6Riesgo = enRiesgo.slice(0, 6); 
 
         if (top6Riesgo.length === 0) {
@@ -1940,6 +1950,9 @@ const AppUI = {
             `;
         }).join('');
     },
+    // ===================================================================
+    // FIN DE LA CORRECCIÓN
+    // ===================================================================
     
     actualizarEstadisticasRapidas: function(grupos) {
         const statsList = document.getElementById('quick-stats-list');
