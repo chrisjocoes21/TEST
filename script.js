@@ -10,9 +10,9 @@ const AppConfig = {
     MAX_RETRIES: 5,
     CACHE_DURATION: 300000,
     
-    // CAMBIO v16.0: Actualización de versión
+    // CAMBIO v16.1: Actualización de versión
     APP_STATUS: 'Beta', 
-    APP_VERSION: 'v16.0 (Optimización Tienda)', 
+    APP_VERSION: 'v16.1 (Control Tienda)',
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -77,6 +77,7 @@ const AppState = {
         items: {}, // Almacenará los artículos de la API
         adminPanelUnlocked: false,
         isStoreOpen: false, // Controlado por updateCountdown
+        storeManualStatus: 'auto', // NUEVO v16.1 (Problema 3): Control manual (auto, open, closed)
         currentItemToConfirm: null // Para el modal de confirmación (factura)
     }
 };
@@ -232,6 +233,8 @@ const AppData = {
         
         // 3. NUEVO v16.0: Procesar Artículos de Tienda
         AppState.tienda.items = data.tiendaStock || {};
+        // NUEVO v16.1 (Problema 3): Procesar estado manual de la tienda
+        AppState.tienda.storeManualStatus = data.storeManualStatus || 'auto';
 
         const allGroups = data.gruposData;
         
@@ -286,18 +289,13 @@ const AppData = {
 
         // 10. NUEVO v16.0: Actualizar UI de Tienda (si está abierta)
         if (document.getElementById('tienda-modal').classList.contains('opacity-0') === false) {
-            // CORRECCIÓN BUG "Cargando...": Si la tienda se actualiza mientras está abierta,
-            // forzamos el re-renderizado si aún estaba en "Cargando..."
-            const container = document.getElementById('tienda-items-container');
-            const isLoading = container.innerHTML.includes('Cargando artículos...');
-            
-            if (isLoading) {
-                AppUI.renderTiendaItems();
-            } else {
-                // Optimización v16.0: Solo actualiza los estados de los botones, no reconstruye todo.
-                AppUI.updateTiendaButtonStates(); 
-            }
+            // CORRECCIÓN v16.1 (Problema 1 - Sincronización):
+            // Forzar el re-renderizado de la lista de estudiantes Y admin
+            // para reflejar cambios (ej: crear item) en tiempo real.
+            AppUI.renderTiendaItems(); 
             AppUI.populateTiendaAdminList();
+            AppUI.updateTiendaAdminStatusLabel(); // v16.1
+            // AppUI.updateTiendaButtonStates(); // renderTiendaItems() ya llama a esto.
         }
 
         AppState.datosActuales = activeGroups; // Actualizar el estado al final
@@ -392,6 +390,9 @@ const AppUI = {
             AppTransacciones.crearActualizarItem();
         });
         document.getElementById('tienda-admin-clear-btn').addEventListener('click', AppUI.clearTiendaAdminForm);
+        
+        // NUEVO v16.1: Listeners para Control Manual de Tienda
+        // Los listeners ya están en el HTML con onclick="AppTransacciones.toggleStoreManual('status')"
 
         // Listeners Modal Confirmación de Compra (Factura)
         document.getElementById('tienda-confirm-close-btn').addEventListener('click', () => AppUI.hideModal('tienda-confirm-modal'));
@@ -948,11 +949,11 @@ const AppUI = {
 
         // Poblar listas
         const container = document.getElementById('tienda-items-container');
-        // CORRECCIÓN BUG "Cargando...": Revisar si el contenedor solo tiene el placeholder
+        // CORRECCIÓN BUG "Cargando..." (Problema 2): Revisar si el contenedor solo tiene el placeholder
         const isLoading = container.innerHTML.includes('Cargando artículos...');
         
         // Si está "cargando" (o vacío), renderizar. Si no, solo actualizar botones.
-        if (isLoading) {
+        if (isLoading || container.innerHTML.trim() === '') {
             AppUI.renderTiendaItems();
         } else {
             AppUI.updateTiendaButtonStates();
@@ -960,6 +961,8 @@ const AppUI = {
         
         // Poblar la lista de admin
         AppUI.populateTiendaAdminList();
+        // v16.1: Actualizar etiqueta de estado manual
+        AppUI.updateTiendaAdminStatusLabel();
         
         AppUI.showModal('tienda-modal');
     },
@@ -991,7 +994,7 @@ const AppUI = {
         AppUI.updateTiendaButtonStates();
     },
 
-    // Renderiza las tarjetas de la tienda (SOLO SE LLAMA UNA VEZ AL ABRIR)
+    // Renderiza las tarjetas de la tienda
     renderTiendaItems: function() {
         const container = document.getElementById('tienda-items-container');
         const items = AppState.tienda.items;
@@ -1010,14 +1013,14 @@ const AppUI = {
             
             // CORRECCIÓN BUG ONCLICK: Escapar descripción y ID
             const descripcionEscapada = escapeHTML(item.descripcion);
-            const itemIdEscapado = escapeHTML(itemId);
+            const itemIdEscapado = escapeHTML(item.ItemID); // Usar ItemID real
 
             html += `
                 <div class="tienda-item-card">
                     <!-- Header de la Tarjeta (Tipo, Stock) -->
                     <div class="flex justify-between items-center mb-2">
                         <span class="text-xs font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">${item.tipo}</span>
-                        <span id="stock-${itemId}" class="text-xs font-medium text-gray-500">Stock: ${item.stock}</span>
+                        <span id="stock-${itemIdEscapado}" class="text-xs font-medium text-gray-500">Stock: ${item.stock}</span>
                     </div>
 
                     <!-- Título y Tooltip -->
@@ -1033,15 +1036,16 @@ const AppUI = {
                         <div class="tooltip-text hidden md:block w-72">
                             <span class="font-bold">${item.nombre}</span>
                             <p class="text-xs mt-1">${descripcionEscapada}</p>
-                            <svg class="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,0 127.5,127.5 255,0"/></svg>
+                            <!-- CORRECCIÓN v16.1 (Problema 2 Tooltip): Invertir polígono de la flecha -->
+                            <svg class="absolute text-gray-800 h-2 w-full left-0 bottom-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,255 127.5,127.5 255,255"/></svg>
                         </div>
                     </div>
                     
                     <!-- Footer (Precio y Botón) -->
                     <div class="flex justify-between items-center mt-auto pt-4">
                         <span class="text-xl font-bold text-blue-600">${AppFormat.formatNumber(costoFinal)} ℙ</span>
-                        <button id="buy-btn-${itemId}" 
-                                data-item-id="${itemId}"
+                        <button id="buy-btn-${itemIdEscapado}" 
+                                data-item-id="${itemIdEscapado}"
                                 onclick="AppUI.showTiendaConfirmModal('${itemIdEscapado}')"
                                 class="tienda-buy-btn bg-blue-600 text-white hover:bg-blue-700 w-auto">
                             Comprar
@@ -1065,7 +1069,7 @@ const AppUI = {
 
         Object.keys(items).forEach(itemId => {
             const item = items[itemId];
-            const btn = document.getElementById(`buy-btn-${itemId}`);
+            const btn = document.getElementById(`buy-btn-${item.ItemID}`);
             if (!btn) return;
 
             const costoFinal = Math.round(item.precio * (1 + AppConfig.TASA_ITBIS));
@@ -1075,7 +1079,7 @@ const AppUI = {
             btn.disabled = false;
             btn.textContent = "Comprar";
 
-            if (item.stock <= 0 && itemId !== 'filantropo') {
+            if (item.stock <= 0 && item.ItemID !== 'filantropo') { // Usar ItemID real
                 btn.classList.add('agotado-btn');
                 btn.textContent = "Agotado";
                 btn.disabled = true;
@@ -1151,6 +1155,30 @@ const AppUI = {
         }
     },
     
+    // NUEVO v16.1 (Problema 3): Actualiza la etiqueta de estado en el panel de admin
+    updateTiendaAdminStatusLabel: function() {
+        const label = document.getElementById('tienda-admin-status-label');
+        if (!label) return;
+        
+        const status = AppState.tienda.storeManualStatus;
+        
+        label.classList.remove('text-blue-600', 'text-green-600', 'text-red-600', 'text-gray-600');
+        
+        if (status === 'auto') {
+            label.textContent = "Automático (por Temporizador)";
+            label.classList.add('text-blue-600');
+        } else if (status === 'open') {
+            label.textContent = "Forzado Abierto";
+            label.classList.add('text-green-600');
+        } else if (status === 'closed') {
+            label.textContent = "Forzado Cerrado";
+            label.classList.add('text-red-600');
+        } else {
+            label.textContent = "Desconocido";
+            label.classList.add('text-gray-600');
+        }
+    },
+
     populateTiendaAdminList: function() {
         const tbody = document.getElementById('tienda-admin-lista');
         const items = AppState.tienda.items;
@@ -1168,10 +1196,10 @@ const AppUI = {
             const item = items[itemId];
             const precio = AppFormat.formatNumber(item.precio);
             const stock = item.stock;
-            const rowClass = (stock <= 0 && itemId !== 'filantropo') ? 'opacity-60 bg-gray-50' : '';
+            const rowClass = (stock <= 0 && item.ItemID !== 'filantropo') ? 'opacity-60 bg-gray-50' : '';
             
             // CORRECCIÓN BUG ONCLICK: Escapar datos para los botones
-            const itemIdEscapado = escapeHTML(itemId);
+            const itemIdEscapado = escapeHTML(item.ItemID); // Usar ItemID real
             const nombreEscapado = escapeHTML(item.nombre);
             const descEscapada = escapeHTML(item.descripcion);
             const tipoEscapado = escapeHTML(item.tipo);
@@ -1767,7 +1795,8 @@ const AppUI = {
                                     <span class="font-bold">Capital Total</span>
                                     <div class="flex justify-between mt-1 text-xs"><span>Capital Líquido:</span> <span>${pincelesLiquidosF} ℙ</span></div>
                                     <div class="flex justify-between text-xs"><span>Capital Invertido:</span> <span>${totalInvertidoF} ℙ</span></div>
-                                    <svg class="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,0 127.5,127.5 255,0"/></svg>
+                                    <!-- CORRECCIÓN v16.1 (Problema 2 Tooltip): Invertir polígono de la flecha -->
+                                    <svg class="absolute text-gray-800 h-2 w-full left-0 bottom-full" x="0px" y="0px" viewBox="0 0 255 255" xml:space="preserve"><polygon class="fill-current" points="0,255 127.5,127.5 255,255"/></svg>
                                 </div>
                             </div>
                         </div>
@@ -2053,7 +2082,7 @@ const AppUI = {
         AppUI.showModal('student-modal');
     },
     
-    // CAMBIO v16.0: Lógica de Tienda añadida
+    // CAMBIO v16.1: Lógica de Tienda y Control Manual
     updateCountdown: function() {
         const getLastThursday = (year, month) => {
             const lastDayOfMonth = new Date(year, month + 1, 0);
@@ -2073,63 +2102,93 @@ const AppUI = {
         const timerEl = document.getElementById('countdown-timer');
         const messageEl = document.getElementById('store-message'); 
         const tiendaBtn = document.getElementById('tienda-btn');
-        const tiendaTimerStatus = document.getElementById('tienda-timer-status'); // NUEVO v16.0
+        const tiendaTimerStatus = document.getElementById('tienda-timer-status');
         
         const f = (val) => String(val).padStart(2, '0');
 
-        if (now >= storeOpen && now <= storeClose) { 
+        // NUEVO v16.1 (Problema 3): Lógica de Control Manual
+        const manualStatus = AppState.tienda.storeManualStatus;
+        
+        if (manualStatus === 'open') {
+            // TIENDA FORZADA ABIERTA
             timerEl.classList.add('hidden');
             messageEl.classList.remove('hidden');
-
-            // NUEVO v16.0: Actualizar estado de la tienda
+            messageEl.textContent = "¡La tienda está abierta! (Manual)"; // Actualizar mensaje principal
             if (tiendaTimerStatus) { 
-                tiendaTimerStatus.innerHTML = `<span class="text-green-600 font-bold">¡TIENDA ABIERTA!</span> Oportunidad única.`;
+                tiendaTimerStatus.innerHTML = `<span class="text-green-600 font-bold">¡TIENDA ABIERTA!</span> (Control Manual)`;
                 tiendaTimerStatus.classList.remove('bg-gray-100', 'text-gray-700', 'bg-red-50', 'text-red-700');
                 tiendaTimerStatus.classList.add('bg-green-50', 'text-green-700');
             }
             AppState.tienda.isStoreOpen = true;
-            
-        } else {
-            timerEl.classList.remove('hidden');
-            messageEl.classList.add('hidden');
-            
-            let targetDate = storeOpen; 
-            if (now > storeClose) { 
-                targetDate = getLastThursday(currentYear, currentMonth + 1);
-                targetDate.setHours(0, 0, 0, 0); 
-            }
 
-            const distance = targetDate - now;
+        } else if (manualStatus === 'closed') {
+            // TIENDA FORZADA CERRADA
+            timerEl.classList.add('hidden'); // Ocultamos el timer principal
+            messageEl.classList.add('hidden'); // Ocultamos el mensaje principal
             
-            const days = f(Math.floor(distance / (1000 * 60 * 60 * 24)));
-            const hours = f(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
-            const minutes = f(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)));
-            const seconds = f(Math.floor((distance % (1000 * 60)) / 1000));
-            
-            document.getElementById('days').textContent = days;
-            document.getElementById('hours').textContent = hours;
-            document.getElementById('minutes').textContent = minutes;
-            document.getElementById('seconds').textContent = seconds;
-
-            // CORRECCIÓN BUG TIMER: Actualizar también el timer del modal
             if (tiendaTimerStatus) {
-                tiendaTimerStatus.innerHTML = `<span class="text-red-600 font-bold">TIENDA CERRADA.</span> Próxima apertura en:
-                    <div class="flex items-baseline justify-center gap-2 mt-2">
-                        <span class="text-xl font-bold text-blue-600 w-8 text-right">${days}</span><span class="text-xs text-gray-500 uppercase -ml-1">Días</span>
-                        <span class="text-xl font-bold text-blue-600 w-8 text-right">${hours}</span><span class="text-xs text-gray-500 uppercase -ml-1">Horas</span>
-                        <span class="text-xl font-bold text-blue-600 w-8 text-right">${minutes}</span><span class="text-xs text-gray-500 uppercase -ml-1">Minutos</span>
-                    </div>
-                `;
-                tiendaTimerStatus.classList.remove('bg-green-50', 'text-green-700');
+                tiendaTimerStatus.innerHTML = `<span class="text-red-600 font-bold">TIENDA CERRADA</span> (Control Manual)`;
+                tiendaTimerStatus.classList.remove('bg-green-50', 'text-green-700', 'bg-gray-100', 'text-gray-700');
                 tiendaTimerStatus.classList.add('bg-red-50', 'text-red-700');
             }
             AppState.tienda.isStoreOpen = false;
+
+        } else {
+            // MODO AUTOMÁTICO (lógica original)
+            if (now >= storeOpen && now <= storeClose) { 
+                timerEl.classList.add('hidden');
+                messageEl.classList.remove('hidden');
+                messageEl.textContent = "¡La tienda está abierta!"; // Mensaje original
+                if (tiendaTimerStatus) { 
+                    tiendaTimerStatus.innerHTML = `<span class="text-green-600 font-bold">¡TIENDA ABIERTA!</span> Oportunidad única.`;
+                    tiendaTimerStatus.classList.remove('bg-gray-100', 'text-gray-700', 'bg-red-50', 'text-red-700');
+                    tiendaTimerStatus.classList.add('bg-green-50', 'text-green-700');
+                }
+                AppState.tienda.isStoreOpen = true;
+            } else {
+                timerEl.classList.remove('hidden');
+                messageEl.classList.add('hidden');
+                
+                let targetDate = storeOpen; 
+                if (now > storeClose) { 
+                    targetDate = getLastThursday(currentYear, currentMonth + 1);
+                    targetDate.setHours(0, 0, 0, 0); 
+                }
+
+                const distance = targetDate - now;
+                
+                const days = f(Math.floor(distance / (1000 * 60 * 60 * 24)));
+                const hours = f(Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)));
+                const minutes = f(Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)));
+                const seconds = f(Math.floor((distance % (1000 * 60)) / 1000));
+                
+                document.getElementById('days').textContent = days;
+                document.getElementById('hours').textContent = hours;
+                document.getElementById('minutes').textContent = minutes;
+                document.getElementById('seconds').textContent = seconds;
+
+                // CORRECCIÓN BUG TIMER (Problema 1): Actualizar también el timer del modal
+                if (tiendaTimerStatus) {
+                    tiendaTimerStatus.innerHTML = `<span class="text-red-600 font-bold">TIENDA CERRADA.</span> Próxima apertura en:
+                        <div class="flex items-baseline justify-center gap-2 mt-2">
+                            <span class="text-xl font-bold text-blue-600 w-8 text-right">${days}</span><span class="text-xs text-gray-500 uppercase -ml-1">Días</span>
+                            <span class="text-xl font-bold text-blue-600 w-8 text-right">${hours}</span><span class="text-xs text-gray-500 uppercase -ml-1">Horas</span>
+                            <span class="text-xl font-bold text-blue-600 w-8 text-right">${minutes}</span><span class="text-xs text-gray-500 uppercase -ml-1">Minutos</span>
+                        </div>
+                    `;
+                    tiendaTimerStatus.classList.remove('bg-green-50', 'text-green-700', 'bg-gray-100', 'text-gray-700');
+                    tiendaTimerStatus.classList.add('bg-red-50', 'text-red-700');
+                }
+                AppState.tienda.isStoreOpen = false;
+            }
         }
+
 
         // NUEVO v16.0: Actualizar estado de botones si la tienda está visible
         // (Optimización: esto solo se ejecuta si el modal está abierto)
         if (document.getElementById('tienda-modal').classList.contains('opacity-0') === false) {
             AppUI.updateTiendaButtonStates();
+            AppUI.updateTiendaAdminStatusLabel(); // v16.1
         }
     }
 };
@@ -2629,7 +2688,7 @@ const AppTransacciones = {
                 item: item // El backend espera este objeto
             };
 
-            // CORRECCIÓN BUG ADMIN: Usar la URL de TRANSACCION
+            // CORRECCIÓN BUG ADMIN (Problema 3): Usar la URL de TRANSACCION
             const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.TRANSACCION_API_URL, {
                 method: 'POST',
                 body: JSON.stringify(payload),
@@ -2665,7 +2724,7 @@ const AppTransacciones = {
                 itemId: itemId
             };
 
-            // CORRECCIÓN BUG ADMIN: Usar la URL de TRANSACCION
+            // CORRECCIÓN BUG ADMIN (Problema 3): Usar la URL de TRANSACCION
             const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.TRANSACCION_API_URL, {
                 method: 'POST',
                 body: JSON.stringify(payload),
@@ -2686,6 +2745,46 @@ const AppTransacciones = {
         } 
     },
     
+    // NUEVO v16.1 (Problema 3): Control Manual de la Tienda
+    toggleStoreManual: async function(status) {
+        const statusMsg = document.getElementById('tienda-admin-status-msg');
+        AppTransacciones.setLoading(statusMsg, `Cambiando estado a: ${status}...`);
+        
+        // Deshabilitar botones temporalmente
+        document.getElementById('tienda-force-open-btn').disabled = true;
+        document.getElementById('tienda-force-close-btn').disabled = true;
+        document.getElementById('tienda-force-auto-btn').disabled = true;
+
+        try {
+            const payload = {
+                accion: 'admin_toggle_store', // Nueva acción para el backend
+                clave: AppConfig.CLAVE_MAESTRA,
+                status: status // 'open', 'closed', o 'auto'
+            };
+
+            const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.TRANSACCION_API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            const result = await response.json();
+
+            if (result.success === true) {
+                AppTransacciones.setSuccess(statusMsg, result.message || "¡Estado de la tienda actualizado!");
+                AppData.cargarDatos(false); // Recargar todos los datos para obtener el nuevo estado
+            } else {
+                throw new Error(result.message || "Error al cambiar estado.");
+            }
+
+        } catch (error) {
+            AppTransacciones.setError(statusMsg, error.message);
+        } finally {
+            // Rehabilitar botones (se actualizarán con el próximo 'cargarDatos')
+            document.getElementById('tienda-force-open-btn').disabled = false;
+            document.getElementById('tienda-force-close-btn').disabled = false;
+            document.getElementById('tienda-force-auto-btn').disabled = false;
+        }
+    },
 
     // --- Utilidades de Fetch y Estado ---
 
@@ -2750,6 +2849,8 @@ window.AppTransacciones.eliminarBono = AppTransacciones.eliminarBono;
 window.AppUI.showTiendaConfirmModal = AppUI.showTiendaConfirmModal;
 window.AppUI.handleEditItem = AppUI.handleEditItem;
 window.AppTransacciones.eliminarItem = AppTransacciones.eliminarItem;
+// NUEVO v16.1 (Problema 3): Exponer control manual de la tienda
+window.AppTransacciones.toggleStoreManual = AppTransacciones.toggleStoreManual;
 
 
 window.onload = function() {
