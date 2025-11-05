@@ -52,13 +52,6 @@ const AppConfig = {
     TASA_ITBIS: 0.18, // 18%
 };
 
-// --- CORRECCIÓN BUG ONCLICK: Función de utilidad para escapar comillas ---
-function escapeHTML(str) {
-    if (typeof str !== 'string') return str;
-    // Escapa comillas simples y dobles para ser seguras en atributos HTML
-    return str.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-}
-
 // --- ESTADO DE LA APLICACIÓN ---
 const AppState = {
     datosActuales: null, // Grupos y alumnos (limpios, sin Cicla/Banco)
@@ -107,7 +100,10 @@ const AppState = {
     
     // NUEVO FIREBASE: Estado de autenticación
     isAdminLoggedIn: false,
-    isAuthInitialized: false
+    isAuthInitialized: false,
+    
+    // INYECTADO: Bandera para saber si el login de admin acaba de ocurrir
+    isProcessingAdminSignIn: false
 };
 
 // --- AUTENTICACIÓN (REDISEÑADO PARA FIREBASE) ---
@@ -135,6 +131,8 @@ const AppAuth = {
             onAuthStateChanged(auth, async (user) => {
                 AppState.isAuthInitialized = true;
                 
+                const justLoggedIn = AppState.isProcessingAdminSignIn; // Capturamos el estado antes de procesar
+                
                 if (user && !user.isAnonymous) {
                     // Usuario es un admin logueado (Email/Pass)
                     console.log("Admin user signed in:", user.email);
@@ -148,6 +146,15 @@ const AppAuth = {
                     if (!AppConfig.CLAVE_MAESTRA) {
                         await AppAuth.fetchAdminKey();
                     }
+                    
+                    // LÓGICA DE APERTURA DE MODAL CORREGIDA (Fix 3):
+                    // Si el login de admin acaba de terminar Y la clave está cargada, abrir el panel.
+                    if (justLoggedIn && AppConfig.CLAVE_MAESTRA) {
+                        AppUI.showTransaccionModal('transaccion');
+                    }
+                    
+                    AppState.isProcessingAdminSignIn = false; // Limpiamos la bandera una vez que hemos procesado la clave (o fallado)
+                    
                 } else if (user && user.isAnonymous) {
                     // Usuario es anónimo (estado por defecto)
                     console.log("Anonymous user signed in.");
@@ -157,6 +164,7 @@ const AppAuth = {
                         authStatusEl.className = "text-xs font-medium text-gray-500";
                     }
                     AppConfig.CLAVE_MAESTRA = null; // Limpiar clave si no es admin
+                    AppState.isProcessingAdminSignIn = false; // Limpiamos la bandera si no es admin
                 } else {
                     // No hay usuario (debería ser raro)
                     console.log("User is signed out.");
@@ -166,6 +174,7 @@ const AppAuth = {
                         authStatusEl.className = "text-xs font-medium text-red-500";
                     }
                     AppConfig.CLAVE_MAESTRA = null;
+                    AppState.isProcessingAdminSignIn = false; // Limpiamos la bandera si no hay usuario
                 }
                 
                 // Actualizar paneles de admin (Bonos y Tienda)
@@ -205,6 +214,9 @@ const AppAuth = {
 
         submitBtn.disabled = true;
         submitBtn.textContent = 'Accediendo...';
+        
+        // INYECTADO: Indicamos que estamos en proceso de login de admin (Fix 3)
+        AppState.isProcessingAdminSignIn = true;
 
         try {
             // Esto dispara onAuthStateChanged si es exitoso
@@ -213,17 +225,8 @@ const AppAuth = {
             // Si el login es exitoso, onAuthStateChanged se encarga del resto
             AppUI.hideModal('gestion-modal');
             
-            // Forzamos la apertura del modal de transacciones después de un pequeño delay 
-            // para dar tiempo a fetchAdminKey()
-            setTimeout(() => {
-                 if (AppConfig.CLAVE_MAESTRA) {
-                    AppUI.showTransaccionModal('transaccion');
-                 } else {
-                    console.warn("Clave no cargada, no abriendo modal de transacciones.");
-                 }
-            }, 1000);
-
-
+            // ELIMINADO BLOQUE setTimeout FRÁGIL (Fix 2)
+            
         } catch (error) {
             let userMessage = "Error de inicio de sesión. Credenciales incorrectas.";
             console.error("Firebase Sign-in Error:", error.code, error.message);
@@ -237,6 +240,9 @@ const AppAuth = {
             errorMsgEl.textContent = userMessage;
             passwordInput.classList.add('shake', 'border-red-500');
             passwordInput.focus();
+            
+            // Si falla el login, limpiamos la bandera
+            AppState.isProcessingAdminSignIn = false; 
             
         } finally {
             submitBtn.disabled = false;
@@ -484,7 +490,8 @@ const AppUI = {
         AppAuth.setupAuthListener();
         
         // Listeners Modales de Gestión (Login)
-        document.getElementById('gestion-btn').addEventListener('click', () => AppUI.showModal('gestion-modal'));
+        // CAMBIO (Fix 1): Reemplazamos el listener fijo por una función que verifica el estado
+        document.getElementById('gestion-btn').addEventListener('click', AppUI.handleGestionClick); 
         document.getElementById('modal-cancel').addEventListener('click', () => AppUI.hideModal('gestion-modal'));
         // CAMBIO FIREBASE: Usar AppAuth.signInAdmin
         document.getElementById('modal-submit').addEventListener('click', AppAuth.signInAdmin);
@@ -626,6 +633,32 @@ const AppUI = {
         AppUI.poblarModalAnuncios();
     },
     
+    // INYECTADO (Fix 1): Función para manejar el clic en el botón de "Administración"
+    handleGestionClick: function() {
+        // Si estamos logueados y tenemos la clave maestra, abrimos el panel de transacciones
+        if (AppState.isAdminLoggedIn && AppConfig.CLAVE_MAESTRA) {
+            AppUI.showTransaccionModal('transaccion');
+            // Si estamos logueados pero la clave aún no está cargada (falló o es lenta)
+        } else if (AppState.isAdminLoggedIn && !AppConfig.CLAVE_MAESTRA) {
+            AppUI.showModal('gestion-modal'); 
+            const errorMsgEl = document.getElementById('auth-error-msg');
+            AppTransacciones.setLoading(errorMsgEl, "Cargando clave de administrador...");
+            
+            // Intentar forzar la recarga de la clave (en caso de fallo inicial)
+            AppAuth.fetchAdminKey().then(() => {
+                if (AppConfig.CLAVE_MAESTRA) {
+                    AppUI.hideModal('gestion-modal');
+                    AppUI.showTransaccionModal('transaccion');
+                } else {
+                    AppTransacciones.setError(errorMsgEl, "Fallo al cargar la clave maestra. Revise los logs de la consola.");
+                }
+            });
+        } else {
+            // Si no estamos logueados, mostramos el modal de login
+            AppUI.showModal('gestion-modal');
+        }
+    },
+
     // NUEVO FIREBASE: Función para actualizar el estado de los paneles de Admin
     updateAdminPanels: function() {
         const isReady = AppState.isAdminLoggedIn && AppConfig.CLAVE_MAESTRA;
@@ -1450,8 +1483,9 @@ const AppUI = {
 
     // --- FUNCIÓN CENTRAL: Mostrar Modal de Administración y pestaña inicial ---
     showTransaccionModal: function(tab) {
-        // CAMBIO FIREBASE: Comprobar el estado global
+        // CAMBIO FIREBASE: Comprobar clave antes de empezar
         if (!AppState.isAdminLoggedIn || !AppConfig.CLAVE_MAESTRA) {
+            // Si por alguna razón la UI permite un clic sin clave, forzamos el login de nuevo
             AppUI.showModal('gestion-modal');
             return;
         }
