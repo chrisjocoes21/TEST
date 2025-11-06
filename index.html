@@ -257,6 +257,7 @@
                     </h2>
                     <button id="transaccion-modal-close-btn" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
                 </div>
+                <!-- V18.1: Se elimina la pestaña de Impuesto Patrimonio, volviendo al estado original -->
                 <div class="flex border-b border-gray-200 px-4">
                     <button data-tab="transaccion" class="tab-btn active-tab px-4 py-2 text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors hover:bg-gray-100">
                         Transacción Múltiple
@@ -291,6 +292,7 @@
                             <span id="tesoreria-saldo-transaccion" class="text-xs text-blue-600 ml-2 font-normal">
                             </span>
                         </label>
+                        <!-- ESTADO NORMAL: Input habilitado y con placeholder simple -->
                         <input type="number" id="transaccion-cantidad-input" placeholder="Ej: 1000 o -50" class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         
                         <!-- NUEVO: Visor de cálculo de comisión -->
@@ -299,7 +301,7 @@
                         </div>
                     </div>
                     <div class="mt-6 flex justify-end">
-                        <button id="transaccion-submit-btn" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm w-full md:w-auto">
+                        <button id="transaccion-submit-btn" data-accion="transaccion_multiple" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm w-full md:w-auto">
                             <span id="transaccion-btn-text">Realizar Transacción</span>
                         </button>
                     </div>
@@ -437,7 +439,8 @@
                         <div class="bg-gray-50 p-4 rounded-lg border border-gray-200 space-y-2">
                             <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Impuestos P2P:</strong> Comisión del 10% sobre todas las transferencias entre alumnos.</p>
                             <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Intereses de Préstamos:</strong> Ganancias recibidas por el pago de cuotas e intereses de préstamos.</p>
-                            <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Impuesto Pasivo:</strong> Cobro diario del 0.5% a saldos superiores a 100 ℙ.</p>
+                            <!-- V18.1: Actualizado el texto de la regla con la nueva política -->
+                            <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Impuesto Pasivo Progresivo (ISP):</strong> Cobro diario con escala progresiva sobre saldos altos para desincentivar la acumulación (el cobro inicia a partir de 101 ℙ).</p>
                             <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Impuesto a Depósitos:</strong> Cobro del 5% sobre los intereses generados por los depósitos a plazo.</p>
                             <!-- INICIO CAMBIO: INGRESO PASIVO POR RENDIMIENTO DE INVERSIONES DE CAPITAL -->
                             <p class="text-sm text-gray-700"><strong class="font-medium text-gray-800">Rendimiento de Inversiones de Capital:</strong> Rendimiento obtenido al invertir capital excedente para inyectar liquidez y mantener el crecimiento.</p>
@@ -897,7 +900,7 @@
 
 
     <!-- Lógica de la Aplicación -->
-    <!-- CAMBIO v17.0: Actualizada versión de script -->
-    <script src="script.js?v=17.0" type="module" defer></script>
+    <!-- CAMBIO v18.1: Apuntando a la nueva versión de script -->
+    <script src="script.js?v=18.1" type="module" defer></script>
 </body>
 </html>
