@@ -13,7 +13,6 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏦</text></svg>">
 
     <!-- Archivo de estilos personalizados -->
-    <!-- CAMBIO v17.0: Actualizada versión de CSS -->
     <link rel="stylesheet" href="style.css?v=17.0">
 </head>
 <!-- CAMBIO v16.0 (SCROLL): 'overflow-hidden' ya estaba aquí (correcto) -->
@@ -257,7 +256,7 @@
                     </h2>
                     <button id="transaccion-modal-close-btn" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
                 </div>
-                <!-- V18.1: Se elimina la pestaña de Impuesto Patrimonio, volviendo al estado original -->
+                <!-- V18.1: Se eliminó la pestaña de Impuesto Patrimonio -->
                 <div class="flex border-b border-gray-200 px-4">
                     <button data-tab="transaccion" class="tab-btn active-tab px-4 py-2 text-sm font-medium border-b-2 border-blue-600 text-blue-600 transition-colors hover:bg-gray-100">
                         Transacción Múltiple
@@ -900,7 +899,7 @@
 
 
     <!-- Lógica de la Aplicación -->
-    <!-- CAMBIO v18.1: Apuntando a la nueva versión de script -->
-    <script src="script.js?v=18.1" type="module" defer></script>
+    <!-- CAMBIO v18.2: Apuntando a la nueva versión de script (con el fix de Auth) -->
+    <script src="script.js?v=18.2" type="module" defer></script>
 </body>
 </html>
