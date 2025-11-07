@@ -8,47 +8,36 @@ const AppConfig = {
     INITIAL_RETRY_DELAY: 1000,
     MAX_RETRY_DELAY: 30000,
     MAX_RETRIES: 5,
-    CACHE_DURATION: 300000,
+    CACHE_DURATION: 15000, // Reducido para simulación en vivo
     
-    // CAMBIO v18.2: Corrección del bug de autenticación
-    APP_STATUS: 'Beta', 
-    APP_VERSION: 'v18.2 (Corrección Auth)', // ACTUALIZADO A v18.2
+    // NUEVO v20.0: Versión y Estado del App
+    APP_STATUS: 'Final', 
+    APP_VERSION: 'v20.0 (Mercado Ícaro)', 
     
-    // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
-    IMPUESTO_P2P_TASA: 0.10, // 10%
+    // Economía
+    IMPUESTO_P2P_TASA: 0.10, 
+    IMPUESTO_DEPOSITO_TASA: 0.05, 
+    IMPUESTO_DEPOSITO_ADMIN: 0.05, 
+    TASA_ITBIS: 0.18, 
     
-    // CAMBIO v0.3.9: Nueva tasa de impuesto sobre intereses de depósitos
-    IMPUESTO_DEPOSITO_TASA: 0.05, // 5%
-    
-    // NUEVO v0.4.2: Comisión sobre depósitos de admin
-    IMPUESTO_DEPOSITO_ADMIN: 0.05, // 5%
+    // NUEVO v20.0: Configuración del Mercado Volátil
+    MERCADO_VOLATIL_TASA_COMISION: 0.25, // 25% sobre la ganancia
+    MERCADO_VOLATIL_PLAZO_DIAS: 7, // 7 días de operación
 
-    // NUEVO v16.0: Tasa de ITBIS de la tienda (debe coincidir con el Backend)
-    TASA_ITBIS: 0.18, // 18%
-
-    // NUEVO v18.1: Definición de la escala de Impuesto Súper Progresivo (ISP)
-    // Tramos del impuesto pasivo PROGRESIVO diario (en porcentaje)
-    // ESTA LÓGICA DEBE COPIARSE A SU API DE GOOGLE APPS SCRIPT PARA QUE EL COBRO SEA AUTOMÁTICO.
+    // Impuesto Progresivo
     ISP_ESCALA: [
-        { limite: 100, tasa: 0 }, // Exención base
-        { limite: 100000, tasa: 0.005 }, // 0.5% (Aplica sobre el exceso de 100 ℙ hasta 100k)
-        { limite: 500000, tasa: 0.008 }, // 0.8%
-        { limite: 1000000, tasa: 0.012 }, // 1.2%
-        { limite: Infinity, tasa: 0.015 } // 1.5%
+        { limite: 100, tasa: 0 }, 
+        { limite: 100000, tasa: 0.005 }, 
+        { limite: 500000, tasa: 0.008 }, 
+        { limite: 1000000, tasa: 0.012 }, 
+        { limite: Infinity, tasa: 0.015 } 
     ],
 };
 
-// --- CORRECCIÓN BUG ONCLICK: Función de utilidad para escapar comillas ---
-function escapeHTML(str) {
-    if (typeof str !== 'string') return str;
-    // Escapa comillas simples y dobles para ser seguras en atributos HTML
-    return str.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-}
-
 // --- ESTADO DE LA APLICACIÓN ---
 const AppState = {
-    datosActuales: null, // Grupos y alumnos (limpios, sin Cicla/Banco)
-    datosAdicionales: { // Objeto para Tesorería, préstamos, etc.
+    datosActuales: null, 
+    datosAdicionales: { 
         saldoTesoreria: 0,
         prestamosActivos: [],
         depositosActivos: [],
@@ -66,41 +55,48 @@ const AppState = {
     sidebarTimer: null, 
     transaccionSelectAll: {}, 
     
-    // CAMBIO v16.0: 'info' almacena el objeto completo del alumno
     currentSearch: {
         prestamo: { query: '', selected: null, info: null },
         deposito: { query: '', selected: null, info: null },
         p2pOrigen: { query: '', selected: null, info: null },
         p2pDestino: { query: '', selected: null, info: null },
-        bonoAlumno: { query: '', selected: null, info: null }, // v0.5.0
-        tiendaAlumno: { query: '', selected: null, info: null } // NUEVO v16.0
+        bonoAlumno: { query: '', selected: null, info: null }, 
+        tiendaAlumno: { query: '', selected: null, info: null },
+        // NUEVO v20.0: Búsqueda para Inversión
+        inversionAlumno: { query: '', selected: null, info: null },
     },
     
-    // NUEVO v0.5.0: Estado de Bonos
     bonos: {
-        disponibles: [], // Bonos que aún tienen usos
-        canjeados: [], // Bonos que el usuario actual (hipotético) ha canjeado
-        adminPanelUnlocked: false // Para el panel de admin
+        disponibles: [], 
+        canjeados: [], 
+        adminPanelUnlocked: false 
     },
 
-    // CAMBIO v17.0: Simplificación de Tienda
     tienda: {
-        items: {}, // Almacenará los artículos de la API
+        items: {}, 
         adminPanelUnlocked: false,
-        isStoreOpen: false, // Controlado por updateCountdown
-        storeManualStatus: 'auto', // NUEVO v16.1 (Problema 3): Control manual (auto, open, closed)
+        isStoreOpen: false, 
+        storeManualStatus: 'auto', 
+    },
+
+    // NUEVO v20.0: Estado del Mercado Volátil
+    mercado: {
+        ofertasActivas: [], // Lotes en RECAUDANDO y OPERANDO
+        cuentasInversor: [], // Cuentas ACTIVO y PENDIENTE
+        logsDiarios: [], // Logs de simulación
+        selectedMercadoTab: 'ofertas',
+        selectedLoteId: null, // Para el modal de inversión
     }
 };
 
 // --- AUTENTICACIÓN ---
-// V18.2: REINSERCIÓN DEL OBJETO AppAuth.
 const AppAuth = {
     verificarClave: function() {
         const claveInput = document.getElementById('clave-input');
         if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
             
             AppUI.hideModal('gestion-modal');
-            AppUI.showTransaccionModal('transaccion'); // Abrir en la pestaña 'transaccion'
+            AppUI.showTransaccionModal('transaccion'); 
             
             claveInput.value = '';
             claveInput.classList.remove('shake', 'border-red-500');
@@ -116,27 +112,24 @@ const AppAuth = {
 
 // --- NÚMEROS Y FORMATO ---
 const AppFormat = {
-    // CAMBIO v0.4.4: Formato de Pinceles sin decimales
     formatNumber: (num) => new Intl.NumberFormat('es-DO', { maximumFractionDigits: 0 }).format(num),
-    // formatNumber: (num) => new Intl.NumberFormat('es-DO').format(num), // <-- ORIGINAL
-    // NUEVO v0.4.0: Formateo de Pinceles (2 decimales) - REEMPLAZADO por formatNumber
-    formatPincel: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)
+    formatDate: (dateString) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('es-DO', { day: 'numeric', month: 'short' });
+    }
 };
 
 // --- FUNCIÓN DE CÁLCULO DEL IMPUESTO (MANTENIDA PARA REFERENCIA Y USO DEL ADMIN) ---
 const AppCalculos = {
     
-    // Calcula el Impuesto Súper Progresivo (ISP) sobre un saldo dado (cobro diario).
-    // Esta función DEBE COPIARSE a su API de Apps Script para el cobro automático.
     calcularISP: function(saldoNeto) {
         if (saldoNeto <= 100) {
-            return 0; // Exención total para saldos muy bajos
+            return 0; 
         }
 
         let impuestoTotal = 0;
         let baseLiquidada = 0;
         
-        // Iteramos sobre la escala para aplicar las tasas de forma progresiva por tramos
         for (let i = 0; i < AppConfig.ISP_ESCALA.length; i++) {
             const tramo = AppConfig.ISP_ESCALA[i];
             const limiteTramo = tramo.limite;
@@ -147,7 +140,6 @@ const AppCalculos = {
                 let limiteSuperiorALiquidar = Math.min(saldoNeto, limiteTramo);
                 let baseImponibleTramo = limiteSuperiorALiquidar - baseLiquidada;
 
-                // Caso especial para el primer tramo (exceso de 100)
                 if (i === 1) {
                     baseImponibleTramo = Math.max(0, limiteSuperiorALiquidar - 100);
                 }
@@ -164,8 +156,29 @@ const AppCalculos = {
             }
         }
         
-        // El cálculo debe ser un número entero (redondeado hacia arriba)
         return Math.ceil(impuestoTotal);
+    },
+    
+    // NUEVO v20.0: Calcula el valor neto de retiro del Fondo Ícaro
+    calcularRetiroNeto: function(montoInvertido, valorFinal) {
+        const gananciaBruta = valorFinal - montoInvertido;
+        let comision = 0;
+        let montoNeto = 0;
+
+        if (gananciaBruta > 0) {
+            comision = Math.ceil(gananciaBruta * AppConfig.MERCADO_VOLATIL_TASA_COMISION);
+            const gananciaNeta = gananciaBruta - comision;
+            montoNeto = montoInvertido + gananciaNeta;
+        } else {
+            // Si hay pérdida o resultado es 0, se devuelve el valor final (sin comisión)
+            montoNeto = valorFinal; 
+        }
+
+        return {
+            montoNeto: montoNeto,
+            gananciaBruta: gananciaBruta,
+            comision: comision
+        };
     }
 };
 
@@ -177,11 +190,10 @@ const AnunciosDB = {
         "Recuerden: 'Ver Reglas' tiene información importante sobre la tienda." 
     ],
     'NUEVO': [
-        // CAMBIO v18.1: Anuncio sobre el ISP
+        "¡Nuevo Módulo: Fondo Ícaro! Invierte con alto riesgo y alto rendimiento.", // NUEVO v20.0
         "¡Nuevo Impuesto de Patrimonio Progresivo! Las fortunas más grandes pagan una tasa mayor diariamente.",
         "¡Nueva Tienda del Mes! Revisa los artículos de alto valor. Se desbloquea el último jueves.",
         "¡Nuevo Portal de Bonos! Canjea códigos por Pinceles ℙ.",
-        "¡Nuevo Sistema Económico! Depósitos de admin limitados por la Tesorería.",
         "¡Nuevo Portal P2P! Transfiere pinceles a tus compañeros (con 10% de comisión)."
     ],
     'CONSEJO': [
@@ -190,10 +202,10 @@ const AnunciosDB = {
         "¡Invierte! Usa los Depósitos a Plazo para obtener retornos fijos (Admin)."
     ],
     'ALERTA': [
-        // CAMBIO v0.5.5: Actualizado por Auto-Cicla
         "¡Cuidado! Saldos negativos (incluso -1 ℙ) te moverán automáticamente a Cicla en el próximo ciclo diario.",
         "Alumnos en Cicla pueden solicitar préstamos de rescate (Admin).",
-        "Si tienes un préstamo activo, NO puedes crear un Depósito a Plazo."
+        "Si tienes un préstamo activo, NO puedes crear un Depósito a Plazo.",
+        "MERCADO VOLÁTIL: ¡Una de cada tres ofertas es una estafa garantizada! Analiza las pistas." // NUEVO v20.0
     ]
 };
 
@@ -242,8 +254,7 @@ const AppData = {
                     throw new Error(`Error de API: ${data.message}`);
                 }
                 
-                // CAMBIO v16.0: Procesa también la tienda
-                AppData.procesarYMostrarDatos(data); // Modifica AppState.datosActuales
+                AppData.procesarYMostrarDatos(data); 
                 AppState.cachedData = data;
                 AppState.lastCacheTime = Date.now();
                 AppState.retryCount = 0;
@@ -273,35 +284,34 @@ const AppData = {
     detectarCambios: function(nuevosDatos) {
         // Lógica de detección de cambios (mantenida simple)
         if (!AppState.datosActuales) return; 
-
-        // ... (Tu lógica de detección de cambios si aplica)
     },
     
-    // CAMBIO v16.0: Modificado para aceptar Tienda
+    // ACTUALIZADO v20.0: Procesar datos del Mercado Volátil
     procesarYMostrarDatos: function(data) {
         // 1. Separar Tesorería y Datos Adicionales
         AppState.datosAdicionales.saldoTesoreria = data.saldoTesoreria || 0;
         AppState.datosAdicionales.prestamosActivos = data.prestamosActivos || [];
         AppState.datosAdicionales.depositosActivos = data.depositosActivos || [];
-
-        // 2. NUEVO v0.5.0: Procesar Bonos
         AppState.bonos.disponibles = data.bonosDisponibles || [];
-        AppState.bonos.canjeados = data.bonosCanjeadosUsuario || []; // (Actualmente vacío, pero listo para el futuro)
-        
-        // 3. NUEVO v16.0: Procesar Artículos de Tienda
+        AppState.bonos.canjeados = data.bonosCanjeadosUsuario || []; 
         AppState.tienda.items = data.tiendaStock || {};
-        // NUEVO v16.1 (Problema 3): Procesar estado manual de la tienda
         AppState.tienda.storeManualStatus = data.storeManualStatus || 'auto';
+        
+        // NUEVO v20.0: Procesar datos del Mercado
+        AppState.mercado.ofertasActivas = data.ofertasActivas || [];
+        AppState.mercado.cuentasInversor = data.cuentasInversor || [];
+        AppState.mercado.logsDiarios = data.logsDiarios || [];
+
 
         const allGroups = data.gruposData;
         
         let gruposOrdenados = Object.entries(allGroups).map(([nombre, info]) => ({ nombre, total: info.total || 0, usuarios: info.usuarios || [] }));
         
-        // 4. Separar Cicla (que viene en el array)
+        // 2. Separar Cicla (que viene en el array)
         const ciclaGroup = gruposOrdenados.find(g => g.nombre === 'Cicla');
         const activeGroups = gruposOrdenados.filter(g => g.nombre !== 'Cicla' && g.nombre !== 'Banco');
 
-        // 5. Crear lista plana de todos los alumnos
+        // 3. Crear lista plana de todos los alumnos
         AppState.datosAdicionales.allStudents = activeGroups.flatMap(g => g.usuarios).concat(ciclaGroup ? ciclaGroup.usuarios : []);
         
         // Asignar el nombre del grupo a cada alumno para fácil búsqueda
@@ -312,16 +322,16 @@ const AppData = {
             ciclaGroup.usuarios.forEach(u => u.grupoNombre = 'Cicla');
         }
 
-        // 6. Ordenar y filtrar
+        // 4. Ordenar y filtrar
         activeGroups.sort((a, b) => b.total - a.total);
         if (ciclaGroup) {
             activeGroups.push(ciclaGroup);
         }
         
-        // 7. Detectar cambios antes de actualizar el estado
+        // 5. Detectar cambios antes de actualizar el estado
         AppData.detectarCambios(activeGroups);
 
-        // 8. Actualizar UI
+        // 6. Actualizar UI
         AppUI.actualizarSidebar(activeGroups);
         
         if (AppState.selectedGrupo) {
@@ -338,26 +348,33 @@ const AppData = {
         
         AppUI.actualizarSidebarActivo();
         
-        // 9. NUEVO v0.5.0: Actualizar UI de Bonos (si está abierta)
+        // 7. Actualizar Modales
         if (document.getElementById('bonos-modal').classList.contains('opacity-0') === false) {
             AppUI.populateBonoList();
             AppUI.populateBonoAdminList();
         }
 
-        // 10. NUEVO v16.0: Actualizar UI de Tienda (si está abierta)
         if (document.getElementById('tienda-modal').classList.contains('opacity-0') === false) {
-            // CORRECCIÓN v16.1 (Problema 1 - Sincronización):
-            // Forzar el re-renderizado de la lista de estudiantes Y admin
-            // para reflejar cambios (ej: crear item) en tiempo real.
             AppUI.renderTiendaItems(); 
             AppUI.populateTiendaAdminList();
-            AppUI.updateTiendaAdminStatusLabel(); // v16.1
-            // AppUI.updateTiendaButtonStates(); // renderTiendaItems() ya llama a esto.
+            AppUI.updateTiendaAdminStatusLabel(); 
         }
 
-        AppState.datosActuales = activeGroups; // Actualizar el estado al final
+        // NUEVO v20.0: Actualizar UI de Mercado Volátil (si está abierta)
+        if (AppState.selectedGrupo === 'mercado') {
+            AppUI.changeMercadoTab(AppState.mercado.selectedMercadoTab);
+        }
+        
+        AppState.datosActuales = activeGroups; 
     }
 };
+
+// --- FUNCIÓN DE UTILIDAD: Escapar comillas ---
+function escapeHTML(str) {
+    if (typeof str !== 'string') return str;
+    return str.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+}
+
 
 // --- MANEJO DE LA INTERFAZ (UI) ---
 const AppUI = {
@@ -365,139 +382,74 @@ const AppUI = {
     init: function() {
         console.log("AppUI.init() comenzando.");
         
-        // Listeners Modales de Gestión (Clave)
+        // Listeners Modales de Acceso/Admin/P2P/Bonos/Tienda/Reglas (Existentes)
         document.getElementById('gestion-btn').addEventListener('click', () => AppUI.showModal('gestion-modal'));
         document.getElementById('modal-cancel').addEventListener('click', () => AppUI.hideModal('gestion-modal'));
-        document.getElementById('modal-submit').addEventListener('click', AppAuth.verificarClave); // CORRECCIÓN V18.2
-        document.getElementById('gestion-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'gestion-modal') AppUI.hideModal('gestion-modal');
-        });
-        document.getElementById('student-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'student-modal') AppUI.hideModal('student-modal');
+        document.getElementById('modal-submit').addEventListener('click', AppAuth.verificarClave); 
+        document.getElementById('p2p-portal-btn').addEventListener('click', () => AppUI.showP2PModal());
+        document.getElementById('bonos-btn').addEventListener('click', () => AppUI.showBonoModal());
+        document.getElementById('tienda-btn').addEventListener('click', () => AppUI.showTiendaModal());
+        document.getElementById('reglas-btn').addEventListener('click', () => AppUI.showModal('reglas-modal'));
+        document.getElementById('anuncios-modal-btn').addEventListener('click', () => AppUI.showModal('anuncios-modal'));
+        
+        // Listener de Botón Principal (Mercado Volátil)
+        document.getElementById('mercado-btn').addEventListener('click', () => {
+            AppState.selectedGrupo = 'mercado';
+            AppUI.showMercadoVolatilModule();
+            AppUI.actualizarSidebarActivo();
         });
 
-        // Listeners Modal de Administración (Tabs)
-        document.getElementById('transaccion-modal-close-btn').addEventListener('click', () => AppUI.hideModal('transaccion-modal'));
-        document.getElementById('transaccion-cancel-btn').addEventListener('click', () => AppUI.hideModal('transaccion-modal'));
-        document.getElementById('transaccion-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'transaccion-modal') AppUI.hideModal('transaccion-modal');
+        // Listeners Modales (Cerrar genérico)
+        document.querySelectorAll('[id$="-modal-close-btn"], [id$="-cancel-btn"], [id$="-modal-close"]').forEach(btn => {
+            const modalId = btn.id.replace(/-close|-btn|-cancel/g, '').replace('modal', 'modal');
+            btn.addEventListener('click', () => AppUI.hideModal(modalId));
+        });
+        document.querySelectorAll('.fixed.inset-0').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target.id === modal.id) AppUI.hideModal(modal.id);
+            });
         });
         
-        // Listener para el botón de enviar transacción
-        document.getElementById('transaccion-submit-btn').addEventListener('click', AppTransacciones.realizarTransaccionMultiple);
-        
-        // NUEVO v0.4.2: Listener para el cálculo de comisión de admin (RESTAURADO)
-        document.getElementById('transaccion-cantidad-input').addEventListener('input', AppUI.updateAdminDepositoCalculo);
-        
-        // Listener para el link de DB
-        document.getElementById('db-link-btn').href = AppConfig.SPREADSHEET_URL;
-        
-        // Listeners Modal P2P
-        document.getElementById('p2p-portal-btn').addEventListener('click', () => AppUI.showP2PModal());
-        document.getElementById('p2p-modal-close-btn').addEventListener('click', () => AppUI.hideModal('p2p-transfer-modal'));
-        document.getElementById('p2p-cancel-btn').addEventListener('click', () => AppUI.hideModal('p2p-transfer-modal'));
-        document.getElementById('p2p-transfer-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'p2p-transfer-modal') AppUI.hideModal('p2p-transfer-modal');
-        });
+        // Listeners P2P
         document.getElementById('p2p-submit-btn').addEventListener('click', AppTransacciones.realizarTransferenciaP2P);
         document.getElementById('p2p-cantidad').addEventListener('input', AppUI.updateP2PCalculoImpuesto);
 
-        // NUEVO v0.5.0: Listeners Modal Bonos
-        document.getElementById('bonos-btn').addEventListener('click', () => AppUI.showBonoModal());
-        document.getElementById('bonos-modal-close').addEventListener('click', () => AppUI.hideModal('bonos-modal'));
-        document.getElementById('bonos-cancel-btn').addEventListener('click', () => AppUI.hideModal('bonos-modal'));
-        document.getElementById('bonos-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'bonos-modal') AppUI.hideModal('bonos-modal');
-        });
-        // Listeners Pestañas de Bonos
-        document.querySelectorAll('#bonos-modal .bono-tab-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const tabId = e.target.dataset.tab;
-                AppUI.changeBonoTab(tabId);
-            });
-        });
-        // Listeners Canje de Bono (Usuario)
-        document.getElementById('bono-submit-btn').addEventListener('click', AppTransacciones.canjearBono);
-        // Listeners Admin de Bonos
-        document.getElementById('bono-admin-unlock-btn').addEventListener('click', AppUI.toggleBonoAdminPanel);
-        document.getElementById('bono-admin-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            AppTransacciones.crearActualizarBono();
-        });
-        document.getElementById('bono-admin-clear-btn').addEventListener('click', AppUI.clearBonoAdminForm);
-
-        // --- NUEVO v16.0: Listeners Modal Tienda ---
-        document.getElementById('tienda-btn').addEventListener('click', () => AppUI.showTiendaModal());
-        document.getElementById('tienda-modal-close').addEventListener('click', () => AppUI.hideModal('tienda-modal'));
-        document.getElementById('tienda-cancel-btn').addEventListener('click', () => AppUI.hideModal('tienda-modal'));
-        document.getElementById('tienda-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'tienda-modal') AppUI.hideModal('tienda-modal');
-        });
-        // Listeners Pestañas de Tienda
-        document.querySelectorAll('#tienda-modal .tienda-tab-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const tabId = e.target.dataset.tab;
-                AppUI.changeTiendaTab(tabId);
-            });
-        });
-        // Listeners Admin de Tienda
-        document.getElementById('tienda-admin-unlock-btn').addEventListener('click', AppUI.toggleTiendaAdminPanel);
-        document.getElementById('tienda-admin-form').addEventListener('submit', (e) => {
-            e.preventDefault();
-            AppTransacciones.crearActualizarItem();
-        });
-        document.getElementById('tienda-admin-clear-btn').addEventListener('click', AppUI.clearTiendaAdminForm);
-        
-        // NUEVO v16.1: Listeners para Control Manual de Tienda
-        // Los listeners ya están en el HTML con onclick="AppTransacciones.toggleStoreManual('status')"
-
-
-        // Listeners Modal Reglas
-        document.getElementById('reglas-btn').addEventListener('click', () => AppUI.showModal('reglas-modal'));
-        document.getElementById('reglas-modal-close').addEventListener('click', () => AppUI.hideModal('reglas-modal'));
-        document.getElementById('reglas-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'reglas-modal') AppUI.hideModal('reglas-modal');
-        });
-
-        // Listeners Modal Anuncios
-        document.getElementById('anuncios-modal-btn').addEventListener('click', () => AppUI.showModal('anuncios-modal'));
-        document.getElementById('anuncios-modal-close').addEventListener('click', () => AppUI.hideModal('anuncios-modal'));
-        document.getElementById('anuncios-modal').addEventListener('click', (e) => {
-            if (e.target.id === 'anuncios-modal') AppUI.hideModal('anuncios-modal');
-        });
-
-        // Listener Sidebar
-        document.getElementById('toggle-sidebar-btn').addEventListener('click', AppUI.toggleSidebar);
-        
-        // Listeners para auto-cerrar sidebar
-        const sidebar = document.getElementById('sidebar');
-        sidebar.addEventListener('mouseenter', () => {
-            if (AppState.sidebarTimer) clearTimeout(AppState.sidebarTimer);
-        });
-        sidebar.addEventListener('mouseleave', () => AppUI.resetSidebarTimer());
-        
-
-        // Listeners de cambio de Pestaña (Admin)
+        // Listeners Modales de Administración (Tabs, Transacciones, etc. - Mantenidos)
+        document.getElementById('transaccion-submit-btn').addEventListener('click', AppTransacciones.realizarTransaccionMultiple);
+        document.getElementById('transaccion-cantidad-input').addEventListener('input', AppUI.updateAdminDepositoCalculo);
+        document.getElementById('db-link-btn').href = AppConfig.SPREADSHEET_URL;
         document.querySelectorAll('#transaccion-modal .tab-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const tabId = e.target.dataset.tab;
-                AppUI.changeAdminTab(tabId);
-            });
+            button.addEventListener('click', (e) => AppUI.changeAdminTab(e.target.dataset.tab));
         });
+        
+        // NUEVO v20.0: Listeners Mercado Volátil
+        document.querySelectorAll('#mercado-volatil-container .mercado-tab-btn').forEach(button => {
+            button.addEventListener('click', (e) => AppUI.changeMercadoTab(e.target.dataset.mercadoTab));
+        });
+        // Listener del modal de Inversión
+        document.getElementById('inversion-submit-btn').addEventListener('click', AppTransacciones.realizarInversion);
+        // Listener del Historial Select
+        document.getElementById('historial-lote-select').addEventListener('change', (e) => AppUI.renderHistorialLog(e.target.value));
 
-        // Mostrar versión de la App
+
+        // Listener Sidebar y Versión
+        document.getElementById('toggle-sidebar-btn').addEventListener('click', AppUI.toggleSidebar);
+        const sidebar = document.getElementById('sidebar');
+        sidebar.addEventListener('mouseenter', () => { if (AppState.sidebarTimer) clearTimeout(AppState.sidebarTimer); });
+        sidebar.addEventListener('mouseleave', () => AppUI.resetSidebarTimer());
         AppUI.mostrarVersionApp();
         
-        // Listeners para los buscadores (autocomplete)
+        // Listeners Buscadores (autocomplete)
         AppUI.setupSearchInput('prestamo-alumno-search', 'prestamo-search-results', 'prestamo', (student) => AppUI.loadPrestamoPaquetes(student ? student.nombre : null));
         AppUI.setupSearchInput('deposito-alumno-search', 'deposito-search-results', 'deposito', (student) => AppUI.loadDepositoPaquetes(student ? student.nombre : null));
         AppUI.setupSearchInput('p2p-search-origen', 'p2p-origen-results', 'p2pOrigen', AppUI.selectP2PStudent);
         AppUI.setupSearchInput('p2p-search-destino', 'p2p-destino-results', 'p2pDestino', AppUI.selectP2PStudent);
-        AppUI.setupSearchInput('bono-search-alumno', 'bono-search-results', 'bonoAlumno', AppUI.selectBonoStudent); // NUEVO v0.5.0
-        AppUI.setupSearchInput('tienda-search-alumno', 'tienda-search-results', 'tiendaAlumno', AppUI.selectTiendaStudent); // NUEVO v16.0
+        AppUI.setupSearchInput('bono-search-alumno', 'bono-search-results', 'bonoAlumno', AppUI.selectBonoStudent); 
+        AppUI.setupSearchInput('tienda-search-alumno', 'tienda-search-results', 'tiendaAlumno', AppUI.selectTiendaStudent);
+        // NUEVO v20.0: Buscador Mercado Volátil
+        AppUI.setupSearchInput('inversion-search-alumno', 'inversion-origen-results', 'inversionAlumno', AppUI.selectInversionStudent); 
 
-
-        // Carga inicial
+        // Carga y Timers
         AppData.cargarDatos(false);
         setInterval(() => AppData.cargarDatos(false), 10000); 
         AppUI.updateCountdown();
@@ -505,6 +457,8 @@ const AppUI = {
         
         AppUI.poblarModalAnuncios();
     },
+
+    // --- FUNCIONES DE NAVEGACIÓN Y ESTADO ---
 
     showLoading: function() {
         const overlay = document.getElementById('loading-overlay');
@@ -518,11 +472,6 @@ const AppUI = {
         overlay.classList.add('opacity-0', 'pointer-events-none');
     },
 
-    mostrarVersionApp: function() {
-        const versionContainer = document.getElementById('app-version-container');
-        versionContainer.innerHTML = `Estado: ${AppConfig.APP_STATUS} | ${AppConfig.APP_VERSION}`;
-    },
-
     showModal: function(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -530,19 +479,17 @@ const AppUI = {
         modal.querySelector('[class*="transform"]').classList.remove('scale-95');
     },
 
-    // CAMBIO v16.0: Añadida limpieza de modal de tienda y confirmación
     hideModal: function(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
         modal.classList.add('opacity-0', 'pointer-events-none');
         modal.querySelector('[class*="transform"]').classList.add('scale-95');
 
-        // Limpiar campos si se cierra el modal de transacciones
         if (modalId === 'transaccion-modal') {
             document.getElementById('transaccion-lista-grupos-container').innerHTML = '';
             document.getElementById('transaccion-lista-usuarios-container').innerHTML = '';
             document.getElementById('transaccion-cantidad-input').value = "";
-            document.getElementById('transaccion-calculo-impuesto').textContent = ""; // NUEVO v0.4.2
+            document.getElementById('transaccion-calculo-impuesto').textContent = "";
             document.getElementById('transaccion-status-msg').textContent = "";
             AppUI.resetSearchInput('prestamo');
             AppUI.resetSearchInput('deposito');
@@ -551,7 +498,6 @@ const AppUI = {
             AppState.transaccionSelectAll = {}; 
             AppTransacciones.setLoadingState(document.getElementById('transaccion-submit-btn'), document.getElementById('transaccion-btn-text'), false, 'Realizar Transacción');
             
-            // RESTAURACIÓN V18.1: Asegurar que el botón de submit vuelve al estado normal
             document.getElementById('transaccion-submit-btn').dataset.accion = 'transaccion_multiple';
             document.getElementById('transaccion-btn-text').textContent = 'Realizar Transacción';
             document.getElementById('transaccion-cantidad-input').disabled = false;
@@ -559,12 +505,10 @@ const AppUI = {
             document.getElementById('transaccion-cantidad-input').placeholder = "Ej: 1000 o -50";
             document.getElementById('tesoreria-saldo-transaccion').classList.remove('hidden');
             
-            // RESTAURACIÓN V18.1: Restaurar listener de cálculo de comisión para la pestaña normal
             document.getElementById('transaccion-cantidad-input').removeEventListener('input', AppUI.updateAdminDepositoCalculo);
             document.getElementById('transaccion-cantidad-input').addEventListener('input', AppUI.updateAdminDepositoCalculo);
         }
         
-        // Limpiar campos de P2P
         if (modalId === 'p2p-transfer-modal') {
             AppUI.resetSearchInput('p2pOrigen');
             AppUI.resetSearchInput('p2pDestino');
@@ -575,50 +519,48 @@ const AppUI = {
             AppTransacciones.setLoadingState(document.getElementById('p2p-submit-btn'), document.getElementById('p2p-btn-text'), false, 'Realizar Transferencia');
         }
         
-        // NUEVO v0.5.0: Limpiar campos de Bonos
         if (modalId === 'bonos-modal') {
-            // Pestaña Canjear
             AppUI.resetSearchInput('bonoAlumno');
             document.getElementById('bono-clave-p2p').value = "";
             document.getElementById('bono-clave-input').value = "";
             document.getElementById('bono-status-msg').textContent = "";
             AppTransacciones.setLoadingState(document.getElementById('bono-submit-btn'), document.getElementById('bono-btn-text'), false, 'Canjear Bono');
             
-            // Pestaña Admin
             document.getElementById('bono-admin-clave').value = "";
             AppUI.clearBonoAdminForm();
             document.getElementById('bono-admin-status-msg').textContent = "";
             
-            // Ocultar panel de admin y resetear estado
             document.getElementById('bono-admin-gate').classList.remove('hidden');
             document.getElementById('bono-admin-panel').classList.add('hidden');
             AppState.bonos.adminPanelUnlocked = false;
         }
 
-        // NUEVO v16.0: Limpiar campos de Tienda
         if (modalId === 'tienda-modal') {
-            // Pestaña Comprar
             AppUI.resetSearchInput('tiendaAlumno');
             document.getElementById('tienda-clave-p2p').value = "";
             
-            // CORRECCIÓN BUG "Cargando...": Resetear al estado inicial para forzar recarga
             document.getElementById('tienda-items-container').innerHTML = '<p class="text-sm text-gray-500 text-center col-span-2">Cargando artículos...</p>';
             
             document.getElementById('tienda-status-msg').textContent = "";
             
-            // Pestaña Admin
             document.getElementById('tienda-admin-clave').value = "";
             AppUI.clearTiendaAdminForm();
             document.getElementById('tienda-admin-status-msg').textContent = "";
             
-            // Ocultar panel de admin
             document.getElementById('tienda-admin-gate').classList.remove('hidden');
             document.getElementById('tienda-admin-panel').classList.add('hidden');
             AppState.tienda.adminPanelUnlocked = false;
         }
         
-        // --- ELIMINADO v17.0: Limpieza de modal de confirmación ---
-        
+        // NUEVO v20.0: Limpiar Modal de Inversión
+        if (modalId === 'inversion-modal') {
+            AppUI.resetSearchInput('inversionAlumno');
+            document.getElementById('inversion-clave-p2p').value = "";
+            document.getElementById('inversion-monto').value = "";
+            document.getElementById('inversion-status-msg').textContent = "";
+            AppTransacciones.setLoadingState(document.getElementById('inversion-submit-btn'), document.getElementById('inversion-btn-text'), false, 'Confirmar Inversión');
+        }
+
         if (modalId === 'gestion-modal') {
              document.getElementById('clave-input').value = "";
              document.getElementById('clave-input').classList.remove('shake', 'border-red-500');
@@ -640,7 +582,6 @@ const AppUI = {
         document.querySelector(`#transaccion-modal [data-tab="${tabId}"]`).classList.remove('border-transparent', 'text-gray-600');
         document.getElementById(`tab-${tabId}`).classList.remove('hidden');
         
-        // V18.1: Restaurar el estado de la pestaña de Transacción Múltiple a NORMAL
         const submitBtn = document.getElementById('transaccion-submit-btn');
         const btnText = document.getElementById('transaccion-btn-text');
         const cantidadInput = document.getElementById('transaccion-cantidad-input');
@@ -661,11 +602,8 @@ const AppUI = {
         
         document.getElementById('transaccion-status-msg').textContent = "";
     },
-
-
-    // --- FUNCIONES DE BÚSQUEDA (AUTOCOMPLETE) ---
     
-    // CAMBIO v16.0: onSelectCallback ahora recibe el objeto student completo
+    // --- FUNCIONES DE BÚSQUEDA ---
     setupSearchInput: function(inputId, resultsId, stateKey, onSelectCallback) {
         const input = document.getElementById(inputId);
         const results = document.getElementById(resultsId);
@@ -674,7 +612,7 @@ const AppUI = {
             const query = e.target.value;
             AppState.currentSearch[stateKey].query = query;
             AppState.currentSearch[stateKey].selected = null; 
-            AppState.currentSearch[stateKey].info = null; // NUEVO v16.0
+            AppState.currentSearch[stateKey].info = null; 
             
             if (query === '') {
                 onSelectCallback(null);
@@ -695,7 +633,7 @@ const AppUI = {
              }
         });
     },
-    
+
     handleStudentSearch: function(query, inputId, resultsId, stateKey, onSelectCallback) {
         const resultsContainer = document.getElementById(resultsId);
         
@@ -705,7 +643,6 @@ const AppUI = {
         }
 
         const lowerQuery = query.toLowerCase();
-        // CAMBIO v0.5.0: Filtrar alumnos de Cicla de los buscadores
         let studentList = AppState.datosAdicionales.allStudents;
         
         // Excepciones donde SÍ se permite a Cicla
@@ -717,7 +654,7 @@ const AppUI = {
         const filteredStudents = studentList
             .filter(s => s.nombre.toLowerCase().includes(lowerQuery))
             .sort((a, b) => a.nombre.localeCompare(b.nombre))
-            .slice(0, 10); // Limitar a 10 resultados
+            .slice(0, 10); 
 
         resultsContainer.innerHTML = '';
         if (filteredStudents.length === 0) {
@@ -732,9 +669,9 @@ const AppUI = {
                     input.value = student.nombre;
                     AppState.currentSearch[stateKey].query = student.nombre;
                     AppState.currentSearch[stateKey].selected = student.nombre;
-                    AppState.currentSearch[stateKey].info = student; // NUEVO v16.0: Almacenar info completa
+                    AppState.currentSearch[stateKey].info = student; 
                     resultsContainer.classList.add('hidden');
-                    onSelectCallback(student); // CAMBIO v16.0: Llamar al callback con el objeto student
+                    onSelectCallback(student); 
                 };
                 resultsContainer.appendChild(div);
             });
@@ -742,15 +679,16 @@ const AppUI = {
         resultsContainer.classList.remove('hidden');
     },
 
-    // CAMBIO v16.0: Añadido 'tienda'
     resetSearchInput: function(stateKey) {
         let inputId = '';
         if (stateKey.includes('p2p')) {
              inputId = `${stateKey.replace('p2p', 'p2p-search-')}`;
         } else if (stateKey.includes('bono')) {
              inputId = 'bono-search-alumno';
-        } else if (stateKey.includes('tienda')) { // NUEVO v16.0
+        } else if (stateKey.includes('tienda')) { 
              inputId = 'tienda-search-alumno';
+        } else if (stateKey.includes('inversion')) { // NUEVO v20.0
+             inputId = 'inversion-search-alumno';
         } else {
             inputId = `${stateKey}-alumno-search`;
         }
@@ -761,32 +699,309 @@ const AppUI = {
         }
         AppState.currentSearch[stateKey].query = "";
         AppState.currentSearch[stateKey].selected = null;
-        AppState.currentSearch[stateKey].info = null; // NUEVO v16.0
+        AppState.currentSearch[stateKey].info = null; 
     },
     
-    // --- FIN FUNCIONES DE BÚSQUEDA ---
-    
-    // --- FUNCIONES P2P (v0.3.0) ---
-    
-    showP2PModal: function() {
-        if (!AppState.datosActuales) return;
+    // --- NUEVO v20.0: FUNCIONES DE MERCADO VOLÁTIL ---
+
+    showMercadoVolatilModule: function() {
+        document.getElementById('main-header-title').textContent = "Mercado Volátil BPD";
+        document.getElementById('page-subtitle').innerHTML = ''; 
+        document.getElementById('table-container').classList.add('hidden');
+        document.getElementById('home-stats-container').classList.add('hidden');
+        document.getElementById('home-modules-grid').classList.add('hidden');
+
+        // Mostrar el módulo del Mercado
+        const mercadoContainer = document.getElementById('mercado-volatil-container');
+        mercadoContainer.classList.remove('hidden');
         
-        AppUI.resetSearchInput('p2pOrigen');
-        AppUI.resetSearchInput('p2pDestino');
-        document.getElementById('p2p-clave').value = "";
-        document.getElementById('p2p-cantidad').value = "";
-        document.getElementById('p2p-calculo-impuesto').textContent = "";
-        document.getElementById('p2p-status-msg').textContent = "";
+        // Forzar la carga de la pestaña seleccionada
+        AppUI.changeMercadoTab(AppState.mercado.selectedMercadoTab);
+
+        // Asegurarse de que 'mercado' sea el grupo seleccionado para la barra lateral
+        AppState.selectedGrupo = 'mercado';
+    },
+
+    // Cambia entre pestañas en el módulo del Mercado Volátil
+    changeMercadoTab: function(tabId) {
+        AppState.mercado.selectedMercadoTab = tabId;
+
+        document.querySelectorAll('#mercado-volatil-container .mercado-tab-btn').forEach(btn => {
+            btn.classList.remove('active-tab', 'border-purple-600', 'text-purple-600');
+            btn.classList.add('border-transparent', 'text-gray-600');
+        });
+
+        document.querySelectorAll('#mercado-volatil-container .mercado-tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+
+        document.querySelector(`#mercado-volatil-container [data-mercado-tab="${tabId}"]`).classList.add('active-tab', 'border-purple-600', 'text-purple-600');
+        document.querySelector(`#mercado-tab-${tabId}`).classList.remove('hidden');
         
-        AppUI.showModal('p2p-transfer-modal');
+        // Renderizar contenido específico de la pestaña
+        if (tabId === 'ofertas') {
+            AppUI.renderOfertas();
+        } else if (tabId === 'cartera') {
+            AppUI.renderCartera();
+        } else if (tabId === 'historial') {
+            AppUI.populateHistorialSelect();
+            // Mostrar log del lote seleccionado (si existe)
+            const selectedLote = document.getElementById('historial-lote-select').value;
+            AppUI.renderHistorialLog(selectedLote);
+        }
     },
     
-    // CAMBIO v16.0: La firma de la función cambió (recibe objeto)
-    selectP2PStudent: function(student) {
-        // Callback para P2P (no hace nada extra)
+    renderOfertas: function() {
+        const container = document.getElementById('ofertas-list-container');
+        const ofertas = AppState.mercado.ofertasActivas;
+        
+        if (ofertas.length === 0) {
+            container.innerHTML = `<p class="md:col-span-3 text-center text-gray-500 p-8 bg-white rounded-lg shadow-sm">No hay ofertas de inversión disponibles en este momento.</p>`;
+            return;
+        }
+
+        container.innerHTML = ofertas.map(oferta => {
+            const isRecaudando = oferta.Estado === 'RECAUDANDO';
+            const isFull = oferta.CapitalReunido >= oferta.CapitalMax;
+            const progress = Math.min(100, (oferta.CapitalReunido / oferta.CapitalMin) * 100).toFixed(0);
+            
+            const progressBarClass = isFull ? 'bg-green-500' : 'bg-purple-500';
+            const statusLabel = isRecaudando ? 'Recaudando' : 'Operando';
+            const statusColor = isRecaudando ? 'text-purple-600 bg-purple-100' : 'text-green-600 bg-green-100';
+            const buttonText = isFull ? '¡Lote Lleno!' : (isRecaudando ? 'Invertir' : 'Operando');
+            const buttonClass = isFull || !isRecaudando ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-700';
+            const buttonDisabled = isFull || !isRecaudando ? 'disabled' : '';
+
+            // CORRECCIÓN BUG ONCLICK: Escapar el ID
+            const idLoteEscapado = escapeHTML(oferta.ID_Lote);
+            const action = isRecaudando && !isFull ? `AppUI.showInversionModal('${idLoteEscapado}', '${escapeHTML(oferta.Empresa)}', ${oferta.MontoIndividualMin})` : '';
+            
+            // Si está operando, mostrar detalles de inicio
+            let detalleOperacion = '';
+            if (!isRecaudando) {
+                const fechaInicio = AppFormat.formatDate(oferta.FechaInicioOperacion);
+                detalleOperacion = `<p class="text-sm text-gray-700 mt-2">Día <strong>${Math.floor((new Date() - new Date(oferta.FechaInicioOperacion)) / (1000 * 60 * 60 * 24)) + 1}</strong> de ${AppConfig.MERCADO_VOLATIL_PLAZO_DIAS} (Inició: ${fechaInicio})</p>`;
+            }
+
+            return `
+                <div class="bg-white rounded-lg shadow-md p-5 border border-gray-200 flex flex-col h-full">
+                    <div class="flex justify-between items-start mb-3">
+                        <h4 class="text-xl font-bold text-gray-900 truncate">${oferta.Empresa}</h4>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${statusColor}">${statusLabel}</span>
+                    </div>
+                    
+                    <p class="text-xs text-gray-500 mb-4 italic">${oferta.Pista}</p>
+                    ${detalleOperacion}
+                    
+                    <div class="mt-auto pt-4 space-y-2">
+                        <div class="text-sm font-medium text-gray-700">
+                            Capital: ${AppFormat.formatNumber(oferta.CapitalReunido)} / ${AppFormat.formatNumber(oferta.CapitalMin)} ℙ
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2.5">
+                            <div class="h-2.5 rounded-full ${progressBarClass}" style="width: ${progress}%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 flex justify-between">
+                            <span>Participantes: ${oferta.ParticipantesActuales} / ${oferta.ParticipantesMin}</span>
+                            <span>Monto Mínimo Ind.: ${AppFormat.formatNumber(oferta.MontoIndividualMin)} ℙ</span>
+                        </p>
+                        
+                        <button onclick="${action}" class="w-full mt-4 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-colors shadow-sm ${buttonClass}" ${buttonDisabled}>
+                            ${buttonText}
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+
+    renderCartera: function() {
+        const container = document.getElementById('cartera-list-container');
+        const cuentas = AppState.mercado.cuentasInversor;
+        
+        if (cuentas.length === 0) {
+            container.innerHTML = `<p class="lg:col-span-2 xl:col-span-3 text-center text-gray-500 p-8 bg-white rounded-lg shadow-sm">No tienes inversiones activas en este momento.</p>`;
+            return;
+        }
+        
+        const cuentasAlumno = cuentas.filter(c => 
+            AppState.currentSearch.p2pOrigen.selected ? c.Alumno === AppState.currentSearch.p2pOrigen.selected : true
+        );
+        
+        // Agrupar por ID_Lote para obtener el nombre de la empresa y el estado actual del lote
+        const ofertasMap = AppState.mercado.ofertasActivas.reduce((acc, oferta) => {
+            acc[oferta.ID_Lote] = { 
+                empresa: oferta.Empresa, 
+                estado: oferta.Estado,
+                fechaInicio: oferta.FechaInicioOperacion
+            };
+            return acc;
+        }, {});
+
+
+        container.innerHTML = cuentasAlumno.map(cuenta => {
+            const loteInfo = ofertasMap[cuenta.ID_Lote] || { empresa: 'Lote Desconocido', estado: 'N/A' };
+            const valorCalculado = AppCalculos.calcularRetiroNeto(cuenta.MontoInvertido, cuenta.ValorFinalCuenta);
+            const ganancia = valorCalculado.gananciaBruta;
+            
+            const isOperando = loteInfo.estado === 'OPERANDO';
+            const statusColor = isOperando ? 'bg-yellow-100 text-yellow-800' : 'bg-purple-100 text-purple-800';
+            const gainColor = ganancia >= 0 ? 'text-green-600' : 'text-red-600';
+            const actionDisabled = !isOperando ? 'disabled' : '';
+            const buttonClass = isOperando ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed';
+
+            let daysIn = '';
+            if (loteInfo.fechaInicio) {
+                 const diffTime = Math.abs(new Date() - new Date(loteInfo.fechaInicio));
+                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                 daysIn = `Día ${diffDays} de ${AppConfig.MERCADO_VOLATIL_PLAZO_DIAS}`;
+            }
+
+            return `
+                <div class="bg-white rounded-lg shadow-md p-4 border border-gray-200 flex flex-col">
+                    <div class="flex justify-between items-center mb-3 border-b pb-2">
+                        <span class="text-sm font-semibold text-gray-800 truncate" title="${loteInfo.empresa}">${loteInfo.empresa}</span>
+                        <span class="text-xs font-semibold px-2 py-1 rounded-full ${statusColor}">${loteInfo.estado}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <p class="text-gray-500">Lote ID:</p>
+                        <p class="font-medium text-gray-800 text-right">${cuenta.ID_Lote}</p>
+                        
+                        <p class="text-gray-500">Monto Invertido:</p>
+                        <p class="font-medium text-gray-800 text-right">${AppFormat.formatNumber(cuenta.MontoInvertido)} ℙ</p>
+                        
+                        <p class="text-gray-500">Valor Actual:</p>
+                        <p class="font-bold ${gainColor} text-right">${AppFormat.formatNumber(cuenta.ValorFinalCuenta)} ℙ</p>
+                        
+                        <p class="text-gray-500">Ganancia Bruta:</p>
+                        <p class="font-bold ${gainColor} text-right">${AppFormat.formatNumber(ganancia)} ℙ</p>
+                        
+                        <p class="text-gray-500">Plazo:</p>
+                        <p class="font-medium text-gray-800 text-right">${daysIn}</p>
+                    </div>
+
+                    <p class="text-xs text-red-600 mt-2 font-medium text-center">
+                        Comisión por Retiro (Ganancia): ${AppFormat.formatNumber(valorCalculado.comision)} ℙ (${AppConfig.MERCADO_VOLATIL_TASA_COMISION * 100}%)
+                    </p>
+                    
+                    <button id="retirar-btn-${cuenta.ID_Lote}" 
+                            onclick="AppTransacciones.realizarRetiro('${escapeHTML(cuenta.Alumno)}', '${escapeHTML(cuenta.ID_Lote)}', this)" 
+                            class="w-full mt-4 px-4 py-2 text-sm font-semibold text-white rounded-lg transition-colors shadow-sm ${buttonClass}" 
+                            ${actionDisabled}>
+                        Retirar ${AppFormat.formatNumber(valorCalculado.montoNeto)} ℙ
+                    </button>
+                </div>
+            `;
+        }).join('');
+    },
+
+    populateHistorialSelect: function() {
+        const select = document.getElementById('historial-lote-select');
+        const logs = AppState.mercado.logsDiarios;
+        
+        // Obtener IDs de lotes únicos
+        const lotesOperados = [...new Set(logs.map(log => log.ID_Lote))];
+        
+        select.innerHTML = '<option value="">Selecciona un lote operado...</option>';
+
+        lotesOperados.forEach(loteId => {
+            const option = document.createElement('option');
+            option.value = loteId;
+            option.textContent = loteId;
+            select.appendChild(option);
+        });
+        
+        if (AppState.mercado.selectedLoteId && lotesOperados.includes(AppState.mercado.selectedLoteId)) {
+            select.value = AppState.mercado.selectedLoteId;
+        }
     },
     
-    updateP2PCalculoImpuesto: function() {
+    renderHistorialLog: function(loteId) {
+        const logContainer = document.getElementById('historial-diario-log');
+        const logs = AppState.mercado.logsDiarios.filter(log => log.ID_Lote === loteId);
+
+        if (!loteId) {
+            logContainer.innerHTML = '<p class="text-sm text-gray-500">Selecciona un lote del historial para ver sus logs.</p>';
+            return;
+        }
+
+        if (logs.length === 0) {
+            logContainer.innerHTML = `<p class="text-sm text-gray-500">No hay logs disponibles para el lote ${loteId}.</p>`;
+            return;
+        }
+        
+        AppState.mercado.selectedLoteId = loteId;
+
+        let html = '';
+        logs.reverse().forEach((log, index) => {
+            const change = log.PorcentajeCambio * 100;
+            const changeColor = change >= 0 ? 'text-green-600' : 'text-red-600';
+            const changeSign = change >= 0 ? '+' : '';
+            const isConfiscation = log.NoticiaSimulada.includes('CONFISCACIÓN') || log.NoticiaSimulada.includes('CRISIS');
+
+            // Calcular el día de operación
+            const diasOperados = logs.length - index;
+            const diaLabel = isConfiscation ? '' : `(Día ${diasOperados})`;
+            
+            html += `
+                <div class="p-3 border-b border-gray-100 ${isConfiscation ? 'bg-red-50' : 'bg-white'}">
+                    <div class="flex justify-between items-baseline">
+                        <span class="text-xs text-gray-500 font-medium">${AppFormat.formatDate(log.Fecha)} ${diaLabel}</span>
+                        <span class="text-sm font-bold ${changeColor}">${changeSign}${change.toFixed(2)}%</span>
+                    </div>
+                    <p class="text-sm text-gray-800 mt-1">${log.NoticiaSimulada}</p>
+                    <p class="text-xs text-gray-600 mt-1">Valor Acumulado: 
+                        <span class="font-bold">${AppFormat.formatNumber(log.ValorAcumuladoFinal)} ℙ</span>
+                    </p>
+                </div>
+            `;
+        });
+        
+        logContainer.innerHTML = html;
+        logContainer.scrollTop = logContainer.scrollHeight; // Scroll al fondo
+    },
+    
+    showInversionModal: function(idLote, empresa, montoMin) {
+        // Encontrar la información del lote completo (para el estado)
+        const lote = AppState.mercado.ofertasActivas.find(o => o.ID_Lote === idLote);
+        if (!lote || lote.Estado !== 'RECAUDANDO') {
+             AppTransacciones.setError(document.getElementById('mercado-status-msg'), `El lote ${idLote} ya no está recaudando.`);
+             return;
+        }
+        
+        // Limpiar campos y mensajes
+        AppUI.resetSearchInput('inversionAlumno');
+        document.getElementById('inversion-clave-p2p').value = "";
+        document.getElementById('inversion-monto').value = "";
+        document.getElementById('inversion-status-msg').textContent = "";
+        
+        // Rellenar datos del lote
+        document.getElementById('inversion-target-info').textContent = `${empresa} (${idLote})`;
+        document.getElementById('inversion-monto-min').textContent = `Monto individual mínimo: ${AppFormat.formatNumber(montoMin)} ℙ`;
+        document.getElementById('inversion-monto').min = montoMin;
+        
+        // Almacenar el ID del lote para la transacción
+        AppState.mercado.selectedLoteId = idLote;
+
+        AppUI.showModal('inversion-modal');
+    },
+
+    selectInversionStudent: function(student) {
+        const saldoSpan = document.getElementById('inversion-alumno-saldo');
+        
+        if (student) {
+            saldoSpan.textContent = `Saldo disponible: ${AppFormat.formatNumber(student.pinceles)} ℙ`;
+        } else {
+            saldoSpan.textContent = '';
+        }
+    },
+    
+    // --- FIN FUNCIONES MERCADO VOLÁTIL ---
+
+    // --- P2P, ADMIN y TIENDA (Funciones de utilidad mantenidas) ---
+
+    selectP2PStudent: function(student) { /* Este cuerpo se mantiene vacío, solo se necesita el select */ },
+    updateP2PCalculoImpuesto: function() { 
         const cantidadInput = document.getElementById('p2p-cantidad');
         const calculoMsg = document.getElementById('p2p-calculo-impuesto');
         const cantidad = parseInt(cantidadInput.value, 10);
@@ -801,539 +1016,31 @@ const AppUI = {
         
         calculoMsg.textContent = `Impuesto (10%): ${AppFormat.formatNumber(impuesto)} ℙ | Total a debitar: ${AppFormat.formatNumber(total)} ℙ`;
     },
-
-    // --- FIN FUNCIONES P2P ---
-
-    // --- NUEVO v0.5.0: FUNCIONES DE BONOS ---
-    
-    showBonoModal: function() {
+    showP2PModal: function() { 
         if (!AppState.datosActuales) return;
         
-        // Resetear pestaña de canje
-        AppUI.resetSearchInput('bonoAlumno');
-        document.getElementById('bono-clave-p2p').value = "";
-        document.getElementById('bono-clave-input').value = "";
-        document.getElementById('bono-status-msg').textContent = "";
-        AppTransacciones.setLoadingState(document.getElementById('bono-submit-btn'), document.getElementById('bono-btn-text'), false, 'Canjear Bono');
-
-        // Resetear pestaña de admin
-        document.getElementById('bono-admin-clave').value = "";
-        AppUI.clearBonoAdminForm();
-        document.getElementById('bono-admin-status-msg').textContent = "";
-        document.getElementById('bono-admin-gate').classList.remove('hidden');
-        document.getElementById('bono-admin-panel').classList.add('hidden');
-        AppState.bonos.adminPanelUnlocked = false;
+        AppUI.resetSearchInput('p2pOrigen');
+        AppUI.resetSearchInput('p2pDestino');
+        document.getElementById('p2p-clave').value = "";
+        document.getElementById('p2p-cantidad').value = "";
+        document.getElementById('p2p-calculo-impuesto').textContent = "";
+        document.getElementById('p2p-status-msg').textContent = "";
         
-        // Resetear a la pestaña 1
-        AppUI.changeBonoTab('canjear');
-
-        // Poblar listas
-        AppUI.populateBonoList();
-        AppUI.populateBonoAdminList();
-        
-        AppUI.showModal('bonos-modal');
-    },
-
-    // Cambia entre pestañas en el modal de Bonos
-    changeBonoTab: function(tabId) {
-        document.querySelectorAll('#bonos-modal .bono-tab-btn').forEach(btn => {
-            btn.classList.remove('active-tab', 'border-blue-600', 'text-blue-600');
-            btn.classList.add('border-transparent', 'text-gray-600');
-        });
-
-        document.querySelectorAll('#bonos-modal .bono-tab-content').forEach(content => {
-            content.classList.add('hidden');
-        });
-
-        const activeBtn = document.querySelector(`#bonos-modal [data-tab="${tabId}"]`);
-        activeBtn.classList.add('active-tab', 'border-blue-600', 'text-blue-600');
-        activeBtn.classList.remove('border-transparent', 'text-gray-600');
-        document.getElementById(`bono-tab-${tabId}`).classList.remove('hidden');
-
-        // CAMBIO v0.5.4: Ocultar/mostrar el botón de canje
-        const bonoSubmitBtn = document.getElementById('bono-submit-btn');
-        if (tabId === 'canjear') {
-            bonoSubmitBtn.classList.remove('hidden');
-        } else {
-            bonoSubmitBtn.classList.add('hidden');
-        }
-
-        // Limpiar mensajes
-        document.getElementById('bono-status-msg').textContent = "";
-        document.getElementById('bono-admin-status-msg').textContent = "";
+        AppUI.showModal('p2p-transfer-modal');
     },
     
-    // CAMBIO v16.0: La firma de la función cambió (recibe objeto)
-    selectBonoStudent: function(student) {
-        // No se necesita acción extra, solo seleccionar
-    },
-
-    // Puebla la lista de bonos disponibles (Vista de Usuario)
-    populateBonoList: function() {
-        const container = document.getElementById('bonos-lista-disponible');
-        const bonos = AppState.bonos.disponibles;
-        
-        // CAMBIO v0.5.4: Filtrar bonos agotados de la vista de usuario
-        const bonosActivos = bonos.filter(b => b.usos_actuales < b.usos_totales);
-
-        if (bonosActivos.length === 0) {
-            container.innerHTML = `<p class="text-sm text-gray-500 text-center col-span-1 md:col-span-2">No hay bonos disponibles en este momento.</p>`;
-            return;
-        }
-
-        container.innerHTML = bonosActivos.map(bono => {
-            const recompensa = AppFormat.formatNumber(bono.recompensa);
-            const usosRestantes = bono.usos_totales - bono.usos_actuales;
-            
-            // Lógica de "canjeado" (a futuro, si la API lo soporta)
-            const isCanjeado = AppState.bonos.canjeados.includes(bono.clave);
-            const cardClass = isCanjeado ? 'bono-item-card canjeado' : 'bono-item-card';
-            const badge = isCanjeado ? 
-                `<span class="text-xs font-bold bg-green-100 text-green-700 rounded-full px-2 py-0.5">CANJEADO</span>` :
-                `<span class="text-xs font-bold bg-gray-100 text-gray-700 rounded-full px-2 py-0.5">DISPONIBLE</span>`;
-
-            return `
-                <div class="${cardClass}">
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-sm font-medium text-gray-500 truncate">${bono.clave}</span>
-                        ${badge}
-                    </div>
-                    <p class="text-base font-semibold text-gray-900 truncate">${bono.nombre}</p>
-                    <div class="flex justify-between items-baseline mt-3">
-                        <span class="text-xs text-gray-500">Quedan ${usosRestantes}</span>
-                        <span class="text-xl font-bold text-blue-600">${recompensa} ℙ</span>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    },
-    
-    // --- Funciones del Panel de Admin de Bonos ---
-    
-    toggleBonoAdminPanel: function() {
-        const claveInput = document.getElementById('bono-admin-clave');
-        const gate = document.getElementById('bono-admin-gate');
-        const panel = document.getElementById('bono-admin-panel');
-        
-        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
-            AppState.bonos.adminPanelUnlocked = true;
-            gate.classList.add('hidden');
-            panel.classList.remove('hidden');
-            claveInput.value = ""; // Limpiar
-            claveInput.classList.remove('shake', 'border-red-500');
-        } else {
-            claveInput.classList.add('shake', 'border-red-500');
-            claveInput.focus();
-            setTimeout(() => {
-                claveInput.classList.remove('shake');
-            }, 500);
-        }
-    },
-    
-    // Puebla la tabla de bonos configurados (Vista de Admin)
-    populateBonoAdminList: function() {
-        const tbody = document.getElementById('bonos-admin-lista');
-        const bonos = AppState.bonos.disponibles; // La API (v13.6) envía todos (activos y agotados)
-
-        if (bonos.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay bonos configurados.</td></tr>`;
-            return;
-        }
-
-        let html = '';
-        // CAMBIO v16.0: Ordenar por clave alfabéticamente
-        const bonosOrdenados = [...bonos].sort((a, b) => a.clave.localeCompare(b.clave));
-
-        bonosOrdenados.forEach(bono => {
-            const recompensa = AppFormat.formatNumber(bono.recompensa);
-            const usos = `${bono.usos_actuales} / ${bono.usos_totales}`;
-            const isAgotado = bono.usos_actuales >= bono.usos_totales;
-            const rowClass = isAgotado ? 'opacity-60 bg-gray-50' : '';
-            
-            // CORRECCIÓN BUG ONCLICK: Escapar comillas
-            const nombreEscapado = escapeHTML(bono.nombre);
-            const claveEscapada = escapeHTML(bono.clave);
-
-            html += `
-                <tr class="${rowClass}">
-                    <td class="px-4 py-2 text-sm font-semibold text-gray-800">${bono.clave}</td>
-                    <td class="px-4 py-2 text-sm text-gray-600">${bono.nombre}</td>
-                    <td class="px-4 py-2 text-sm text-gray-800 text-right">${recompensa} ℙ</td>
-                    <td class="px-4 py-2 text-sm text-gray-600 text-right">${usos}</td>
-                    <td class="px-4 py-2 text-right text-sm">
-                        <button onclick="AppUI.handleEditBono('${claveEscapada}', '${nombreEscapado}', ${bono.recompensa}, ${bono.usos_totales})" class="font-medium text-blue-600 hover:text-blue-800 edit-bono-btn">Editar</button>
-                        <!-- NUEVO v0.5.4: Botón Eliminar -->
-                        <button onclick="AppTransacciones.eliminarBono('${claveEscapada}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-bono-btn">Eliminar</button>
-                    </td>
-                </tr>
-            `;
-        });
-        tbody.innerHTML = html;
-    },
-    
-    // Carga los datos de un bono en el formulario de admin
-    handleEditBono: function(clave, nombre, recompensa, usosTotales) {
-        document.getElementById('bono-admin-clave-input').value = clave;
-        document.getElementById('bono-admin-nombre-input').value = nombre;
-        document.getElementById('bono-admin-recompensa-input').value = recompensa;
-        document.getElementById('bono-admin-usos-input').value = usosTotales;
-        
-        // Hacer scroll al formulario
-        document.getElementById('bono-admin-form-container').scrollIntoView({ behavior: 'smooth' });
-    },
-    
-    // Limpia el formulario de admin de bonos
-    clearBonoAdminForm: function() {
-        document.getElementById('bono-admin-form').reset();
-        document.getElementById('bono-admin-clave-input').disabled = false;
-        document.getElementById('bono-admin-status-msg').textContent = "";
-    },
-    
-    // --- FIN FUNCIONES DE BONOS ---
-
-    // --- INICIO FUNCIONES DE TIENDA (NUEVO v16.0) ---
-
-    showTiendaModal: function() {
-        if (!AppState.datosActuales) return;
-        
-        // Resetear pestaña de compra
-        AppUI.resetSearchInput('tiendaAlumno');
-        document.getElementById('tienda-clave-p2p').value = "";
-        document.getElementById('tienda-status-msg').textContent = "";
-        
-        // Resetear pestaña de admin
-        document.getElementById('tienda-admin-clave').value = "";
-        AppUI.clearTiendaAdminForm();
-        document.getElementById('tienda-admin-status-msg').textContent = "";
-        document.getElementById('tienda-admin-gate').classList.remove('hidden');
-        document.getElementById('tienda-admin-panel').classList.add('hidden');
-        AppState.tienda.adminPanelUnlocked = false;
-        
-        // Resetear a la pestaña 1
-        AppUI.changeTiendaTab('comprar');
-
-        // Poblar listas
-        const container = document.getElementById('tienda-items-container');
-        // CORRECCIÓN BUG "Cargando...": Revisar si el contenedor solo tiene el placeholder
-        const isLoading = container.innerHTML.includes('Cargando artículos...');
-        
-        // Si está "cargando" (o vacío), renderizar. Si no, solo actualizar botones.
-        if (isLoading || container.innerHTML.trim() === '') {
-            AppUI.renderTiendaItems();
-        } else {
-            AppUI.updateTiendaButtonStates();
-        }
-        
-        // Poblar la lista de admin
-        AppUI.populateTiendaAdminList();
-        // v16.1: Actualizar etiqueta de estado manual
-        AppUI.updateTiendaAdminStatusLabel();
-        
-        AppUI.showModal('tienda-modal');
-    },
-
-    // Cambia entre pestañas en el modal de Tienda
-    changeTiendaTab: function(tabId) {
-        document.querySelectorAll('#tienda-modal .tienda-tab-btn').forEach(btn => {
-            btn.classList.remove('active-tab', 'border-blue-600', 'text-blue-600');
-            btn.classList.add('border-transparent', 'text-gray-600');
-        });
-
-        document.querySelectorAll('#tienda-modal .tienda-tab-content').forEach(content => {
-            content.classList.add('hidden');
-        });
-
-        const activeBtn = document.querySelector(`#tienda-modal [data-tab="${tabId}"]`);
-        activeBtn.classList.add('active-tab', 'border-blue-600', 'text-blue-600');
-        activeBtn.classList.remove('border-transparent', 'text-gray-600');
-        document.getElementById(`tienda-tab-${tabId}`).classList.remove('hidden');
-
-        // Limpiar mensajes
-        document.getElementById('tienda-status-msg').textContent = "";
-        document.getElementById('tienda-admin-status-msg').textContent = "";
-    },
-
-    // Callback para el buscador de alumno en la tienda
-    // Optimización v16.0: Llama a la función que solo actualiza botones
-    selectTiendaStudent: function(student) {
-        AppUI.updateTiendaButtonStates();
-    },
-
-    // Renderiza las tarjetas de la tienda
-    renderTiendaItems: function() {
-        const container = document.getElementById('tienda-items-container');
-        const items = AppState.tienda.items;
-        
-        const itemKeys = Object.keys(items);
-
-        if (itemKeys.length === 0) {
-            container.innerHTML = `<p class="text-sm text-gray-500 text-center col-span-1 md:col-span-2">No hay artículos configurados en la tienda en este momento.</p>`;
-            return;
-        }
-
-        let html = '';
-        itemKeys.sort((a,b) => items[a].precio - items[b].precio).forEach(itemId => {
-            const item = items[itemId];
-            const costoFinal = Math.round(item.precio * (1 + AppConfig.TASA_ITBIS));
-            
-            // CORRECCIÓN BUG ONCLICK: Escapar descripción y ID
-            const itemIdEscapado = escapeHTML(item.ItemID); // Usar ItemID real
-
-            html += `
-                <div class="tienda-item-card">
-                    <!-- Header de la Tarjeta (Tipo, Stock) -->
-                    <div class="flex justify-between items-center mb-2">
-                        <span class="text-xs font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">${item.tipo}</span>
-                        <span id="stock-${itemIdEscapado}" class="text-xs font-medium text-gray-500">Stock: ${item.stock}</span>
-                    </div>
-
-                    <!-- CAMBIO v17.1: Se elimina el contenedor de tooltip -->
-                    <h4 class="text-lg font-bold text-gray-900 truncate mb-3" title="${escapeHTML(item.descripcion)}">
-                        ${item.nombre}
-                    </h4>
-                    
-                    <!-- Footer (Precio y Botón) -->
-                    <div class="flex justify-between items-center mt-auto pt-4">
-                        <span class="text-xl font-bold text-blue-600">${AppFormat.formatNumber(costoFinal)} ℙ</span>
-                        
-                        <!-- CORRECCIÓN v17.1: Se asegura que se usa el itemId correcto para el ID del botón -->
-                        <!-- CAMBIO v17.0: Botón de compra simplificado -->
-                        <button id="buy-btn-${itemId}" 
-                                data-item-id="${itemId}"
-                                onclick="AppTransacciones.comprarItem('${itemId}', this)"
-                                class="tienda-buy-btn bg-blue-600 text-white hover:bg-blue-700 w-auto min-w-[90px] text-center">
-                            <span class="btn-text">Comprar</span>
-                        </button>
-                    </div>
-                </div>
-            `;
-        });
-        
-        container.innerHTML = html;
-        
-        // Llamada inicial para establecer el estado de los botones
-        AppUI.updateTiendaButtonStates();
-    },
-
-    // Optimización v16.0: Solo actualiza el estado de los botones
-    // CAMBIO v17.0: Actualiza el .btn-text interno
-    // CORRECCIÓN v17.1: Asegura que la búsqueda usa el ItemID como clave
-    updateTiendaButtonStates: function() {
-        const items = AppState.tienda.items;
-        const student = AppState.currentSearch.tiendaAlumno.info;
-        const isStoreOpen = AppState.tienda.isStoreOpen;
-
-        Object.keys(items).forEach(itemId => { // itemId es la clave del objeto, que es item.ItemID
-            const item = items[itemId];
-            const btn = document.getElementById(`buy-btn-${itemId}`); // Se busca por itemId (la clave)
-            if (!btn) return;
-            
-            const btnText = btn.querySelector('.btn-text');
-            if (!btnText) return; 
-
-            const costoFinal = Math.round(item.precio * (1 + AppConfig.TASA_ITBIS));
-            
-            // Reset clases
-            btn.classList.remove('disabled-gray', 'sin-fondos-btn', 'agotado-btn', 'bg-blue-600', 'hover:bg-blue-700');
-            btn.disabled = false;
-            btnText.textContent = "Comprar";
-
-            if (item.stock <= 0 && item.ItemID !== 'filantropo') { // Usar ItemID real
-                btn.classList.add('agotado-btn');
-                btnText.textContent = "Agotado";
-                btn.disabled = true;
-            } else if (!isStoreOpen) {
-                btn.classList.add('disabled-gray');
-                btnText.textContent = "Cerrada"; // Cambiar a "Cerrada" para más claridad
-                btn.disabled = true;
-            } else if (!student) {
-                btn.classList.add('disabled-gray');
-                btnText.textContent = "Comprar";
-                btn.disabled = true;
-            } else if (student && student.pinceles < costoFinal) { // Añadir chequeo de 'student'
-                btn.classList.add('sin-fondos-btn');
-                btnText.textContent = "Comprar"; // No mostrar "Sin Fondos" para no exponer
-                btn.disabled = true;
-            } else {
-                // Estado por defecto (Habilitado)
-                btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
-                btnText.textContent = "Comprar";
-            }
-        });
-    },
-
-    // --- ELIMINADO v17.0: showTiendaConfirmModal ---
-
-    // --- Funciones del Panel de Admin de Tienda ---
-    
-    toggleTiendaAdminPanel: function() {
-        const claveInput = document.getElementById('tienda-admin-clave');
-        const gate = document.getElementById('tienda-admin-gate');
-        const panel = document.getElementById('tienda-admin-panel');
-        
-        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
-            AppState.tienda.adminPanelUnlocked = true;
-            gate.classList.add('hidden');
-            panel.classList.remove('hidden');
-            claveInput.value = ""; // Limpiar
-            claveInput.classList.remove('shake', 'border-red-500');
-        } else {
-            claveInput.classList.add('shake', 'border-red-500');
-            claveInput.focus();
-            setTimeout(() => {
-                claveInput.classList.remove('shake');
-            }, 500);
-        }
-    },
-    
-    // NUEVO v16.1 (Problema 3): Actualiza la etiqueta de estado en el panel de admin
-    // CAMBIO v17.1: Se eliminan las etiquetas "(Control Manual)"
-    updateTiendaAdminStatusLabel: function() {
-        const label = document.getElementById('tienda-admin-status-label');
-        if (!label) return;
-        
-        const status = AppState.tienda.storeManualStatus;
-        
-        label.classList.remove('text-blue-600', 'text-green-600', 'text-red-600', 'text-gray-600');
-        
-        if (status === 'auto') {
-            label.textContent = "Automático (por Temporizador)";
-            label.classList.add('text-blue-600');
-        } else if (status === 'open') {
-            label.textContent = "Forzado Abierto";
-            label.classList.add('text-green-600');
-        } else if (status === 'closed') {
-            label.textContent = "Forzado Cerrado";
-            label.classList.add('text-red-600');
-        } else {
-            label.textContent = "Desconocido";
-            label.classList.add('text-gray-600');
-        }
-    },
-
-    // --- NUEVAS FUNCIONES DE CONFIRMACIÓN DE BORRADO (v17.0) ---
-    handleDeleteConfirmation: function(itemId) {
-        const row = document.getElementById(`tienda-item-row-${itemId}`);
-        if (!row) return;
-
-        const actionCell = row.cells[4];
-        
-        // CORRECCIÓN BUG ONCLICK: Escapar ID para el onclick
-        const itemIdEscapado = escapeHTML(itemId);
-
-        actionCell.innerHTML = `
-            <button onclick="AppTransacciones.eliminarItem('${itemIdEscapado}')" class="font-medium text-red-600 hover:text-red-800 confirm-delete-btn">Confirmar</button>
-            <button onclick="AppUI.cancelDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-gray-600 hover:text-gray-800">Cancelar</button>
-        `;
-    },
-
-    cancelDeleteConfirmation: function(itemId) {
-        const item = AppState.tienda.items[itemId];
-        if (!item) return;
-
-        const row = document.getElementById(`tienda-item-row-${itemId}`);
-        if (!row) return;
-
-        const actionCell = row.cells[4];
-        
-        // Revertir a los botones originales
-        const nombreEscapado = escapeHTML(item.nombre);
-        const descEscapada = escapeHTML(item.descripcion);
-        const tipoEscapado = escapeHTML(item.tipo);
-        const itemIdEscapado = escapeHTML(item.ItemID); 
-
-        actionCell.innerHTML = `
-            <button onclick="AppUI.handleEditItem('${itemIdEscapado}', '${nombreEscapado}', '${descEscapada}', '${tipoEscapado}', ${item.precio}, ${item.stock})" class="font-medium text-blue-600 hover:text-blue-800 edit-item-btn">Editar</button>
-            <button onclick="AppUI.handleDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-item-btn">Eliminar</button>
-        `;
-    },
-    // --- FIN FUNCIONES DE CONFIRMACIÓN ---
-
-
-    populateTiendaAdminList: function() {
-        const tbody = document.getElementById('tienda-admin-lista');
-        const items = AppState.tienda.items;
-        const itemKeys = Object.keys(items);
-
-        if (itemKeys.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay artículos configurados.</td></tr>`;
-            return;
-        }
-
-        let html = '';
-        const itemsOrdenados = itemKeys.sort((a,b) => a.localeCompare(b));
-
-        itemsOrdenados.forEach(itemId => {
-            const item = items[itemId];
-            const precio = AppFormat.formatNumber(item.precio);
-            const stock = item.stock;
-            const rowClass = (stock <= 0 && item.ItemID !== 'filantropo') ? 'opacity-60 bg-gray-50' : '';
-            
-            // CORRECCIÓN BUG ONCLICK: Escapar datos para los botones
-            const itemIdEscapado = escapeHTML(item.ItemID); // Usar ItemID real
-            const nombreEscapado = escapeHTML(item.nombre);
-            const descEscapada = escapeHTML(item.descripcion);
-            const tipoEscapado = escapeHTML(item.tipo);
-
-            html += `
-                <tr id="tienda-item-row-${itemIdEscapado}" class="${rowClass}">
-                    <td class="px-4 py-2 text-sm font-semibold text-gray-800">${item.ItemID}</td>
-                    <td class="px-4 py-2 text-sm text-gray-600 truncate" title="${item.nombre}">${item.nombre}</td>
-                    <td class="px-4 py-2 text-sm text-gray-800 text-right">${precio} ℙ</td>
-                    <td class="px-4 py-2 text-sm text-gray-600 text-right">${stock}</td>
-                    <td class="px-4 py-2 text-right text-sm">
-                        <button onclick="AppUI.handleEditItem('${itemIdEscapado}', '${nombreEscapado}', '${descEscapada}', '${tipoEscapado}', ${item.precio}, ${item.stock})" class="font-medium text-blue-600 hover:text-blue-800 edit-item-btn">Editar</button>
-                        <button onclick="AppUI.handleDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-item-btn">Eliminar</button>
-                    </td>
-                </tr>
-            `;
-        });
-        tbody.innerHTML = html;
-    },
-    
-    // CAMBIO v17.0: Deshabilita ItemID al editar y cambia texto del botón.
-    handleEditItem: function(itemId, nombre, descripcion, tipo, precio, stock) {
-        document.getElementById('tienda-admin-itemid-input').value = itemId;
-        document.getElementById('tienda-admin-nombre-input').value = nombre;
-        document.getElementById('tienda-admin-desc-input').value = descripcion;
-        document.getElementById('tienda-admin-tipo-input').value = tipo;
-        document.getElementById('tienda-admin-precio-input').value = precio;
-        document.getElementById('tienda-admin-stock-input').value = stock;
-        
-        // OPTIMIZACIÓN ADMIN 1: Deshabilitar ItemID al editar
-        document.getElementById('tienda-admin-itemid-input').disabled = true;
-        document.getElementById('tienda-admin-submit-btn').textContent = 'Guardar Cambios';
-
-        // Hacer scroll al formulario
-        document.getElementById('tienda-admin-form-container').scrollIntoView({ behavior: 'smooth' });
-    },
-    
-    // CAMBIO v17.0: Habilita ItemID y resetea texto del botón.
-    clearTiendaAdminForm: function() {
-        document.getElementById('tienda-admin-form').reset();
-        // OPTIMIZACIÓN ADMIN 1: Habilitar ItemID y resetear botón al limpiar
-        document.getElementById('tienda-admin-itemid-input').disabled = false;
-        document.getElementById('tienda-admin-submit-btn').textContent = 'Crear / Actualizar';
-        document.getElementById('tienda-admin-status-msg').textContent = "";
-    },
-    
-    // --- FIN FUNCIONES DE TIENDA ---
-    
-    // --- NUEVO v0.4.2: Cálculo de Comisión Admin (RESTAURADO) ---
-    updateAdminDepositoCalculo: function() {
+    updateAdminDepositoCalculo: function() { 
         const cantidadInput = document.getElementById('transaccion-cantidad-input');
         const calculoMsg = document.getElementById('transaccion-calculo-impuesto');
-        // Asegurar que el input está habilitado para la pestaña normal
         cantidadInput.disabled = false;
         cantidadInput.classList.remove('bg-gray-100');
         cantidadInput.placeholder = "Ej: 1000 o -50";
         document.getElementById('tesoreria-saldo-transaccion').classList.remove('hidden');
 
-
         const cantidad = parseInt(cantidadInput.value, 10);
 
         if (isNaN(cantidad) || cantidad <= 0) {
-            calculoMsg.textContent = ""; // Limpiar si es 0, negativo o vacío
+            calculoMsg.textContent = ""; 
             return;
         }
 
@@ -1342,9 +1049,7 @@ const AppUI = {
 
         calculoMsg.textContent = `Monto a depositar: ${AppFormat.formatNumber(cantidad)} ℙ | Costo Neto Tesorería: ${AppFormat.formatNumber(costoNeto)} ℙ (Comisión: ${AppFormat.formatNumber(comision)} ℙ)`;
     },
-
-    // --- FUNCIÓN CENTRAL: Mostrar Modal de Administración y pestaña inicial ---
-    showTransaccionModal: function(tab) {
+    showTransaccionModal: function(tab) { 
         if (!AppState.datosActuales) {
             return;
         }
@@ -1353,13 +1058,10 @@ const AppUI = {
         
         AppUI.showModal('transaccion-modal');
     },
-
-    // V0.2.2: Función para poblar GRUPOS de la pestaña Transacción
-    populateGruposTransaccion: function() {
+    populateGruposTransaccion: function() { 
         const grupoContainer = document.getElementById('transaccion-lista-grupos-container');
         grupoContainer.innerHTML = ''; 
 
-        // V18.1: Asegurar que el modo es 'transaccion_multiple' (normal)
         document.getElementById('transaccion-submit-btn').dataset.accion = 'transaccion_multiple';
 
         AppState.datosActuales.forEach(grupo => {
@@ -1373,7 +1075,6 @@ const AppUI = {
             input.id = `group-cb-${grupo.nombre}`;
             input.value = grupo.nombre;
             input.className = "h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 group-checkbox";
-            // V18.1: Solo necesita el listener original
             input.addEventListener('change', AppUI.populateUsuariosTransaccion);
 
             const label = document.createElement('label');
@@ -1390,11 +1091,9 @@ const AppUI = {
         AppState.transaccionSelectAll = {}; 
         
         document.getElementById('tesoreria-saldo-transaccion').textContent = `(Fondos disponibles: ${AppFormat.formatNumber(AppState.datosAdicionales.saldoTesoreria)} ℙ)`;
-        document.getElementById('tesoreria-saldo-transaccion').classList.remove('hidden'); // Asegurar visible
+        document.getElementById('tesoreria-saldo-transaccion').classList.remove('hidden');
     },
-
-    // V0.2.2: Función para poblar USUARIOS de la pestaña Transacción
-    populateUsuariosTransaccion: function() {
+    populateUsuariosTransaccion: function() { 
         const checkedGroups = document.querySelectorAll('#transaccion-lista-grupos-container input[type="checkbox"]:checked');
         const selectedGroupNames = Array.from(checkedGroups).map(cb => cb.value);
         
@@ -1437,7 +1136,6 @@ const AppUI = {
                     input.dataset.grupo = grupo.nombre; 
                     input.className = "h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 user-checkbox";
                     input.dataset.checkboxGrupo = grupo.nombre; 
-                    // V18.1: No añadir listener de ISP
 
                     const label = document.createElement('label');
                     label.htmlFor = input.id;
@@ -1455,8 +1153,7 @@ const AppUI = {
              listaContainer.innerHTML = '<span class="text-sm text-gray-500 p-2">Los grupos seleccionados no tienen usuarios.</span>';
         }
     },
-    
-    toggleSelectAllUsuarios: function(event) {
+    toggleSelectAllUsuarios: function(event) { 
         event.preventDefault();
         const btn = event.target;
         const grupoNombre = btn.dataset.grupo;
@@ -1473,8 +1170,6 @@ const AppUI = {
 
         btn.textContent = isChecked ? "Ninguno" : "Todos";
     },
-
-    // --- FUNCIONES DE PRÉSTAMOS (PESTAÑA 2) ---
     loadPrestamoPaquetes: function(selectedStudentName) {
         const container = document.getElementById('prestamo-paquetes-container');
         const saldoSpan = document.getElementById('prestamo-alumno-saldo');
@@ -1542,7 +1237,6 @@ const AppUI = {
             const buttonClass = isEligible ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-400 cursor-not-allowed';
             const buttonDisabled = !isEligible ? 'disabled' : '';
             
-            // CORRECCIÓN BUG ONCLICK: Escapar nombres
             const studentNameEscapado = escapeHTML(selectedStudentName);
             const tipoEscapado = escapeHTML(tipo);
             const action = isEligible ? `AppTransacciones.realizarPrestamo('${studentNameEscapado}', '${tipoEscapado}')` : '';
@@ -1562,8 +1256,6 @@ const AppUI = {
         
         container.innerHTML = html;
     },
-    
-    // --- FUNCIONES DE DEPÓSITOS (PESTAÑA 3) ---
     loadDepositoPaquetes: function(selectedStudentName) {
         const container = document.getElementById('deposito-paquetes-container');
         const saldoSpan = document.getElementById('deposito-alumno-saldo');
@@ -1614,7 +1306,6 @@ const AppUI = {
             const buttonClass = isEligible ? 'bg-green-600 hover:bg-green-700' : 'bg-gray-400 cursor-not-allowed';
             const buttonDisabled = !isEligible ? 'disabled' : '';
             
-            // CORRECCIÓN BUG ONCLICK: Escapar nombres
             const studentNameEscapado = escapeHTML(selectedStudentName);
             const tipoEscapado = escapeHTML(tipo);
             const action = isEligible ? `AppTransacciones.realizarDeposito('${studentNameEscapado}', '${tipoEscapado}')` : '';
@@ -1638,8 +1329,440 @@ const AppUI = {
         container.innerHTML = html;
     },
 
+    // Bonos
+    showBonoModal: function() {
+        if (!AppState.datosActuales) return;
+        
+        AppUI.resetSearchInput('bonoAlumno');
+        document.getElementById('bono-clave-p2p').value = "";
+        document.getElementById('bono-clave-input').value = "";
+        document.getElementById('bono-status-msg').textContent = "";
+        AppTransacciones.setLoadingState(document.getElementById('bono-submit-btn'), document.getElementById('bono-btn-text'), false, 'Canjear Bono');
 
-    // --- Utilidades UI ---
+        document.getElementById('bono-admin-clave').value = "";
+        AppUI.clearBonoAdminForm();
+        document.getElementById('bono-admin-status-msg').textContent = "";
+        document.getElementById('bono-admin-gate').classList.remove('hidden');
+        document.getElementById('bono-admin-panel').classList.add('hidden');
+        AppState.bonos.adminPanelUnlocked = false;
+        
+        AppUI.changeBonoTab('canjear');
+
+        AppUI.populateBonoList();
+        AppUI.populateBonoAdminList();
+        
+        AppUI.showModal('bonos-modal');
+    },
+    changeBonoTab: function(tabId) {
+        document.querySelectorAll('#bonos-modal .bono-tab-btn').forEach(btn => {
+            btn.classList.remove('active-tab', 'border-blue-600', 'text-blue-600');
+            btn.classList.add('border-transparent', 'text-gray-600');
+        });
+
+        document.querySelectorAll('#bonos-modal .bono-tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+
+        const activeBtn = document.querySelector(`#bonos-modal [data-tab="${tabId}"]`);
+        activeBtn.classList.add('active-tab', 'border-blue-600', 'text-blue-600');
+        activeBtn.classList.remove('border-transparent', 'text-gray-600');
+        document.getElementById(`bono-tab-${tabId}`).classList.remove('hidden');
+
+        const bonoSubmitBtn = document.getElementById('bono-submit-btn');
+        if (tabId === 'canjear') {
+            bonoSubmitBtn.classList.remove('hidden');
+        } else {
+            bonoSubmitBtn.classList.add('hidden');
+        }
+
+        document.getElementById('bono-status-msg').textContent = "";
+        document.getElementById('bono-admin-status-msg').textContent = "";
+    },
+    selectBonoStudent: function(student) { /* Vacío */ },
+    populateBonoList: function() {
+        const container = document.getElementById('bonos-lista-disponible');
+        const bonos = AppState.bonos.disponibles;
+        
+        const bonosActivos = bonos.filter(b => b.usos_actuales < b.usos_totales);
+
+        if (bonosActivos.length === 0) {
+            container.innerHTML = `<p class="text-sm text-gray-500 text-center col-span-1 md:col-span-2">No hay bonos disponibles en este momento.</p>`;
+            return;
+        }
+
+        container.innerHTML = bonosActivos.map(bono => {
+            const recompensa = AppFormat.formatNumber(bono.recompensa);
+            const usosRestantes = bono.usos_totales - bono.usos_actuales;
+            
+            const isCanjeado = AppState.bonos.canjeados.includes(bono.clave);
+            const cardClass = isCanjeado ? 'bono-item-card canjeado' : 'bono-item-card';
+            const badge = isCanjeado ? 
+                `<span class="text-xs font-bold bg-green-100 text-green-700 rounded-full px-2 py-0.5">CANJEADO</span>` :
+                `<span class="text-xs font-bold bg-gray-100 text-gray-700 rounded-full px-2 py-0.5">DISPONIBLE</span>`;
+
+            return `
+                <div class="${cardClass}">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-500 truncate">${bono.clave}</span>
+                        ${badge}
+                    </div>
+                    <p class="text-base font-semibold text-gray-900 truncate">${bono.nombre}</p>
+                    <div class="flex justify-between items-baseline mt-3">
+                        <span class="text-xs text-gray-500">Quedan ${usosRestantes}</span>
+                        <span class="text-xl font-bold text-blue-600">${recompensa} ℙ</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    },
+    toggleBonoAdminPanel: function() {
+        const claveInput = document.getElementById('bono-admin-clave');
+        const gate = document.getElementById('bono-admin-gate');
+        const panel = document.getElementById('bono-admin-panel');
+        
+        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
+            AppState.bonos.adminPanelUnlocked = true;
+            gate.classList.add('hidden');
+            panel.classList.remove('hidden');
+            claveInput.value = ""; // Limpiar
+            claveInput.classList.remove('shake', 'border-red-500');
+        } else {
+            claveInput.classList.add('shake', 'border-red-500');
+            claveInput.focus();
+            setTimeout(() => {
+                claveInput.classList.remove('shake');
+            }, 500);
+        }
+    },
+    populateBonoAdminList: function() {
+        const tbody = document.getElementById('bonos-admin-lista');
+        const bonos = AppState.bonos.disponibles; 
+
+        if (bonos.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay bonos configurados.</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        const bonosOrdenados = [...bonos].sort((a, b) => a.clave.localeCompare(b.clave));
+
+        bonosOrdenados.forEach(bono => {
+            const recompensa = AppFormat.formatNumber(bono.recompensa);
+            const usos = `${bono.usos_actuales} / ${bono.usos_totales}`;
+            const isAgotado = bono.usos_actuales >= bono.usos_totales;
+            const rowClass = isAgotado ? 'opacity-60 bg-gray-50' : '';
+            
+            const nombreEscapado = escapeHTML(bono.nombre);
+            const claveEscapada = escapeHTML(bono.clave);
+
+            html += `
+                <tr class="${rowClass}">
+                    <td class="px-4 py-2 text-sm font-semibold text-gray-800">${bono.clave}</td>
+                    <td class="px-4 py-2 text-sm text-gray-600">${bono.nombre}</td>
+                    <td class="px-4 py-2 text-sm text-gray-800 text-right">${recompensa} ℙ</td>
+                    <td class="px-4 py-2 text-sm text-gray-600 text-right">${usos}</td>
+                    <td class="px-4 py-2 text-right text-sm">
+                        <button onclick="AppUI.handleEditBono('${claveEscapada}', '${nombreEscapado}', ${bono.recompensa}, ${bono.usos_totales})" class="font-medium text-blue-600 hover:text-blue-800 edit-bono-btn">Editar</button>
+                        <button onclick="AppTransacciones.eliminarBono('${claveEscapada}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-bono-btn">Eliminar</button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    },
+    handleEditBono: function(clave, nombre, recompensa, usosTotales) {
+        document.getElementById('bono-admin-clave-input').value = clave;
+        document.getElementById('bono-admin-nombre-input').value = nombre;
+        document.getElementById('bono-admin-recompensa-input').value = recompensa;
+        document.getElementById('bono-admin-usos-input').value = usosTotales;
+        
+        document.getElementById('bono-admin-form-container').scrollIntoView({ behavior: 'smooth' });
+    },
+    clearBonoAdminForm: function() {
+        document.getElementById('bono-admin-form').reset();
+        document.getElementById('bono-admin-clave-input').disabled = false;
+        document.getElementById('bono-admin-status-msg').textContent = "";
+    },
+    
+    // Tienda
+    showTiendaModal: function() {
+        if (!AppState.datosActuales) return;
+        
+        AppUI.resetSearchInput('tiendaAlumno');
+        document.getElementById('tienda-clave-p2p').value = "";
+        document.getElementById('tienda-status-msg').textContent = "";
+        
+        document.getElementById('tienda-admin-clave').value = "";
+        AppUI.clearTiendaAdminForm();
+        document.getElementById('tienda-admin-status-msg').textContent = "";
+        document.getElementById('tienda-admin-gate').classList.remove('hidden');
+        document.getElementById('tienda-admin-panel').classList.add('hidden');
+        AppState.tienda.adminPanelUnlocked = false;
+        
+        AppUI.changeTiendaTab('comprar');
+
+        const container = document.getElementById('tienda-items-container');
+        const isLoading = container.innerHTML.includes('Cargando artículos...');
+        
+        if (isLoading || container.innerHTML.trim() === '') {
+            AppUI.renderTiendaItems();
+        } else {
+            AppUI.updateTiendaButtonStates();
+        }
+        
+        AppUI.populateTiendaAdminList();
+        AppUI.updateTiendaAdminStatusLabel();
+        
+        AppUI.showModal('tienda-modal');
+    },
+    changeTiendaTab: function(tabId) {
+        document.querySelectorAll('#tienda-modal .tienda-tab-btn').forEach(btn => {
+            btn.classList.remove('active-tab', 'border-blue-600', 'text-blue-600');
+            btn.classList.add('border-transparent', 'text-gray-600');
+        });
+
+        document.querySelectorAll('#tienda-modal .tienda-tab-content').forEach(content => {
+            content.classList.add('hidden');
+        });
+
+        const activeBtn = document.querySelector(`#tienda-modal [data-tab="${tabId}"]`);
+        activeBtn.classList.add('active-tab', 'border-blue-600', 'text-blue-600');
+        activeBtn.classList.remove('border-transparent', 'text-gray-600');
+        document.getElementById(`tienda-tab-${tabId}`).classList.remove('hidden');
+
+        document.getElementById('tienda-status-msg').textContent = "";
+        document.getElementById('tienda-admin-status-msg').textContent = "";
+    },
+    selectTiendaStudent: function(student) {
+        AppUI.updateTiendaButtonStates();
+    },
+    renderTiendaItems: function() {
+        const container = document.getElementById('tienda-items-container');
+        const items = AppState.tienda.items;
+        
+        const itemKeys = Object.keys(items);
+
+        if (itemKeys.length === 0) {
+            container.innerHTML = `<p class="text-sm text-gray-500 text-center col-span-1 md:col-span-2">No hay artículos configurados en la tienda en este momento.</p>`;
+            return;
+        }
+
+        let html = '';
+        itemKeys.sort((a,b) => items[a].precio - items[b].precio).forEach(itemId => {
+            const item = items[itemId];
+            const costoFinal = Math.round(item.precio * (1 + AppConfig.TASA_ITBIS));
+            
+            const itemIdEscapado = escapeHTML(item.ItemID); 
+
+            html += `
+                <div class="tienda-item-card">
+                    <!-- Header de la Tarjeta (Tipo, Stock) -->
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-xs font-bold bg-blue-100 text-blue-700 rounded-full px-2 py-0.5">${item.tipo}</span>
+                        <span id="stock-${itemIdEscapado}" class="text-xs font-medium text-gray-500">Stock: ${item.stock}</span>
+                    </div>
+
+                    <h4 class="text-lg font-bold text-gray-900 truncate mb-3" title="${escapeHTML(item.descripcion)}">
+                        ${item.nombre}
+                    </h4>
+                    
+                    <!-- Footer (Precio y Botón) -->
+                    <div class="flex justify-between items-center mt-auto pt-4">
+                        <span class="text-xl font-bold text-blue-600">${AppFormat.formatNumber(costoFinal)} ℙ</span>
+                        
+                        <button id="buy-btn-${itemId}" 
+                                data-item-id="${itemId}"
+                                onclick="AppTransacciones.comprarItem('${itemId}', this)"
+                                class="tienda-buy-btn bg-blue-600 text-white hover:bg-blue-700 w-auto min-w-[90px] text-center">
+                            <span class="btn-text">Comprar</span>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+        
+        AppUI.updateTiendaButtonStates();
+    },
+    updateTiendaButtonStates: function() {
+        const items = AppState.tienda.items;
+        const student = AppState.currentSearch.tiendaAlumno.info;
+        const isStoreOpen = AppState.tienda.isStoreOpen;
+
+        Object.keys(items).forEach(itemId => { 
+            const item = items[itemId];
+            const btn = document.getElementById(`buy-btn-${itemId}`); 
+            if (!btn) return;
+            
+            const btnText = btn.querySelector('.btn-text');
+            if (!btnText) return; 
+
+            const costoFinal = Math.round(item.precio * (1 + AppConfig.TASA_ITBIS));
+            
+            btn.classList.remove('disabled-gray', 'sin-fondos-btn', 'agotado-btn', 'bg-blue-600', 'hover:bg-blue-700');
+            btn.disabled = false;
+            btnText.textContent = "Comprar";
+
+            if (item.stock <= 0 && item.ItemID !== 'filantropo') { 
+                btn.classList.add('agotado-btn');
+                btnText.textContent = "Agotado";
+                btn.disabled = true;
+            } else if (!isStoreOpen) {
+                btn.classList.add('disabled-gray');
+                btnText.textContent = "Cerrada"; 
+                btn.disabled = true;
+            } else if (!student) {
+                btn.classList.add('disabled-gray');
+                btnText.textContent = "Comprar";
+                btn.disabled = true;
+            } else if (student && student.pinceles < costoFinal) { 
+                btn.classList.add('sin-fondos-btn');
+                btnText.textContent = "Comprar"; 
+                btn.disabled = true;
+            } else {
+                btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
+                btnText.textContent = "Comprar";
+            }
+        });
+    },
+    toggleTiendaAdminPanel: function() {
+        const claveInput = document.getElementById('tienda-admin-clave');
+        const gate = document.getElementById('tienda-admin-gate');
+        const panel = document.getElementById('tienda-admin-panel');
+        
+        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
+            AppState.tienda.adminPanelUnlocked = true;
+            gate.classList.add('hidden');
+            panel.classList.remove('hidden');
+            claveInput.value = ""; // Limpiar
+            claveInput.classList.remove('shake', 'border-red-500');
+        } else {
+            claveInput.classList.add('shake', 'border-red-500');
+            claveInput.focus();
+            setTimeout(() => {
+                claveInput.classList.remove('shake');
+            }, 500);
+        }
+    },
+    updateTiendaAdminStatusLabel: function() {
+        const label = document.getElementById('tienda-admin-status-label');
+        if (!label) return;
+        
+        const status = AppState.tienda.storeManualStatus;
+        
+        label.classList.remove('text-blue-600', 'text-green-600', 'text-red-600', 'text-gray-600');
+        
+        if (status === 'auto') {
+            label.textContent = "Automático (por Temporizador)";
+            label.classList.add('text-blue-600');
+        } else if (status === 'open') {
+            label.textContent = "Forzado Abierto";
+            label.classList.add('text-green-600');
+        } else if (status === 'closed') {
+            label.textContent = "Forzado Cerrado";
+            label.classList.add('text-red-600');
+        } else {
+            label.textContent = "Desconocido";
+            label.classList.add('text-gray-600');
+        }
+    },
+    handleDeleteConfirmation: function(itemId) {
+        const row = document.getElementById(`tienda-item-row-${itemId}`);
+        if (!row) return;
+
+        const actionCell = row.cells[4];
+        
+        const itemIdEscapado = escapeHTML(itemId);
+
+        actionCell.innerHTML = `
+            <button onclick="AppTransacciones.eliminarItem('${itemIdEscapado}')" class="font-medium text-red-600 hover:text-red-800 confirm-delete-btn">Confirmar</button>
+            <button onclick="AppUI.cancelDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-gray-600 hover:text-gray-800">Cancelar</button>
+        `;
+    },
+    cancelDeleteConfirmation: function(itemId) {
+        const item = AppState.tienda.items[itemId];
+        if (!item) return;
+
+        const row = document.getElementById(`tienda-item-row-${itemId}`);
+        if (!row) return;
+
+        const actionCell = row.cells[4];
+        
+        const nombreEscapado = escapeHTML(item.nombre);
+        const descEscapada = escapeHTML(item.descripcion);
+        const tipoEscapado = escapeHTML(item.tipo);
+        const itemIdEscapado = escapeHTML(item.ItemID); 
+
+        actionCell.innerHTML = `
+            <button onclick="AppUI.handleEditItem('${itemIdEscapado}', '${nombreEscapado}', '${descEscapada}', '${tipoEscapado}', ${item.precio}, ${item.stock})" class="font-medium text-blue-600 hover:text-blue-800 edit-item-btn">Editar</button>
+            <button onclick="AppUI.handleDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-item-btn">Eliminar</button>
+        `;
+    },
+    populateTiendaAdminList: function() {
+        const tbody = document.getElementById('tienda-admin-lista');
+        const items = AppState.tienda.items;
+        const itemKeys = Object.keys(items);
+
+        if (itemKeys.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay artículos configurados.</td></tr>`;
+            return;
+        }
+
+        let html = '';
+        const itemsOrdenados = itemKeys.sort((a,b) => a.localeCompare(b));
+
+        itemsOrdenados.forEach(itemId => {
+            const item = items[itemId];
+            const precio = AppFormat.formatNumber(item.precio);
+            const stock = item.stock;
+            const rowClass = (stock <= 0 && item.ItemID !== 'filantropo') ? 'opacity-60 bg-gray-50' : '';
+            
+            const itemIdEscapado = escapeHTML(item.ItemID); 
+            const nombreEscapado = escapeHTML(item.nombre);
+            const descEscapada = escapeHTML(item.descripcion);
+            const tipoEscapado = escapeHTML(item.tipo);
+
+            html += `
+                <tr id="tienda-item-row-${itemIdEscapado}" class="${rowClass}">
+                    <td class="px-4 py-2 text-sm font-semibold text-gray-800">${item.ItemID}</td>
+                    <td class="px-4 py-2 text-sm text-gray-600 truncate" title="${item.nombre}">${item.nombre}</td>
+                    <td class="px-4 py-2 text-sm text-gray-800 text-right">${precio} ℙ</td>
+                    <td class="px-4 py-2 text-sm text-gray-600 text-right">${stock}</td>
+                    <td class="px-4 py-2 text-right text-sm">
+                        <button onclick="AppUI.handleEditItem('${itemIdEscapado}', '${nombreEscapado}', '${descEscapada}', '${tipoEscapado}', ${item.precio}, ${item.stock})" class="font-medium text-blue-600 hover:text-blue-800 edit-item-btn">Editar</button>
+                        <button onclick="AppUI.handleDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-item-btn">Eliminar</button>
+                    </td>
+                </tr>
+            `;
+        });
+        tbody.innerHTML = html;
+    },
+    handleEditItem: function(itemId, nombre, descripcion, tipo, precio, stock) {
+        document.getElementById('tienda-admin-itemid-input').value = itemId;
+        document.getElementById('tienda-admin-nombre-input').value = nombre;
+        document.getElementById('tienda-admin-desc-input').value = descripcion;
+        document.getElementById('tienda-admin-tipo-input').value = tipo;
+        document.getElementById('tienda-admin-precio-input').value = precio;
+        document.getElementById('tienda-admin-stock-input').value = stock;
+        
+        document.getElementById('tienda-admin-itemid-input').disabled = true;
+        document.getElementById('tienda-admin-submit-btn').textContent = 'Guardar Cambios';
+
+        document.getElementById('tienda-admin-form-container').scrollIntoView({ behavior: 'smooth' });
+    },
+    clearTiendaAdminForm: function() {
+        document.getElementById('tienda-admin-form').reset();
+        document.getElementById('tienda-admin-itemid-input').disabled = false;
+        document.getElementById('tienda-admin-submit-btn').textContent = 'Crear / Actualizar';
+        document.getElementById('tienda-admin-status-msg').textContent = "";
+    },
+    
+    // Generals
+    mostrarVersionApp: function() {
+        const versionContainer = document.getElementById('app-version-container');
+        versionContainer.innerHTML = `Estado: ${AppConfig.APP_STATUS} | ${AppConfig.APP_VERSION}`;
+    },
     setConnectionStatus: function(status, title) {
         const dot = document.getElementById('status-dot');
         const indicator = document.getElementById('status-indicator');
@@ -1661,13 +1784,11 @@ const AppUI = {
                 break;
         }
     },
-
     hideSidebar: function() {
         if (AppState.isSidebarOpen) {
             AppUI.toggleSidebar();
         }
     },
-
     toggleSidebar: function() {
         const sidebar = document.getElementById('sidebar');
         const btn = document.getElementById('toggle-sidebar-btn');
@@ -1684,7 +1805,6 @@ const AppUI = {
         
         AppUI.resetSidebarTimer(); // Iniciar o limpiar el timer
     },
-    
     resetSidebarTimer: function() {
         if (AppState.sidebarTimer) {
             clearTimeout(AppState.sidebarTimer);
@@ -1698,8 +1818,6 @@ const AppUI = {
             }, 10000); // 10 segundos
         }
     },
-
-
     actualizarSidebar: function(grupos) {
         const nav = document.getElementById('sidebar-nav');
         nav.innerHTML = ''; 
@@ -1745,7 +1863,6 @@ const AppUI = {
             nav.appendChild(link);
         });
     },
-
     actualizarSidebarActivo: function() {
         const links = document.querySelectorAll('#sidebar-nav .nav-link');
         links.forEach(link => {
@@ -1760,11 +1877,13 @@ const AppUI = {
                 link.classList.add('text-gray-700', 'hover:bg-gray-100');
             }
         });
+        
+        // NUEVO v20.0: Ocultar o mostrar el módulo de mercado
+        const mercadoContainer = document.getElementById('mercado-volatil-container');
+        if (AppState.selectedGrupo !== 'mercado') {
+            mercadoContainer.classList.add('hidden');
+        }
     },
-
-    /**
-     * Muestra la vista de "Inicio"
-     */
     mostrarPantallaNeutral: function(grupos) {
         document.getElementById('main-header-title').textContent = "Bienvenido al Banco del Pincel Dorado";
         document.getElementById('page-subtitle').innerHTML = ''; 
@@ -1772,6 +1891,9 @@ const AppUI = {
         const tableContainer = document.getElementById('table-container');
         tableContainer.innerHTML = '';
         tableContainer.classList.add('hidden');
+
+        // OCULTAR MODULO MERCADO
+        document.getElementById('mercado-volatil-container').classList.add('hidden');
 
         // 1. MOSTRAR RESUMEN COMPACTO
         const homeStatsContainer = document.getElementById('home-stats-container');
@@ -1783,19 +1905,12 @@ const AppUI = {
         let tesoreriaHtml = ''; 
         let top3Html = '';
 
-        // ===================================================================
-        // CORRECCIÓN 1: BÓVEDA (Total en Cuentas)
-        // Calculamos la bóveda sumando solo los pinceles positivos de todos
-        // los alumnos, para que coincida con la estadística "Pinceles Positivos".
-        // ===================================================================
         const allStudents = AppState.datosAdicionales.allStudents;
         
-        // Tarjeta de Bóveda (AHORA CALCULA EL BRUTO POSITIVO)
         const totalGeneral = allStudents
             .filter(s => s.pinceles > 0)
             .reduce((sum, user) => sum + user.pinceles, 0);
         
-        // Tarjeta de Tesorería
         const tesoreriaSaldo = AppState.datosAdicionales.saldoTesoreria;
         
         bovedaHtml = `
@@ -1831,10 +1946,6 @@ const AppUI = {
                 </div>
             </div>
         `;
-        
-        // ===================================================================
-        // Lógica "Alumnos Destacados"
-        // ===================================================================
         
         const depositosActivos = AppState.datosAdicionales.depositosActivos;
         
@@ -1927,12 +2038,7 @@ const AppUI = {
         AppUI.actualizarAlumnosEnRiesgo();
         AppUI.actualizarAnuncios(); 
         AppUI.actualizarEstadisticasRapidas(grupos);
-        
     },
-
-    /**
-     * Muestra la tabla de un grupo específico
-     */
     mostrarDatosGrupo: function(grupo) {
         document.getElementById('main-header-title').textContent = grupo.nombre;
         
@@ -1958,7 +2064,6 @@ const AppUI = {
             if (pos === 3) rankBg = 'bg-orange-100 text-orange-600';
             if (grupo.nombre === "Cicla") rankBg = 'bg-red-100 text-red-600';
 
-            // CORRECCIÓN BUG ONCLICK: Escapar nombres
             const grupoNombreEscapado = escapeHTML(grupo.nombre);
             const usuarioNombreEscapado = escapeHTML(usuario.nombre);
 
@@ -1998,27 +2103,17 @@ const AppUI = {
         
         tableContainer.classList.remove('hidden');
 
-        // 4. OCULTAR MÓDULOS DE HOME
         document.getElementById('home-stats-container').classList.add('hidden');
         document.getElementById('home-modules-grid').classList.add('hidden');
     },
-
-    // ===================================================================
-    // FUNCIÓN CORREGIDA (Estadísticas v17.0)
-    // ===================================================================
     actualizarAlumnosEnRiesgo: function() {
         const lista = document.getElementById('riesgo-lista');
         if (!lista) return;
 
-        // CORRECCIÓN: Ahora incluye a TODOS los alumnos (incluyendo Cicla)
-        // y los ordena de menor a mayor saldo para mostrar el verdadero riesgo.
         const allStudents = AppState.datosAdicionales.allStudents;
         
-        // Ordenar a TODOS los alumnos por sus pinceles, de menor a mayor.
-        // Usamos [...allStudents] para no modificar el array original.
         const enRiesgo = [...allStudents].sort((a, b) => a.pinceles - b.pinceles);
         
-        // Tomar los 6 con saldos más bajos.
         const top6Riesgo = enRiesgo.slice(0, 6); 
 
         if (top6Riesgo.length === 0) {
@@ -2040,10 +2135,6 @@ const AppUI = {
             `;
         }).join('');
     },
-    
-    // ===================================================================
-    // FUNCIÓN CORREGIDA (Estadísticas v17.0)
-    // ===================================================================
     actualizarEstadisticasRapidas: function(grupos) {
         const statsList = document.getElementById('quick-stats-list');
         if (!statsList) return;
@@ -2051,18 +2142,13 @@ const AppUI = {
         const allStudents = AppState.datosAdicionales.allStudents;
         const ciclaGrupo = grupos.find(g => g.nombre === 'Cicla');
         
-        // CORRECCIÓN 2: ESTADÍSTICAS RÁPIDAS
-        
-        // Alumnos Activos (sin Cicla)
         const alumnosActivos = allStudents.filter(s => s.grupoNombre !== 'Cicla');
         const totalAlumnosActivos = alumnosActivos.length;
         const totalEnCicla = ciclaGrupo ? ciclaGrupo.usuarios.length : 0;
         
-        // Pinceles Positivos (el valor que debe cuadrar con la Bóveda)
         const pincelesPositivos = allStudents.filter(s => s.pinceles > 0).reduce((sum, user) => sum + user.pinceles, 0);
         const pincelesNegativos = allStudents.filter(s => s.pinceles < 0).reduce((sum, user) => sum + user.pinceles, 0);
         
-        // Pincel Promedio: Pinceles Positivos divididos entre Alumnos Activos (más útil)
         const promedioPinceles = totalAlumnosActivos > 0 ? (pincelesPositivos / totalAlumnosActivos) : 0;
         
         const createStat = (label, value, valueClass = 'text-gray-900') => `
@@ -2080,7 +2166,6 @@ const AppUI = {
             ${createStat('Pinceles Negativos', `${AppFormat.formatNumber(pincelesNegativos)} ℙ`, 'text-red-600')}
         `;
     },
-
     actualizarAnuncios: function() {
         const lista = document.getElementById('anuncios-lista');
         
@@ -2093,7 +2178,6 @@ const AppUI = {
         
         const anuncios = [...todosLosAnuncios].sort(() => 0.5 - Math.random()).slice(0, 5);
 
-        // V18.2: Corrección de CLS (salto de layout)
         lista.innerHTML = anuncios.map(anuncio => `
             <li class="flex items-center p-2 hover:bg-gray-50 rounded-lg transition-colors h-10"> 
                 <span class="text-xs font-bold ${anuncio.bg} ${anuncio.text} rounded-full w-20 text-center py-0.5 mr-3 flex-shrink-0">${anuncio.tipo}</span>
@@ -2101,7 +2185,6 @@ const AppUI = {
             </li>
         `).join('');
     },
-
     poblarModalAnuncios: function() {
         const listaModal = document.getElementById('anuncios-modal-lista');
         if (!listaModal) return;
@@ -2135,7 +2218,6 @@ const AppUI = {
 
         listaModal.innerHTML = html;
     },
-
     showStudentModal: function(nombreGrupo, nombreUsuario, rank) {
         const student = AppState.datosAdicionales.allStudents.find(u => u.nombre === nombreUsuario);
         const grupo = AppState.datosActuales.find(g => g.nombre === nombreGrupo);
@@ -2148,7 +2230,6 @@ const AppUI = {
         const gruposRankeados = AppState.datosActuales.filter(g => g.nombre !== 'Cicla');
         const rankGrupo = gruposRankeados.findIndex(g => g.nombre === nombreGrupo) + 1;
         
-        // Buscar préstamos y depósitos
         const prestamoActivo = AppState.datosAdicionales.prestamosActivos.find(p => p.alumno === student.nombre);
         const depositoActivo = AppState.datosAdicionales.depositosActivos.find(d => d.alumno === student.nombre);
 
@@ -2191,9 +2272,6 @@ const AppUI = {
         `;
         AppUI.showModal('student-modal');
     },
-    
-    // CAMBIO v16.1: Lógica de Tienda y Control Manual
-    // CAMBIO v17.1: Se eliminan las etiquetas "(Manual)" en los mensajes
     updateCountdown: function() {
         const getLastThursday = (year, month) => {
             const lastDayOfMonth = new Date(year, month + 1, 0);
@@ -2217,28 +2295,25 @@ const AppUI = {
         
         const f = (val) => String(val).padStart(2, '0');
 
-        // NUEVO v16.1 (Problema 3): Lógica de Control Manual
         const manualStatus = AppState.tienda.storeManualStatus;
         
         if (manualStatus === 'open') {
-            // TIENDA FORZADA ABIERTA
             timerEl.classList.add('hidden');
             messageEl.classList.remove('hidden');
-            messageEl.textContent = "¡La tienda está abierta!"; // Sin etiqueta (Manual)
+            messageEl.textContent = "¡La tienda está abierta!"; 
             if (tiendaTimerStatus) { 
-                tiendaTimerStatus.innerHTML = `<span class="text-green-600 font-bold">¡TIENDA ABIERTA!</span>`; // Sin etiqueta (Control Manual)
+                tiendaTimerStatus.innerHTML = `<span class="text-green-600 font-bold">¡TIENDA ABIERTA!</span>`; 
                 tiendaTimerStatus.classList.remove('bg-gray-100', 'text-gray-700', 'bg-red-50', 'text-red-700');
                 tiendaTimerStatus.classList.add('bg-green-50', 'text-green-700');
             }
             AppState.tienda.isStoreOpen = true;
 
         } else if (manualStatus === 'closed') {
-            // TIENDA FORZADA CERRADA
-            timerEl.classList.add('hidden'); // Ocultamos el timer principal
-            messageEl.classList.add('hidden'); // Ocultamos el mensaje principal
+            timerEl.classList.add('hidden'); 
+            messageEl.classList.add('hidden'); 
             
             if (tiendaTimerStatus) {
-                tiendaTimerStatus.innerHTML = `<span class="text-red-600 font-bold">TIENDA CERRADA</span>`; // Sin etiqueta (Control Manual)
+                tiendaTimerStatus.innerHTML = `<span class="text-red-600 font-bold">TIENDA CERRADA</span>`; 
                 tiendaTimerStatus.classList.remove('bg-green-50', 'text-green-700', 'bg-gray-100', 'text-gray-700');
                 tiendaTimerStatus.classList.add('bg-red-50', 'text-red-700');
             }
@@ -2278,7 +2353,6 @@ const AppUI = {
                 document.getElementById('minutes').textContent = minutes;
                 document.getElementById('seconds').textContent = seconds;
 
-                // CORRECCIÓN BUG TIMER (Problema 1): Actualizar también el timer del modal
                 if (tiendaTimerStatus) {
                     tiendaTimerStatus.innerHTML = `<span class="text-red-600 font-bold">TIENDA CERRADA.</span> Próxima apertura en:
                         <div class="flex items-baseline justify-center gap-2 mt-2">
@@ -2294,26 +2368,149 @@ const AppUI = {
             }
         }
 
-
-        // NUEVO v16.0: Actualizar estado de botones si la tienda está visible
-        // (Optimización: esto solo se ejecuta si el modal está abierto)
         if (document.getElementById('tienda-modal').classList.contains('opacity-0') === false) {
             AppUI.updateTiendaButtonStates();
-            AppUI.updateTiendaAdminStatusLabel(); // v16.1
+            AppUI.updateTiendaAdminStatusLabel();
         }
     }
 };
 
-// --- OBJETO TRANSACCIONES (Préstamos, Depósitos, P2P, Bonos, Tienda) ---
+// --- OBJETO TRANSACCIONES (Préstamos, Depósitos, P2P, Bonos, Tienda, MERCADO) ---
 const AppTransacciones = {
 
+    // --- ACCIONES DE MERCADO VOLÁTIL (NUEVO v20.0) ---
+    realizarInversion: async function() {
+        const statusMsg = document.getElementById('inversion-status-msg');
+        const submitBtn = document.getElementById('inversion-submit-btn');
+        const btnText = document.getElementById('inversion-btn-text');
+        
+        const idLote = AppState.mercado.selectedLoteId;
+        const nombreOrigen = AppState.currentSearch.inversionAlumno.selected;
+        const claveP2P = document.getElementById('inversion-clave-p2p').value;
+        const monto = parseInt(document.getElementById('inversion-monto').value, 10);
+        const infoAlumno = AppState.currentSearch.inversionAlumno.info;
+        
+        const lote = AppState.mercado.ofertasActivas.find(o => o.ID_Lote === idLote);
+        const montoMinIndividual = lote ? lote.MontoIndividualMin : 0;
+
+
+        let errorValidacion = "";
+        if (!nombreOrigen || !infoAlumno) {
+            errorValidacion = "Debe seleccionar su nombre de la lista (Comprador).";
+        } else if (!claveP2P) {
+            errorValidacion = "Debe ingresar su Clave P2P.";
+        } else if (!idLote || !lote) {
+            errorValidacion = "Error interno: Lote no seleccionado o no existe.";
+        } else if (isNaN(monto) || monto < montoMinIndividual) {
+            errorValidacion = `El monto mínimo es ${AppFormat.formatNumber(montoMinIndividual)} ℙ.`;
+        } else if (infoAlumno.pinceles < monto) {
+            errorValidacion = "Fondos insuficientes en su cuenta.";
+        } else if (lote.CapitalReunido + monto > lote.CapitalMax) {
+            errorValidacion = `La inversión excede el tope de capital (${AppFormat.formatNumber(lote.CapitalMax)} ℙ).`;
+        }
+        
+        if (errorValidacion) {
+            AppTransacciones.setError(statusMsg, errorValidacion);
+            return;
+        }
+
+        AppTransacciones.setLoadingState(submitBtn, btnText, true, 'Invirtiendo...');
+        AppTransacciones.setLoading(statusMsg, `Invertiendo ${AppFormat.formatNumber(monto)} ℙ en ${lote.Empresa}...`);
+        
+        try {
+            const payload = {
+                accion: 'invertir_riesgo',
+                alumnoNombre: nombreOrigen,
+                claveP2P: claveP2P,
+                idLote: idLote,
+                monto: monto
+            };
+
+            const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload), 
+            });
+
+            const result = await response.json();
+
+            if (result.success === true) {
+                AppTransacciones.setSuccess(statusMsg, result.message || "¡Inversión exitosa!");
+                
+                // Limpiar campos y recargar datos
+                document.getElementById('inversion-monto').value = "";
+                document.getElementById('inversion-alumno-saldo').textContent = "";
+                AppData.cargarDatos(false); 
+                
+                setTimeout(() => AppUI.hideModal('inversion-modal'), 1500);
+
+            } else {
+                throw new Error(result.message || "Error desconocido de la API.");
+            }
+
+        } catch (error) {
+            AppTransacciones.setError(statusMsg, error.message);
+        } finally {
+            AppTransacciones.setLoadingState(submitBtn, btnText, false, 'Confirmar Inversión');
+        }
+    },
+
+    realizarRetiro: async function(alumnoNombre, idLote, btnElement) {
+        const statusMsg = document.getElementById('mercado-status-msg');
+        AppTransacciones.setLoading(statusMsg, `Procesando retiro de lote ${idLote}...`);
+        
+        // El campo claveP2P no existe en el modal de Cartera. Se debe solicitar.
+        // Simularemos pidiéndola con un prompt, aunque en un app real usaríamos un modal.
+        // **NOTA: En producción, usar un modal de UI, no un prompt.**
+        const claveP2P = prompt(`Para confirmar el retiro de ${alumnoNombre} del lote ${idLote}, por favor ingrese su Clave P2P:`);
+        
+        if (!claveP2P) {
+            AppTransacciones.setError(statusMsg, 'Retiro cancelado. No se ingresó Clave P2P.');
+            if (btnElement) AppTransacciones.setLoadingState(btnElement, null, false);
+            return;
+        }
+        
+        // Deshabilitar todos los botones de la cartera (medida de seguridad)
+        document.querySelectorAll('#cartera-list-container button').forEach(btn => btn.disabled = true);
+
+
+        try {
+            
+            const payload = {
+                accion: 'retirar_riesgo',
+                alumnoNombre: alumnoNombre,
+                claveP2P: claveP2P, // Usar la clave P2P ingresada
+                idLote: idLote,
+            };
+
+            const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.API_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload), 
+            });
+
+            const result = await response.json();
+
+            if (result.success === true) {
+                AppTransacciones.setSuccess(statusMsg, result.message || "¡Retiro de inversión completado!");
+                AppData.cargarDatos(false); 
+
+            } else {
+                throw new Error(result.message || "Error desconocido de la API.");
+            }
+
+        } catch (error) {
+            AppTransacciones.setError(statusMsg, error.message);
+            // Re-habilitar botones si falla
+            document.querySelectorAll('#cartera-list-container button').forEach(btn => btn.disabled = false);
+        }
+    },
+
+
+    // --- TRANSACCIONES EXISTENTES ---
     realizarTransaccionMultiple: async function() {
         const cantidadInput = document.getElementById('transaccion-cantidad-input');
         const statusMsg = document.getElementById('transaccion-status-msg');
         const submitBtn = document.getElementById('transaccion-submit-btn');
         const btnText = document.getElementById('transaccion-btn-text');
-        
-        // ACCIÓN NORMAL: 'transaccion_multiple' (dataset.accion por defecto)
         
         const pinceles = parseInt(cantidadInput.value, 10);
 
@@ -2356,7 +2553,6 @@ const AppTransacciones = {
                 clave: AppConfig.CLAVE_MAESTRA,
                 cantidad: pinceles, 
                 transacciones: transacciones,
-                // Tipo Log por defecto (ya no se usa el ISP aquí)
                 tipoLog: 'transaccion_multiple' 
             };
 
@@ -2376,7 +2572,6 @@ const AppTransacciones = {
                 AppData.cargarDatos(false); 
                 AppUI.populateGruposTransaccion(); 
                 AppUI.populateUsuariosTransaccion(); 
-                // Se asegura el estado normal
                 cantidadInput.disabled = false;
                 cantidadInput.classList.remove('bg-gray-100');
 
@@ -2391,7 +2586,6 @@ const AppTransacciones = {
             AppTransacciones.setLoadingState(submitBtn, btnText, false, 'Realizar Transacción');
         }
     },
-    
     realizarPrestamo: async function(alumnoNombre, tipoPrestamo) {
         const modalDialog = document.getElementById('transaccion-modal-dialog');
         const submitBtn = modalDialog.querySelector(`button[onclick*="realizarPrestamo('${escapeHTML(alumnoNombre)}', '${escapeHTML(tipoPrestamo)}')"]`);
@@ -2430,7 +2624,6 @@ const AppTransacciones = {
             AppTransacciones.setLoadingState(submitBtn, null, false);
         }
     },
-    
     realizarDeposito: async function(alumnoNombre, tipoDeposito) {
         const modalDialog = document.getElementById('transaccion-modal-dialog');
         const submitBtn = modalDialog.querySelector(`button[onclick*="realizarDeposito('${escapeHTML(alumnoNombre)}', '${escapeHTML(tipoDeposito)}')"]`);
@@ -2469,7 +2662,6 @@ const AppTransacciones = {
             AppTransacciones.setLoadingState(submitBtn, null, false);
         }
     },
-    
     realizarTransferenciaP2P: async function() {
         const statusMsg = document.getElementById('p2p-status-msg');
         const submitBtn = document.getElementById('p2p-submit-btn');
@@ -2537,9 +2729,6 @@ const AppTransacciones = {
             AppTransacciones.setLoadingState(submitBtn, btnText, false, 'Realizar Transferencia');
         }
     },
-
-    // --- LÓGICA DE BONOS (v0.5.0) ---
-
     canjearBono: async function() {
         const statusMsg = document.getElementById('bono-status-msg');
         const submitBtn = document.getElementById('bono-submit-btn');
@@ -2569,9 +2758,8 @@ const AppTransacciones = {
         try {
             const payload = {
                 accion: 'canjear_bono',
-                // CORRECCIÓN: Usar las mismas claves que P2P para la autenticación
-                nombre_origen: alumnoNombre, // Antes era 'alumnoNombre'
-                clave_p2p_origen: claveP2P,  // Antes era 'claveP2P'
+                nombre_origen: alumnoNombre, 
+                clave_p2p_origen: claveP2P,  
                 claveBono: claveBono
             };
 
@@ -2585,10 +2773,9 @@ const AppTransacciones = {
             if (result.success === true) {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Bono canjeado con éxito!");
                 
-                // Limpiar campos
                 document.getElementById('bono-clave-input').value = "";
                 
-                AppData.cargarDatos(false); // Recargar todos los datos
+                AppData.cargarDatos(false); 
 
             } else {
                 throw new Error(result.message || "Error desconocido de la API.");
@@ -2600,7 +2787,6 @@ const AppTransacciones = {
             AppTransacciones.setLoadingState(submitBtn, btnText, false, 'Canjear Bono');
         }
     },
-
     crearActualizarBono: async function() {
         const statusMsg = document.getElementById('bono-admin-status-msg');
         const submitBtn = document.getElementById('bono-admin-submit-btn');
@@ -2651,7 +2837,7 @@ const AppTransacciones = {
             if (result.success === true) {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Bono guardado con éxito!");
                 AppUI.clearBonoAdminForm();
-                AppData.cargarDatos(false); // Recargar todos los datos
+                AppData.cargarDatos(false); 
             } else {
                 throw new Error(result.message || "Error al guardar el bono.");
             }
@@ -2662,12 +2848,7 @@ const AppTransacciones = {
             AppTransacciones.setLoadingState(submitBtn, null, false, 'Crear / Actualizar Bono');
         }
     },
-    
-    // NUEVO v0.5.4: Eliminar Bono
     eliminarBono: async function(claveBono) {
-        // ADVERTENCIA: Esta función elimina directamente sin confirmación,
-        // ya que `window.confirm()` está prohibido.
-
         const statusMsg = document.getElementById('bono-admin-status-msg');
         AppTransacciones.setLoading(statusMsg, `Eliminando bono ${claveBono}...`);
         
@@ -2689,7 +2870,7 @@ const AppTransacciones = {
 
             if (result.success === true) {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Bono eliminado con éxito!");
-                AppData.cargarDatos(false); // Recargar todos los datos
+                AppData.cargarDatos(false); 
             } else {
                 throw new Error(result.message || "Error al eliminar el bono.");
             }
@@ -2699,19 +2880,13 @@ const AppTransacciones = {
             document.querySelectorAll('.delete-bono-btn').forEach(btn => btn.disabled = false);
         } 
     },
-
-    // --- LÓGICA DE TIENDA (NUEVO v16.0) ---
-
-    // CAMBIO v17.0: Simplificado. Se llama directamente desde el botón Comprar.
-    // Acepta el elemento del botón para mostrar el estado de carga.
     comprarItem: async function(itemId, btnElement) {
-        const statusMsg = document.getElementById('tienda-status-msg'); // Mensaje en el footer del modal
+        const statusMsg = document.getElementById('tienda-status-msg'); 
         const btnText = btnElement ? btnElement.querySelector('.btn-text') : null;
         
         const alumnoNombre = AppState.currentSearch.tiendaAlumno.selected;
         const claveP2P = document.getElementById('tienda-clave-p2p').value;
 
-        // Limpiar mensajes de error anteriores
         statusMsg.textContent = ""; 
 
         let errorValidacion = "";
@@ -2748,8 +2923,6 @@ const AppTransacciones = {
             if (result.success === true) {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Compra exitosa!");
                 
-                // NO cerrar el modal, solo recargar datos
-                // Esto actualizará el stock y el saldo del alumno (si está visible)
                 AppData.cargarDatos(false); 
 
             } else {
@@ -2759,13 +2932,9 @@ const AppTransacciones = {
         } catch (error) {
             AppTransacciones.setError(statusMsg, error.message);
         } finally {
-            // El estado de carga se reinicia automáticamente cuando 
-            // AppData.cargarDatos() llama a AppUI.updateTiendaButtonStates()
-            // Si la carga de datos falla, el estado se resetea aquí.
             AppTransacciones.setLoadingState(btnElement, btnText, false, 'Comprar');
         }
     },
-
     crearActualizarItem: async function() {
         const statusMsg = document.getElementById('tienda-admin-status-msg');
         const submitBtn = document.getElementById('tienda-admin-submit-btn');
@@ -2802,10 +2971,9 @@ const AppTransacciones = {
             const payload = {
                 accion: 'admin_crear_item_tienda',
                 clave: AppConfig.CLAVE_MAESTRA,
-                item: item // El backend espera este objeto
+                item: item 
             };
 
-            // CORRECCIÓN BUG ADMIN (Problema 3): Usar la URL de TRANSACCION
             const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.TRANSACCION_API_URL, {
                 method: 'POST',
                 body: JSON.stringify(payload),
@@ -2816,7 +2984,7 @@ const AppTransacciones = {
             if (result.success === true) {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Artículo guardado con éxito!");
                 AppUI.clearTiendaAdminForm();
-                AppData.cargarDatos(false); // Recargar todos los datos
+                AppData.cargarDatos(false); 
             } else {
                 throw new Error(result.message || "Error al guardar el artículo.");
             }
@@ -2827,13 +2995,10 @@ const AppTransacciones = {
             AppTransacciones.setLoadingState(submitBtn, null, false, 'Crear / Actualizar');
         }
     },
-    
-    // CAMBIO v17.0: Esta función ahora es llamada por el botón "Confirmar" en la tabla.
     eliminarItem: async function(itemId) {
         const statusMsg = document.getElementById('tienda-admin-status-msg');
         AppTransacciones.setLoading(statusMsg, `Eliminando artículo ${itemId}...`);
         
-        // Deshabilitar todos los botones de la fila durante el proceso
         document.getElementById(`tienda-item-row-${itemId}`).querySelectorAll('button').forEach(btn => btn.disabled = true);
 
         try {
@@ -2843,7 +3008,6 @@ const AppTransacciones = {
                 itemId: itemId
             };
 
-            // CORRECCIÓN BUG ADMIN (Problema 3): Usar la URL de TRANSACCION
             const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.TRANSACCION_API_URL, {
                 method: 'POST',
                 body: JSON.stringify(payload),
@@ -2853,33 +3017,29 @@ const AppTransacciones = {
 
             if (result.success === true) {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Artículo eliminado con éxito!");
-                AppData.cargarDatos(false); // Recargar todos los datos
+                AppData.cargarDatos(false); 
             } else {
                 throw new Error(result.message || "Error al eliminar el artículo.");
             }
 
         } catch (error) {
             AppTransacciones.setError(statusMsg, error.message);
-            // Si hay un error, al menos reactivar la interfaz global (aunque la fila quede mal)
             AppData.cargarDatos(false); 
         } 
     },
-    
-    // NUEVO v16.1 (Problema 3): Control Manual de la Tienda
     toggleStoreManual: async function(status) {
         const statusMsg = document.getElementById('tienda-admin-status-msg');
         AppTransacciones.setLoading(statusMsg, `Cambiando estado a: ${status}...`);
         
-        // Deshabilitar botones temporalmente
         document.getElementById('tienda-force-open-btn').disabled = true;
         document.getElementById('tienda-force-close-btn').disabled = true;
         document.getElementById('tienda-force-auto-btn').disabled = true;
 
         try {
             const payload = {
-                accion: 'admin_toggle_store', // Nueva acción para el backend
+                accion: 'admin_toggle_store', 
                 clave: AppConfig.CLAVE_MAESTRA,
-                status: status // 'open', 'closed', o 'auto'
+                status: status 
             };
 
             const response = await AppTransacciones.fetchWithExponentialBackoff(AppConfig.TRANSACCION_API_URL, {
@@ -2891,7 +3051,7 @@ const AppTransacciones = {
 
             if (result.success === true) {
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Estado de la tienda actualizado!");
-                AppData.cargarDatos(false); // Recargar todos los datos para obtener el nuevo estado
+                AppData.cargarDatos(false); 
             } else {
                 throw new Error(result.message || "Error al cambiar estado.");
             }
@@ -2899,7 +3059,6 @@ const AppTransacciones = {
         } catch (error) {
             AppTransacciones.setError(statusMsg, error.message);
         } finally {
-            // Rehabilitar botones (se actualizarán con el próximo 'cargarDatos')
             document.getElementById('tienda-force-open-btn').disabled = false;
             document.getElementById('tienda-force-close-btn').disabled = false;
             document.getElementById('tienda-force-auto-btn').disabled = false;
@@ -2907,7 +3066,6 @@ const AppTransacciones = {
     },
 
     // --- Utilidades de Fetch y Estado ---
-
     fetchWithExponentialBackoff: async function(url, options, maxRetries = 5, initialDelay = 1000) {
         for (let attempt = 0; attempt < maxRetries; attempt++) {
             try {
@@ -2925,10 +3083,9 @@ const AppTransacciones = {
         throw new Error('Failed to fetch after multiple retries.');
     },
 
-    // CAMBIO v17.0: Texto de carga modificado
     setLoadingState: function(btn, btnTextEl, isLoading, defaultText) {
         if (isLoading) {
-            if (btnTextEl) btnTextEl.textContent = '...'; // Texto de carga más corto
+            if (btnTextEl) btnTextEl.textContent = '...'; 
             if (btn) btn.disabled = true;
         } else {
             if (btnTextEl && defaultText) btnTextEl.textContent = defaultText;
@@ -2939,21 +3096,21 @@ const AppTransacciones = {
     setLoading: function(statusMsgEl, message) {
         if (statusMsgEl) {
             statusMsgEl.textContent = message;
-            statusMsgEl.className = "text-sm text-center font-medium text-blue-600 h-auto min-h-[1rem]";
+            statusMsgEl.className = "text-sm text-center font-medium text-blue-600 h-auto min-h-[1rem] bg-blue-50 p-2 rounded";
         }
     },
 
     setSuccess: function(statusMsgEl, message) {
         if (statusMsgEl) {
             statusMsgEl.textContent = message;
-            statusMsgEl.className = "text-sm text-center font-medium text-green-600 h-auto min-h-[1rem]";
+            statusMsgEl.className = "text-sm text-center font-medium text-green-600 h-auto min-h-[1rem] bg-green-50 p-2 rounded";
         }
     },
 
     setError: function(statusMsgEl, message) {
         if (statusMsgEl) {
             statusMsgEl.textContent = `Error: ${message}`;
-            statusMsgEl.className = "text-sm text-center font-medium text-red-600 h-auto min-h-[1em]";
+            statusMsgEl.className = "text-sm text-center font-medium text-red-600 h-auto min-h-[1em] bg-red-50 p-2 rounded";
         }
     }
 };
@@ -2963,21 +3120,17 @@ const AppTransacciones = {
 window.AppUI = AppUI;
 window.AppFormat = AppFormat;
 window.AppTransacciones = AppTransacciones;
-window.AppCalculos = AppCalculos; // Mantener para futura referencia
+window.AppCalculos = AppCalculos; 
 
-// NUEVO v16.0: Exponer funciones de admin al scope global para onclick=""
+// Exponer funciones globales para onclick=""
 window.AppUI.handleEditBono = AppUI.handleEditBono;
 window.AppTransacciones.eliminarBono = AppTransacciones.eliminarBono;
 window.AppUI.handleEditItem = AppUI.handleEditItem;
-// CAMBIO v17.0: Exponer funciones de confirmación de borrado
 window.AppUI.handleDeleteConfirmation = AppUI.handleDeleteConfirmation;
 window.AppUI.cancelDeleteConfirmation = AppUI.cancelDeleteConfirmation;
 window.AppTransacciones.eliminarItem = AppTransacciones.eliminarItem;
-// NUEVO v16.1 (Problema 3): Exponer control manual de la tienda
 window.AppTransacciones.toggleStoreManual = AppTransacciones.toggleStoreManual;
-// CAMBIO v17.0: Exponer la nueva función de compra
 window.AppTransacciones.comprarItem = AppTransacciones.comprarItem;
-
 
 window.onload = function() {
     console.log("window.onload disparado. Iniciando AppUI...");
