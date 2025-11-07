@@ -121,7 +121,7 @@ const AnunciosDB = {
     ],
     'NUEVO': [
         // NUEVO v16.0: Actualizado anuncio de Tienda
-        "¡Nueva Tienda del Mes! Revisa los artículos de alto valor. Se desbloquea el último jueves.",
+        "¡Nueva Tienda del Mes! Revisa los artículos. Se desbloquea el último jueves.",
         "¡Nuevo Portal de Bonos! Canjea códigos por Pinceles ℙ.",
         "¡Nuevo Sistema Económico! Depósitos de admin limitados por la Tesorería.",
         "¡Nuevo Portal P2P! Transfiere pinceles a tus compañeros (con 10% de comisión).",
@@ -134,7 +134,7 @@ const AnunciosDB = {
     ],
     'ALERTA': [
         // CAMBIO v0.5.5: Actualizado por Auto-Cicla
-        "¡Cuidado! Saldos negativos (incluso -1 ℙ) te moverán automáticamente a Cicla en el próximo ciclo diario.",
+        "¡Cuidado! Saldos negativos (incluso -1 ℙ) te moverán automáticamente a Cicla.",
         "Alumnos en Cicla pueden solicitar préstamos de rescate (Admin).",
         "Si tienes un préstamo activo, NO puedes crear un Depósito a Plazo."
     ]
