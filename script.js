@@ -12,7 +12,7 @@ const AppConfig = {
     
     // CAMBIO v16.1: Actualización de versión
     APP_STATUS: 'Beta', 
-    APP_VERSION: 'v17.1 (Tienda Limpia)', // ACTUALIZADO A v17.1
+    APP_VERSION: 'v17.1', // ACTUALIZADO A v17.1
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
