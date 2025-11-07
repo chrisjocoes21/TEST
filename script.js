@@ -11,8 +11,9 @@ const AppConfig = {
     CACHE_DURATION: 300000,
     
     // CAMBIO v16.1: Actualización de versión
+    // CAMBIO v18.2: Nueva versión
     APP_STATUS: 'Beta', 
-    APP_VERSION: 'v17.1 (Tienda Limpia)', // ACTUALIZADO A v17.1
+    APP_VERSION: 'v18.2 (Inversiones Sim.)',
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -79,6 +80,12 @@ const AppState = {
         isStoreOpen: false, // Controlado por updateCountdown
         storeManualStatus: 'auto', // NUEVO v16.1 (Problema 3): Control manual (auto, open, closed)
         // currentItemToConfirm: null ELIMINADO V17.0
+    },
+
+    // NUEVO v18.2: Estado y Gráfica de Inversiones
+    inversionesSim: {
+        chartInstance: null,
+        data: [] // Datos simulados de rendimiento
     }
 };
 
@@ -302,7 +309,7 @@ const AppData = {
     }
 };
 
-// --- MANEJO DE LA INTERFAZ (UI) ---
+// --- MANEJO de la interfaz (UI) ---
 const AppUI = {
     
     init: function() {
@@ -449,6 +456,9 @@ const AppUI = {
         setInterval(AppUI.updateCountdown, 1000);
         
         AppUI.poblarModalAnuncios();
+        
+        // NUEVO v18.2: Inicializar la gráfica de Inversiones
+        AppUI.iniciarGraficaInversiones();
     },
 
     showLoading: function() {
@@ -1073,8 +1083,8 @@ const AppUI = {
                 btnText.textContent = "Comprar";
                 btn.disabled = true;
             } else if (student && student.pinceles < costoFinal) { // Añadir chequeo de 'student'
-                btn.classList.add('sin-fondos-btn');
-                btnText.textContent = "Comprar"; // No mostrar "Sin Fondos" para no exponer
+                btn.classList.add('disabled-gray'); // Cambiado de 'sin-fondos-btn' para no dar información de saldo
+                btnText.textContent = "Comprar"; 
                 btn.disabled = true;
             } else {
                 // Estado por defecto (Habilitado)
@@ -1843,6 +1853,8 @@ const AppUI = {
         AppUI.actualizarAnuncios(); 
         AppUI.actualizarEstadisticasRapidas(grupos);
         
+        // NUEVO v18.2: Renderizar la gráfica de Inversiones
+        AppUI.renderInvestmentChart();
     },
 
     /**
@@ -2215,7 +2227,160 @@ const AppUI = {
             AppUI.updateTiendaButtonStates();
             AppUI.updateTiendaAdminStatusLabel(); // v16.1
         }
+    },
+    
+    // ===================================================================
+    // NUEVO v18.2: FUNCIONES DE SIMULACIÓN Y GRÁFICA DE INVERSIONES
+    // ===================================================================
+
+    /**
+     * Genera datos de rendimiento simulados para la gráfica.
+     * @returns {Object} Datos de la gráfica y métricas clave.
+     */
+    generateInvestmentData: function() {
+        const numPeriods = 12; // 12 meses
+        const baseCapital = 5000000; // 5 millones de Pinceles
+        const labels = Array.from({ length: numPeriods }, (_, i) => `Mes ${i + 1}`);
+        const data = [baseCapital];
+
+        // Parámetros de simulación
+        const avgGrowthRate = 0.005; // 0.5% de crecimiento promedio mensual (6% anual)
+        const volatility = 0.01; // 1% de volatilidad
+
+        let currentCapital = baseCapital;
+
+        for (let i = 1; i < numPeriods; i++) {
+            // Crecimiento base + fluctuación aleatoria (ruido)
+            const randomFactor = (Math.random() - 0.5) * 2 * volatility; // [-0.01, 0.01]
+            const periodReturn = avgGrowthRate + randomFactor;
+            
+            // Aseguramos que no caiga muy por debajo del valor inicial si la volatilidad es alta
+            const factor = 1 + periodReturn;
+            
+            currentCapital = currentCapital * factor;
+            
+            // Asegurar que el capital no baje irracionalmente (opcional)
+            if (currentCapital < baseCapital * 0.95) {
+                 currentCapital = baseCapital * 0.95 + (Math.random() * baseCapital * 0.01);
+            }
+            
+            data.push(Math.round(currentCapital));
+        }
+
+        const startCapital = data[0];
+        const endCapital = data[data.length - 1];
+        const totalReturn = (endCapital - startCapital);
+        const annualizedReturn = (totalReturn / startCapital) * 100;
+
+        return {
+            labels: labels,
+            data: data,
+            totalInvestment: endCapital,
+            annualizedReturn: annualizedReturn
+        };
+    },
+
+    /**
+     * Inicializa la instancia de Chart.js si aún no existe.
+     */
+    iniciarGraficaInversiones: function() {
+        // Generar datos iniciales
+        AppState.inversionesSim.data = AppUI.generateInvestmentData();
+        
+        // El renderizado real se hace en mostrarPantallaNeutral para asegurar que el canvas esté visible
+    },
+    
+    /**
+     * Renderiza la gráfica de línea de inversiones.
+     */
+    renderInvestmentChart: function() {
+        const chartData = AppState.inversionesSim.data;
+        if (!chartData || !chartData.data) {
+            return;
+        }
+
+        const ctx = document.getElementById('inversiones-chart');
+        if (!ctx) return;
+        
+        // 1. Actualizar Stats en el HTML
+        document.getElementById('inversion-total-stat').textContent = `${AppFormat.formatNumber(chartData.totalInvestment)} ℙ`;
+        
+        const returnText = `${chartData.annualizedReturn >= 0 ? '+' : ''}${chartData.annualizedReturn.toFixed(2)}%`;
+        const returnColor = chartData.annualizedReturn >= 0 ? 'text-green-600' : 'text-red-600';
+        
+        const statEl = document.getElementById('inversion-rendimiento-stat');
+        statEl.textContent = returnText;
+        statEl.classList.remove('text-green-600', 'text-red-600');
+        statEl.classList.add(returnColor);
+
+
+        // 2. Destruir instancia anterior si existe
+        if (AppState.inversionesSim.chartInstance) {
+            AppState.inversionesSim.chartInstance.destroy();
+        }
+
+        // 3. Crear nueva instancia de Chart.js
+        AppState.inversionesSim.chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: chartData.labels,
+                datasets: [{
+                    label: 'Rendimiento Acumulado (ℙ)',
+                    data: chartData.data,
+                    borderColor: 'rgb(29, 78, 216)', // Blue-600 de Tailwind
+                    backgroundColor: 'rgba(29, 78, 216, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0, // Ocultar puntos para una línea de fluctuación limpia
+                    tension: 0.4, // Suavizar la línea
+                    fill: 'start' // Rellenar área bajo la línea
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false // Ocultar la leyenda
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function(context) {
+                                return ` Capital: ${AppFormat.formatNumber(context.parsed.y)} ℙ`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            display: false // Ocultar rejilla X
+                        },
+                        ticks: {
+                            maxRotation: 0,
+                            minRotation: 0,
+                            autoSkip: true,
+                            maxTicksLimit: 6 // Mostrar menos etiquetas para no saturar
+                        }
+                    },
+                    y: {
+                        grid: {
+                            borderDash: [5, 5],
+                            color: '#e5e7eb' // Gris claro
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                // Formato de miles en el eje Y
+                                return AppFormat.formatNumber(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
     }
+
 };
 
 // --- OBJETO TRANSACCIONES (Préstamos, Depósitos, P2P, Bonos, Tienda) ---
