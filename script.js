@@ -93,6 +93,28 @@ const AppState = {
     }
 };
 
+// --- AUTENTICACIÓN ---
+// V18.2: REINSERCIÓN DEL OBJETO AppAuth.
+const AppAuth = {
+    verificarClave: function() {
+        const claveInput = document.getElementById('clave-input');
+        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
+            
+            AppUI.hideModal('gestion-modal');
+            AppUI.showTransaccionModal('transaccion'); // Abrir en la pestaña 'transaccion'
+            
+            claveInput.value = '';
+            claveInput.classList.remove('shake', 'border-red-500');
+        } else {
+            claveInput.classList.add('shake', 'border-red-500');
+            claveInput.focus();
+            setTimeout(() => {
+                claveInput.classList.remove('shake');
+            }, 500);
+        }
+    }
+};
+
 // --- NÚMEROS Y FORMATO ---
 const AppFormat = {
     // CAMBIO v0.4.4: Formato de Pinceles sin decimales
