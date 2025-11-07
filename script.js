@@ -12,7 +12,7 @@ const AppConfig = {
     
     // CAMBIO v16.1: Actualización de versión
     APP_STATUS: 'Beta', 
-    APP_VERSION: 'v18.1.3 (Fix Bonos & Estética)', // ACTUALIZADO A v18.1.3
+    APP_VERSION: 'v17.1', // ACTUALIZADO A v17.1
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -42,12 +42,6 @@ const AppState = {
         prestamosActivos: [],
         depositosActivos: [],
         allStudents: [] // Lista plana de todos los alumnos
-    },
-    // NUEVO: Almacenamiento de valores para el cálculo de crecimiento
-    crecimientoHistorico: { 
-        tesoreria: { anterior: 0, cambioNeto: 0, cambioPorcentual: 0 },
-        boveda: { anterior: 0, cambioNeto: 0, cambioPorcentual: 0 },
-        // La bóveda se calcula como la suma de todos los pinceles positivos (capital líquido)
     },
     historialUsuarios: {}, 
     actualizacionEnProceso: false,
@@ -84,6 +78,7 @@ const AppState = {
         adminPanelUnlocked: false,
         isStoreOpen: false, // Controlado por updateCountdown
         storeManualStatus: 'auto', // NUEVO v16.1 (Problema 3): Control manual (auto, open, closed)
+        // currentItemToConfirm: null ELIMINADO V17.0
     }
 };
 
@@ -112,16 +107,37 @@ const AppAuth = {
 const AppFormat = {
     // CAMBIO v0.4.4: Formato de Pinceles sin decimales
     formatNumber: (num) => new Intl.NumberFormat('es-DO', { maximumFractionDigits: 0 }).format(num),
-    // NUEVO: Formato de porcentaje con signo y dos decimales
-    formatPercent: (num) => {
-        const sign = num > 0 ? '+' : '';
-        return `${sign}${new Intl.NumberFormat('es-DO', { 
-            minimumFractionDigits: 2, 
-            maximumFractionDigits: 2 
-        }).format(num)}%`;
-    },
+    // formatNumber: (num) => new Intl.NumberFormat('es-DO').format(num), // <-- ORIGINAL
     // NUEVO v0.4.0: Formateo de Pinceles (2 decimales) - REEMPLAZADO por formatNumber
     formatPincel: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)
+};
+
+// --- BASE DE DATOS DE ANUNCIOS ---
+const AnunciosDB = {
+    'AVISO': [
+        "La tienda de fin de mes abre el último Jueves de cada mes.", 
+        "Revisen sus saldos antes del cierre de mes. No se aceptan saldos negativos.",
+        "Recuerden: 'Ver Reglas' tiene información importante sobre la tienda." 
+    ],
+    'NUEVO': [
+        // NUEVO v16.0: Actualizado anuncio de Tienda
+        "¡Nueva Tienda del Mes! Revisa los artículos. Se desbloquea el último jueves.",
+        "¡Nuevo Portal de Bonos! Canjea códigos por Pinceles ℙ.",
+        "¡Nuevo Sistema Económico! Depósitos de admin limitados por la Tesorería.",
+        "¡Nuevo Portal P2P! Transfiere pinceles a tus compañeros (con 10% de comisión).",
+        "La Tesorería cobra un 0.5% diario de impuesto a saldos altos."
+    ],
+    'CONSEJO': [
+        "Usa el botón '»' en la esquina para abrir y cerrar la barra lateral.",
+        "Haz clic en el nombre de un alumno en la tabla para ver sus estadísticas.",
+        "¡Invierte! Usa los Depósitos a Plazo para obtener retornos fijos (Admin)."
+    ],
+    'ALERTA': [
+        // CAMBIO v0.5.5: Actualizado por Auto-Cicla
+        "¡Cuidado! Saldos negativos te moverán automáticamente a Cicla.",
+        "Alumnos en Cicla pueden solicitar préstamos de rescate (Admin).",
+        "Si tienes un préstamo activo, NO puedes crear un Depósito a Plazo."
+    ]
 };
 
 // --- MANEJO de datos ---
@@ -204,62 +220,9 @@ const AppData = {
         // ... (Tu lógica de detección de cambios si aplica)
     },
     
-    // NUEVA FUNCIÓN: Calcula el crecimiento/decrecimiento entre estados
-    calcularCrecimiento: function() {
-        const actualTesoreria = AppState.datosAdicionales.saldoTesoreria;
-        const actualAllStudents = AppState.datosAdicionales.allStudents;
-        
-        // 1. Calcular Bóveda actual (Suma de Pinceles Positivos)
-        const actualBoveda = actualAllStudents
-            .filter(s => s.pinceles > 0)
-            .reduce((sum, user) => sum + user.pinceles, 0);
-
-        // --- CÁLCULOS DE TESORERÍA ---
-        const histTesoreria = AppState.crecimientoHistorico.tesoreria.anterior;
-        let cambioNetoT = actualTesoreria - histTesoreria;
-        // CORRECCIÓN BUG 1: Asegurar que el denominador no sea 0 para el porcentaje
-        let cambioPorcentualT = histTesoreria === 0 ? 0 : (cambioNetoT / histTesoreria) * 100;
-        
-        AppState.crecimientoHistorico.tesoreria.cambioNeto = cambioNetoT;
-        AppState.crecimientoHistorico.tesoreria.cambioPorcentual = cambioPorcentualT;
-
-        // --- CÁLCULOS DE BÓVEDA ---
-        const histBoveda = AppState.crecimientoHistorico.boveda.anterior;
-        let cambioNetoB = actualBoveda - histBoveda;
-        // CORRECCIÓN BUG 1: Asegurar que el denominador no sea 0 para el porcentaje
-        let cambioPorcentualB = histBoveda === 0 ? 0 : (cambioNetoB / histBoveda) * 100;
-        
-        AppState.crecimientoHistorico.boveda.cambioNeto = cambioNetoB;
-        AppState.crecimientoHistorico.boveda.cambioPorcentual = cambioPorcentualB;
-    },
-    
     // CAMBIO v16.0: Modificado para aceptar Tienda
     procesarYMostrarDatos: function(data) {
-        
-        // --- INICIO: Guardar el estado ANTERIOR para el cálculo de crecimiento ---
-        
-        // Calcular la bóveda anterior ANTES de actualizar AppState.datosAdicionales
-        const anteriorBoveda = AppState.datosAdicionales.allStudents.length > 0
-            ? AppState.datosAdicionales.allStudents.filter(s => s.pinceles > 0).reduce((sum, user) => sum + user.pinceles, 0)
-            : 0;
-            
-        // CORRECCIÓN BUG 1: Guardar el saldo anterior de la Tesorería de forma segura
-        // Si no hay datos actuales (primera carga), usamos el valor entrante como el "anterior"
-        const anteriorTesoreria = AppState.datosAdicionales.saldoTesoreria || 0;
-
-        // Si es la primera carga y no hay valor en el estado, usamos el valor del API como "anterior"
-        // para que la próxima carga muestre la variación desde este punto.
-        if (AppState.datosActuales === null) {
-            AppState.crecimientoHistorico.tesoreria.anterior = data.saldoTesoreria || 0;
-            AppState.crecimientoHistorico.boveda.anterior = anteriorBoveda; // (aunque será 0)
-        } else {
-            AppState.crecimientoHistorico.tesoreria.anterior = anteriorTesoreria;
-            AppState.crecimientoHistorico.boveda.anterior = anteriorBoveda;
-        }
-        
-        // --- FIN: Guardar estado anterior ---
-
-        // 1. Separar Tesorería y Datos Adicionales (ACTUALIZAR CON DATOS NUEVOS)
+        // 1. Separar Tesorería y Datos Adicionales
         AppState.datosAdicionales.saldoTesoreria = data.saldoTesoreria || 0;
         AppState.datosAdicionales.prestamosActivos = data.prestamosActivos || [];
         AppState.datosAdicionales.depositosActivos = data.depositosActivos || [];
@@ -300,9 +263,6 @@ const AppData = {
         
         // 7. Detectar cambios antes de actualizar el estado
         AppData.detectarCambios(activeGroups);
-        
-        // LLAMADA CLAVE: Calcular el crecimiento después de procesar los datos
-        AppData.calcularCrecimiento();
 
         // 8. Actualizar UI
         AppUI.actualizarSidebar(activeGroups);
@@ -431,11 +391,24 @@ const AppUI = {
         });
         document.getElementById('tienda-admin-clear-btn').addEventListener('click', AppUI.clearTiendaAdminForm);
         
+        // NUEVO v16.1: Listeners para Control Manual de Tienda
+        // Los listeners ya están en el HTML con onclick="AppTransacciones.toggleStoreManual('status')"
+
+        // --- ELIMINADO v17.0: Listeners para Modal Confirmación de Compra ---
+
+
         // Listeners Modal Reglas
         document.getElementById('reglas-btn').addEventListener('click', () => AppUI.showModal('reglas-modal'));
         document.getElementById('reglas-modal-close').addEventListener('click', () => AppUI.hideModal('reglas-modal'));
         document.getElementById('reglas-modal').addEventListener('click', (e) => {
             if (e.target.id === 'reglas-modal') AppUI.hideModal('reglas-modal');
+        });
+
+        // Listeners Modal Anuncios
+        document.getElementById('anuncios-modal-btn').addEventListener('click', () => AppUI.showModal('anuncios-modal'));
+        document.getElementById('anuncios-modal-close').addEventListener('click', () => AppUI.hideModal('anuncios-modal'));
+        document.getElementById('anuncios-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'anuncios-modal') AppUI.hideModal('anuncios-modal');
         });
 
         // Listener Sidebar
@@ -471,10 +444,11 @@ const AppUI = {
 
         // Carga inicial
         AppData.cargarDatos(false);
-        // La carga cada 10s es la que simula el crecimiento "minuto a minuto"
         setInterval(() => AppData.cargarDatos(false), 10000); 
         AppUI.updateCountdown();
         setInterval(AppUI.updateCountdown, 1000);
+        
+        AppUI.poblarModalAnuncios();
     },
 
     showLoading: function() {
@@ -545,7 +519,7 @@ const AppUI = {
             
             // Pestaña Admin
             document.getElementById('bono-admin-clave').value = "";
-            AppUI.clearBonoAdminForm(); // Esto ya habilita la clave si está deshabilitada
+            AppUI.clearBonoAdminForm();
             document.getElementById('bono-admin-status-msg').textContent = "";
             
             // Ocultar panel de admin y resetear estado
@@ -575,6 +549,8 @@ const AppUI = {
             document.getElementById('tienda-admin-panel').classList.add('hidden');
             AppState.tienda.adminPanelUnlocked = false;
         }
+        
+        // --- ELIMINADO v17.0: Limpieza de modal de confirmación ---
         
         if (modalId === 'gestion-modal') {
              document.getElementById('clave-input').value = "";
@@ -764,10 +740,8 @@ const AppUI = {
 
         // Resetear pestaña de admin
         document.getElementById('bono-admin-clave').value = "";
-        AppUI.clearBonoAdminForm(); // Esto ahora habilita el input de clave si está deshabilitado
+        AppUI.clearBonoAdminForm();
         document.getElementById('bono-admin-status-msg').textContent = "";
-        
-        // Ocultar panel de admin y resetear estado
         document.getElementById('bono-admin-gate').classList.remove('hidden');
         document.getElementById('bono-admin-panel').classList.add('hidden');
         AppState.bonos.adminPanelUnlocked = false;
@@ -926,9 +900,6 @@ const AppUI = {
         document.getElementById('bono-admin-recompensa-input').value = recompensa;
         document.getElementById('bono-admin-usos-input').value = usosTotales;
         
-        // CORRECCIÓN BUG 2 (Bonos): Deshabilitar la clave al editar.
-        document.getElementById('bono-admin-clave-input').disabled = true;
-
         // Hacer scroll al formulario
         document.getElementById('bono-admin-form-container').scrollIntoView({ behavior: 'smooth' });
     },
@@ -936,7 +907,6 @@ const AppUI = {
     // Limpia el formulario de admin de bonos
     clearBonoAdminForm: function() {
         document.getElementById('bono-admin-form').reset();
-        // CORRECCIÓN BUG 2 (Bonos): Habilitar la clave al limpiar/crear nuevo.
         document.getElementById('bono-admin-clave-input').disabled = false;
         document.getElementById('bono-admin-status-msg').textContent = "";
     },
@@ -1114,6 +1084,55 @@ const AppUI = {
         });
     },
 
+    // --- ELIMINADO v17.0: showTiendaConfirmModal ---
+
+    // --- Funciones del Panel de Admin de Tienda ---
+    
+    toggleTiendaAdminPanel: function() {
+        const claveInput = document.getElementById('tienda-admin-clave');
+        const gate = document.getElementById('tienda-admin-gate');
+        const panel = document.getElementById('tienda-admin-panel');
+        
+        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
+            AppState.tienda.adminPanelUnlocked = true;
+            gate.classList.add('hidden');
+            panel.classList.remove('hidden');
+            claveInput.value = ""; // Limpiar
+            claveInput.classList.remove('shake', 'border-red-500');
+        } else {
+            claveInput.classList.add('shake', 'border-red-500');
+            claveInput.focus();
+            setTimeout(() => {
+                claveInput.classList.remove('shake');
+            }, 500);
+        }
+    },
+    
+    // NUEVO v16.1 (Problema 3): Actualiza la etiqueta de estado en el panel de admin
+    // CAMBIO v17.1: Se eliminan las etiquetas "(Control Manual)"
+    updateTiendaAdminStatusLabel: function() {
+        const label = document.getElementById('tienda-admin-status-label');
+        if (!label) return;
+        
+        const status = AppState.tienda.storeManualStatus;
+        
+        label.classList.remove('text-blue-600', 'text-green-600', 'text-red-600', 'text-gray-600');
+        
+        if (status === 'auto') {
+            label.textContent = "Automático (por Temporizador)";
+            label.classList.add('text-blue-600');
+        } else if (status === 'open') {
+            label.textContent = "Forzado Abierto";
+            label.classList.add('text-green-600');
+        } else if (status === 'closed') {
+            label.textContent = "Forzado Cerrado";
+            label.classList.add('text-red-600');
+        } else {
+            label.textContent = "Desconocido";
+            label.classList.add('text-gray-600');
+        }
+    },
+
     // --- NUEVAS FUNCIONES DE CONFIRMACIÓN DE BORRADO (v17.0) ---
     handleDeleteConfirmation: function(itemId) {
         const row = document.getElementById(`tienda-item-row-${itemId}`);
@@ -1238,6 +1257,11 @@ const AppUI = {
 
         calculoMsg.textContent = `Monto a depositar: ${AppFormat.formatNumber(cantidad)} ℙ | Costo Neto Tesorería: ${AppFormat.formatNumber(costoNeto)} ℙ (Comisión: ${AppFormat.formatNumber(comision)} ℙ)`;
     },
+
+
+    // --- ELIMINADO v0.4.1: FUNCIONES FONDO DE INVERSIÓN ---
+
+    // --- FIN FUNCIONES FONDO DE INVERSIÓN ---
 
 
     // --- FUNCIÓN CENTRAL: Mostrar Modal de Administración y pestaña inicial ---
@@ -1816,98 +1840,9 @@ const AppUI = {
         // 2. MOSTRAR MÓDULOS (Idea 1 & 2)
         document.getElementById('home-modules-grid').classList.remove('hidden');
         AppUI.actualizarAlumnosEnRiesgo();
-        // LLAMADA CLAVE: Llamamos al nuevo resumen de bolsa en lugar de los anuncios
-        AppUI.actualizarResumenBolsa(); 
+        AppUI.actualizarAnuncios(); 
         AppUI.actualizarEstadisticasRapidas(grupos);
         
-    },
-    
-    // NUEVA FUNCIÓN: Genera el resumen de crecimiento de la Tesorería y Bóveda (REDESIGN)
-    actualizarResumenBolsa: function() {
-        const container = document.getElementById('resumen-bolsa-container');
-        if (!container) return;
-
-        const tesoreriaData = AppState.crecimientoHistorico.tesoreria;
-        const bovedaData = AppState.crecimientoHistorico.boveda;
-        
-        // La Tesorería es el saldo actual, no el anterior
-        const actualTesoreria = AppState.datosAdicionales.saldoTesoreria;
-        
-        // La Bóveda actual la calculamos de nuevo
-        const actualBoveda = AppState.datosAdicionales.allStudents
-            .filter(s => s.pinceles > 0)
-            .reduce((sum, user) => sum + user.pinceles, 0);
-
-        // Helper para generar una tarjeta de resumen (Mejora estética)
-        const generateCard = (titulo, saldoActual, data, badgeText, badgeColor) => {
-            const isPositive = data.cambioNeto >= 0;
-            const isNeutral = data.cambioNeto === 0;
-            
-            // Iconos SVG (más limpios y estéticos que los unicode)
-            const arrowUp = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12 21a.75.75 0 0 0 .75-.75V5.626l4.295 4.195a.75.75 0 0 0 1.054-1.07l-5.75-5.625a.75.75 0 0 0-1.074 0l-5.75 5.625a.75.75 0 1 0 1.054 1.07l4.295-4.195V20.25a.75.75 0 0 0 .75.75Z" clip-rule="evenodd" /></svg>`;
-            const arrowDown = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><path fill-rule="evenodd" d="M12 3a.75.75 0 0 1 .75.75v14.624l4.295-4.195a.75.75 0 1 1 1.054 1.07l-5.75 5.625a.75.75 0 0 1-1.074 0l-5.75-5.625a.75.75 0 0 1 1.054-1.07l4.295 4.195V3.75A.75.75 0 0 1 12 3Z" clip-rule="evenodd" /></svg>`;
-
-            const trendColor = isPositive ? 'text-green-600' : 'text-red-600';
-            const signNeto = isPositive ? '+' : '-';
-            const arrowIcon = isPositive ? arrowUp : arrowDown;
-            
-            // Si es la primera carga (anterior = 0), mostramos el valor actual como "sin cambio"
-            const isInitialLoad = data.anterior === 0 && actualTesoreria !== 0;
-
-            const currentChangeHtml = isInitialLoad ? 
-                `
-                <div class="flex items-center text-xl font-semibold text-gray-500">
-                    <span class="text-sm font-medium">Cargando histórico...</span>
-                </div>
-                ` :
-                `
-                <!-- Porcentaje de Cambio (Grande y con Color) -->
-                <div class="flex items-center space-x-1">
-                    <span class="${trendColor} w-4 h-4 flex-shrink-0">${arrowIcon}</span>
-                    <span class="text-2xl font-bold ${trendColor}">${AppFormat.formatPercent(data.cambioPorcentual)}</span>
-                </div>
-                <!-- Cambio Neto (Secundario) -->
-                <span class="text-base font-semibold ${trendColor} whitespace-nowrap">
-                    ${signNeto}${AppFormat.formatNumber(Math.abs(data.cambioNeto))} ℙ
-                </span>
-                `;
-            
-            return `
-                <div class="bg-white rounded-lg border-2 ${trendColor.replace('text-', 'border-')} p-6 flex flex-col justify-between h-full min-h-[160px]">
-                    
-                    <!-- Fila Superior: Título y Badge -->
-                    <div class="flex justify-between items-center mb-4">
-                        <span class="text-sm font-semibold text-gray-600 uppercase">${titulo}</span>
-                        <span class="text-xs font-bold ${badgeColor} rounded-full px-2 py-0.5">${badgeText}</span>
-                    </div>
-                    
-                    <!-- Fila Central: Saldo Actual y Variación -->
-                    <div class="flex justify-between items-center mb-4">
-                        <p class="text-4xl font-extrabold text-gray-900 truncate">${AppFormat.formatNumber(saldoActual)} ℙ</p>
-                        
-                        <!-- Indicador de Crecimiento -->
-                        <div class="text-right">
-                            ${currentChangeHtml}
-                        </div>
-                    </div>
-                    
-                    <!-- Fila Inferior: Valor Anterior -->
-                    <div class="mt-auto pt-3 border-t border-gray-100">
-                        <p class="text-xs text-gray-500">
-                            Valor Anterior: <span class="font-medium text-gray-700">${AppFormat.formatNumber(data.anterior)} ℙ</span>
-                        </p>
-                    </div>
-                </div>
-            `;
-        };
-        
-        container.innerHTML = `
-            <h3 class="text-base font-semibold text-gray-800 border-b pb-3 mb-4">Crecimiento del Capital (Minuto a Minuto)</h3>
-            <div id="bolsa-dynamic-content" class="grid grid-cols-1 md:grid-cols-2 gap-4 h-full">
-                ${generateCard('TESORERÍA', actualTesoreria, tesoreriaData, 'OPERATIVO', 'bg-blue-100 text-blue-700')}
-                ${generateCard('BÓVEDA', actualBoveda, bovedaData, 'LÍQUIDO', 'bg-green-100 text-green-700')}
-            </div>
-        `;
     },
 
     /**
@@ -2059,6 +1994,60 @@ const AppUI = {
             ${createStat('Pinceles Positivos', `${AppFormat.formatNumber(pincelesPositivos)} ℙ`, 'text-green-600')}
             ${createStat('Pinceles Negativos', `${AppFormat.formatNumber(pincelesNegativos)} ℙ`, 'text-red-600')}
         `;
+    },
+
+    actualizarAnuncios: function() {
+        const lista = document.getElementById('anuncios-lista');
+        
+        const todosLosAnuncios = [
+            ...AnunciosDB['AVISO'].map(texto => ({ tipo: 'AVISO', texto, bg: 'bg-gray-100', text: 'text-gray-700' })),
+            ...AnunciosDB['NUEVO'].map(texto => ({ tipo: 'NUEVO', texto, bg: 'bg-blue-100', text: 'text-blue-700' })),
+            ...AnunciosDB['CONSEJO'].map(texto => ({ tipo: 'CONSEJO', texto, bg: 'bg-green-100', text: 'text-green-700' })),
+            ...AnunciosDB['ALERTA'].map(texto => ({ tipo: 'ALERTA', texto, bg: 'bg-red-100', text: 'text-red-700' }))
+        ];
+        
+        const anuncios = [...todosLosAnuncios].sort(() => 0.5 - Math.random()).slice(0, 5);
+
+        lista.innerHTML = anuncios.map(anuncio => `
+            <li class="flex items-start p-2 hover:bg-gray-50 rounded-lg transition-colors"> 
+                <span class="text-xs font-bold ${anuncio.bg} ${anuncio.text} rounded-full w-20 text-center py-0.5 mr-3 flex-shrink-0 mt-1">${anuncio.tipo}</span>
+                <span class="text-sm text-gray-700 flex-1">${anuncio.texto}</span>
+            </li>
+        `).join('');
+    },
+
+    poblarModalAnuncios: function() {
+        const listaModal = document.getElementById('anuncios-modal-lista');
+        if (!listaModal) return;
+
+        let html = '';
+        const tipos = [
+            { id: 'AVISO', titulo: 'Avisos', bg: 'bg-gray-100', text: 'text-gray-700' },
+            { id: 'NUEVO', titulo: 'Novedades', bg: 'bg-blue-100', text: 'text-blue-700' },
+            { id: 'CONSEJO', titulo: 'Consejos', bg: 'bg-green-100', text: 'text-green-700' },
+            { id: 'ALERTA', titulo: 'Alertas', bg: 'bg-red-100', text: 'text-red-700' }
+        ];
+
+        tipos.forEach(tipo => {
+            const anuncios = AnunciosDB[tipo.id];
+            if (anuncios && anuncios.length > 0) {
+                html += `
+                    <div>
+                        <h4 class="text-sm font-semibold ${tipo.text} mb-2">${tipo.titulo}</h4>
+                        <ul class="space-y-2">
+                            ${anuncios.map(texto => `
+                                <li class="flex items-start p-2 bg-gray-50 rounded-lg">
+                                    <span class="text-xs font-bold ${tipo.bg} ${tipo.text} rounded-full w-20 text-center py-0.5 mr-3 flex-shrink-0 mt-1">${tipo.id}</span>
+                                    <span class="text-sm text-gray-700 flex-1">${texto}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+        });
+
+        listaModal.innerHTML = html;
     },
 
     showStudentModal: function(nombreGrupo, nombreUsuario, rank) {
