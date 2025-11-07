@@ -134,7 +134,7 @@ const AnunciosDB = {
     ],
     'ALERTA': [
         // CAMBIO v0.5.5: Actualizado por Auto-Cicla
-        "¡Cuidado! Saldos negativos (incluso -1 ℙ) te moverán automáticamente a Cicla.",
+        "¡Cuidado! Saldos negativos te moverán automáticamente a Cicla.",
         "Alumnos en Cicla pueden solicitar préstamos de rescate (Admin).",
         "Si tienes un préstamo activo, NO puedes crear un Depósito a Plazo."
     ]
