@@ -184,17 +184,16 @@
                             <div class="text-center p-4 text-sm text-gray-500">Cargando datos...</div>
                         </div>
                     </div>
-
-                    <!-- Tablón de Anuncios (lg:col-span-6) -->
-                    <div id="anuncios-container" class="bg-white rounded-lg shadow-md lg:col-span-6">
-                        <div class="flex justify-between items-center p-4 border-b border-gray-200">
-                            <h3 class="text-base font-semibold text-gray-800">Tablón de Anuncios</h3>
-                            <button id="anuncios-modal-btn" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Ver Todos</button>
-                        </div>
-                        <ul id="anuncios-lista" class="divide-y divide-gray-100 p-4 space-y-1">
-                            <!-- Anuncios dinámicos se insertarán aquí -->
-                        </ul>
+                    
+                    <!-- NUEVO: Panel de Resumen de Crecimiento (Reemplaza el Tablón de Anuncios) (lg:col-span-6) -->
+                    <div id="resumen-bolsa-container" class="bg-white rounded-lg shadow-md lg:col-span-6 p-4 space-y-4">
+                         <h3 class="text-base font-semibold text-gray-800 border-b pb-3">Crecimiento del Capital (Minuto a Minuto)</h3>
+                         <!-- Las tarjetas de Tesorería y Bóveda se insertarán aquí por JS -->
+                         <div class="p-4 text-sm text-gray-500 text-center">Esperando datos de crecimiento...</div>
                     </div>
+                    
+                    <!-- ELIMINADO: Tablón de Anuncios (lg:col-span-6) -->
+                    <!-- <div id="anuncios-container" class="bg-white rounded-lg shadow-md lg:col-span-6">...</div> -->
                 </div>
 
             </main>
@@ -488,10 +487,8 @@
         </div>
     </div>
 
-    <!-- Modal de Todos los Anuncios -->
-    <!-- CAMBIO v16.0: Eliminado backdrop-blur, aumentado /75 -->
-    <div id="anuncios-modal" class="fixed inset-0 bg-gray-900/75 flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- Contenido... (sin cambios) -->
+    <!-- ELIMINADO: Modal de Todos los Anuncios -->
+    <!-- <div id="anuncios-modal" class="fixed inset-0 bg-gray-900/75 flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl transform scale-95 transition-transform duration-300">
             <div class="p-6">
                 <div class="flex justify-between items-center mb-4">
@@ -503,7 +500,7 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> -->
 
     <!-- Modal de Información del Alumno -->
     <!-- CAMBIO v16.0: Eliminado backdrop-blur, aumentado /75 -->
@@ -893,11 +890,6 @@
 
         </div>
     </div>
-
-    <!-- =================================================================== -->
-    <!-- MODAL DE CONFIRMACIÓN DE TIENDA (ELIMINADO v17.0) -->
-    <!-- =================================================================== -->
-
 
     <!-- Lógica de la Aplicación -->
     <!-- CAMBIO v18.1: Apuntando a la nueva versión de script -->
