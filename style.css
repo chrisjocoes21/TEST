@@ -1,7 +1,7 @@
 /* Estilo base para que Inter sea la fuente por defecto */
 body {
     font-family: 'Inter', sans-serif;
-    /* Volvemos a texto oscuro por defecto */
+    /* Mantenemos el texto base oscuro */
     color: #1f2937; /* text-gray-800 */
 }
 
@@ -28,22 +28,27 @@ body {
     animation: pulse-dot-animation 1.4s infinite ease-in-out;
 }
 
-/* Estilos para el scrollbar (VUELTA A MODO CLARO) */
+/* =================================================================== */
+/* ESTILOS DE SCROLLBAR (Monocromo Gris) */
+/* =================================================================== */
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 ::-webkit-scrollbar-thumb {
-    background: #cbd5e1; /* gris de tailwind */
+    /* Gris de tailwind */
+    background: #cbd5e1; 
     border-radius: 3px;
-    border: 2px solid transparent; /* para que se vea más moderno */
+    border: 2px solid transparent; 
     background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8; /* gris más oscuro */
+    /* Gris más oscuro */
+    background: #94a3b8; 
 }
 ::-webkit-scrollbar-track {
-    background: #f1f5f9; /* gris claro (como el fondo de la app) */
+    /* Gris claro (como el fondo de la app) */
+    background: #f1f5f9; 
     border-radius: 3px;
 }
 
@@ -56,12 +61,14 @@ body {
     scrollbar-width: none;  /* Firefox */
 }
 
-/* Estilos para las Pestañas (Tabs) en el modal de administración (FINTECH AZUL) */
+/* =================================================================== */
+/* Estilos para las Pestañas (Tabs) en el modal de administración */
+/* =================================================================== */
 .tab-btn {
     border-radius: 0;
     margin-right: 0.5rem;
 }
-/* CAMBIO vFintech: Color de acento a indigo-600 */
+/* CAMBIO vMonocromo: Color de acento a indigo-600 */
 #transaccion-modal .tab-btn.active-tab {
     border-bottom-color: #4f46e5 !important; /* indigo-600 */
     color: #4f46e5 !important; /* indigo-600 */
@@ -70,12 +77,14 @@ body {
     min-height: 540px; 
 }
 
-/* Estilos para el contenedor de resultados de búsqueda (VUELTA A MODO CLARO) */
+/* =================================================================== */
+/* Estilos para el contenedor de resultados de búsqueda (Modo Claro) */
+/* =================================================================== */
 .search-results-container {
     position: absolute;
     z-index: 10;
     width: 100%;
-    /* VUELTA A CLARO */
+    /* Mantenido en blanco para contraste */
     background-color: white; 
     border: 1px solid #d1d5db; /* border-gray-300 */
     border-radius: 0.5rem; /* rounded-lg */
@@ -86,7 +95,7 @@ body {
 }
 
 /* =================================================================== */
-/* ESTILOS DE TOOLTIP (VUELTA A MODO CLARO, si se llega a usar) */
+/* ESTILOS DE TOOLTIP (Modo Oscuro, se mantiene para contraste) */
 /* =================================================================== */
 
 .tooltip-container {
@@ -108,7 +117,7 @@ body {
     z-index: 50;
     
     top: 125%; /* Debajo del elemento */
-    bottom: auto; /* Asegurar que 'bottom' no interfiera */
+    bottom: auto; 
     left: 50%;
     transform: translateX(-50%); /* Centrarlo */
     
@@ -119,7 +128,7 @@ body {
 .tooltip-text svg {
     position: absolute;
     bottom: 100%; /* Arriba del tooltip */
-    top: auto; /* Asegurar que 'top' no interfiera */
+    top: auto; 
     left: 0;
     width: 100%;
     height: 0.5rem; /* h-2 */
@@ -141,33 +150,14 @@ body {
 
 
 /* =================================================================== */
-/* Estilos para Pestañas de Bonos (FINTECH AZUL) */
-/* =================================================================== */
-.bono-tab-btn {
-    border-radius: 0;
-    margin-right: 0.5rem;
-}
-/* CAMBIO vFintech: Color de acento a indigo-600 */
-#bonos-modal .bono-tab-btn.active-tab {
-    border-bottom-color: #4f46e5 !important; /* indigo-600 */
-    color: #4f46e5 !important; /* indigo-600 */
-}
-
-/* =================================================================== */
-/* Estilos para Pestañas de Tienda (FINTECH AZUL) */
+/* Estilos para Pestañas de Bonos (Innecesarios si usamos Tailwind) */
 /* =================================================================== */
 
-.tienda-tab-btn {
-    border-radius: 0;
-    margin-right: 0.5rem;
-}
-/* CAMBIO vFintech: Color de acento a indigo-600 */
-#tienda-modal .tienda-tab-btn.active-tab {
-    border-bottom-color: #4f46e5 !important; /* indigo-600 */
-    color: #4f46e5 !important; /* indigo-600 */
-}
+/* =================================================================== */
+/* Estilos para Pestañas de Tienda (Innecesarios si usamos Tailwind) */
+/* =================================================================== */
 
-/* CORRECCIÓN SALTO VERTICAL (Problema 4): */
+/* CORRECCIÓN SALTO VERTICAL */
 .tienda-tab-content {
     height: 550px; /* Altura unificada */
     overflow-y: auto; /* Permitir scroll si el contenido se pasa */
