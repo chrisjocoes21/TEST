@@ -1,8 +1,8 @@
 /* Estilo base para que Inter sea la fuente por defecto */
 body {
     font-family: 'Inter', sans-serif;
-    /* NUEVO: Forzar texto claro por defecto para el modo oscuro */
-    color: #e5e7eb; /* text-gray-200 */
+    /* Volvemos a texto oscuro por defecto */
+    color: #1f2937; /* text-gray-800 */
 }
 
 /* Animación de Shake para el modal de clave */
@@ -28,23 +28,23 @@ body {
     animation: pulse-dot-animation 1.4s infinite ease-in-out;
 }
 
-/* Estilos para el scrollbar (MODO OSCURO) */
+/* Estilos para el scrollbar (VUELTA A MODO CLARO) */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
 }
 ::-webkit-scrollbar-thumb {
-    background: #374151; /* gray-700 */
-    border-radius: 4px;
-    border: 2px solid transparent;
+    background: #cbd5e1; /* gris de tailwind */
+    border-radius: 3px;
+    border: 2px solid transparent; /* para que se vea más moderno */
     background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-    background: #4b5563; /* gray-600 */
+    background: #94a3b8; /* gris más oscuro */
 }
 ::-webkit-scrollbar-track {
-    background: #111827; /* gray-900 */
-    border-radius: 4px;
+    background: #f1f5f9; /* gris claro (como el fondo de la app) */
+    border-radius: 3px;
 }
 
 /* Ocultar scrollbar */
@@ -56,28 +56,28 @@ body {
     scrollbar-width: none;  /* Firefox */
 }
 
-/* Estilos para las Pestañas (Tabs) en el modal de administración (MODO NEÓN) */
+/* Estilos para las Pestañas (Tabs) en el modal de administración (FINTECH AZUL) */
 .tab-btn {
     border-radius: 0;
     margin-right: 0.5rem;
 }
-/* CAMBIO vNeón: Color de acento a cian */
+/* CAMBIO vFintech: Color de acento a indigo-600 */
 #transaccion-modal .tab-btn.active-tab {
-    border-bottom-color: #06b6d4 !important; /* cyan-500 */
-    color: #06b6d4 !important; /* cyan-500 */
+    border-bottom-color: #4f46e5 !important; /* indigo-600 */
+    color: #4f46e5 !important; /* indigo-600 */
 }
 .tab-content {
     min-height: 540px; 
 }
 
-/* Estilos para el contenedor de resultados de búsqueda (MODO OSCURO) */
+/* Estilos para el contenedor de resultados de búsqueda (VUELTA A MODO CLARO) */
 .search-results-container {
     position: absolute;
     z-index: 10;
     width: 100%;
-    /* CAMBIO vNeón: Fondo y borde oscuros */
-    background-color: #374151; /* bg-gray-700 */
-    border: 1px solid #4b5563; /* border-gray-600 */
+    /* VUELTA A CLARO */
+    background-color: white; 
+    border: 1px solid #d1d5db; /* border-gray-300 */
     border-radius: 0.5rem; /* rounded-lg */
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
     margin-top: 0.25rem; /* mt-1 */
@@ -86,7 +86,7 @@ body {
 }
 
 /* =================================================================== */
-/* ESTILOS DE TOOLTIP (Ya son oscuros, se mantienen) */
+/* ESTILOS DE TOOLTIP (VUELTA A MODO CLARO, si se llega a usar) */
 /* =================================================================== */
 
 .tooltip-container {
@@ -99,7 +99,7 @@ body {
     visibility: hidden; /* Oculto por defecto */
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
-    background-color: #1f2937; /* bg-gray-800 */
+    background-color: #1f2937; /* bg-gray-800 - se mantiene oscuro para contraste */
     color: #ffffff;
     text-align: left;
     border-radius: 0.5rem; /* rounded-lg */
@@ -141,30 +141,30 @@ body {
 
 
 /* =================================================================== */
-/* Estilos para Pestañas de Bonos (MODO NEÓN) */
+/* Estilos para Pestañas de Bonos (FINTECH AZUL) */
 /* =================================================================== */
 .bono-tab-btn {
     border-radius: 0;
     margin-right: 0.5rem;
 }
-/* CAMBIO vNeón: Color de acento a cian */
+/* CAMBIO vFintech: Color de acento a indigo-600 */
 #bonos-modal .bono-tab-btn.active-tab {
-    border-bottom-color: #06b6d4 !important; /* cyan-500 */
-    color: #06b6d4 !important; /* cyan-500 */
+    border-bottom-color: #4f46e5 !important; /* indigo-600 */
+    color: #4f46e5 !important; /* indigo-600 */
 }
 
 /* =================================================================== */
-/* Estilos para Pestañas de Tienda (MODO NEÓN) */
+/* Estilos para Pestañas de Tienda (FINTECH AZUL) */
 /* =================================================================== */
 
 .tienda-tab-btn {
     border-radius: 0;
     margin-right: 0.5rem;
 }
-/* CAMBIO vNeón: Color de acento a cian */
+/* CAMBIO vFintech: Color de acento a indigo-600 */
 #tienda-modal .tienda-tab-btn.active-tab {
-    border-bottom-color: #06b6d4 !important; /* cyan-500 */
-    color: #06b6d4 !important; /* cyan-500 */
+    border-bottom-color: #4f46e5 !important; /* indigo-600 */
+    color: #4f46e5 !important; /* indigo-600 */
 }
 
 /* CORRECCIÓN SALTO VERTICAL (Problema 4): */
@@ -172,10 +172,3 @@ body {
     height: 550px; /* Altura unificada */
     overflow-y: auto; /* Permitir scroll si el contenido se pasa */
 }
-
-
-/* NOTA: Todas las reglas de @apply fueron eliminadas.
-  Esos estilos (como .bono-item-card, .tienda-item-card, etc.)
-  se aplicarán directamente en el script.js y el index.html
-  para que el rediseño "Neón / Gamer" funcione.
-*/
