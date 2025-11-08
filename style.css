@@ -1,219 +1,128 @@
-/* Estilo base para que Inter sea la fuente por defecto */
-body {
+/* Fuentes */
+html {
     font-family: 'Inter', sans-serif;
-    /* Volvemos a texto oscuro por defecto */
-    color: #1f2937; /* text-gray-800 */
 }
 
-/* =================================================================== */
-/* COMPONENTES Y ANIMACIONES MODERNIZADAS */
-/* =================================================================== */
-
-/* Animación de Shake para el modal de clave */
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); } /* Reducido para mayor fluidez */
-    20%, 40%, 60%, 80% { transform: translateX(6px); } /* Reducido para mayor fluidez */
-}
-.shake {
-    animation: shake 0.3s; /* Reducido para mayor fluidez */
-}
-
-/* Animación de puntos de carga (para el indicador de estado) */
-@keyframes pulse-dot-animation {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.3; /* Hacemos el pulso más sutil */
+/* Base Tailwind Overrides & Custom Utilities */
+@layer base {
+    h1, h2, h3, h4, h5, h6 {
+        @apply font-semibold;
     }
 }
+
+/* Animaciones de Carga */
+/* CAMBIO vFintech: Color de acento Índigo */
 .animate-pulse-dot {
-    animation: pulse-dot-animation 1.0s infinite ease-in-out; /* Optimizado a 1.0s para ser más rápido */
+    animation: pulse-dot 1.4s infinite ease-in-out both;
+    background-color: theme('colors.indigo.600'); /* Aplicar color de acento */
 }
 
-/* * ESTILO BASE DE BOTÓN UNIFICADO: 
- * Reemplaza el estilo de "Ver Reglas" para unificar todos los botones secundarios.
- */
+.animate-pulse-dot:nth-child(1) { animation-delay: 0s; }
+.animate-pulse-dot:nth-child(2) { animation-delay: 0.2s; }
+.animate-pulse-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes pulse-dot {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+/* Clases de estado de conexión */
+.status-online {
+    background-color: theme('colors.green.500'); /* Verde para online */
+}
+.status-offline {
+    background-color: theme('colors.red.500'); /* Rojo para offline */
+}
+.status-loading {
+    background-color: theme('colors.yellow.500'); /* Amarillo para cargando */
+}
+
+/* Estilos de la barra lateral */
+.sidebar-link {
+    @apply flex items-center p-2 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors duration-200 text-sm font-medium;
+}
+.sidebar-link.active {
+    /* CAMBIO vFintech: Acento Índigo */
+    @apply bg-indigo-50 text-indigo-700 font-semibold;
+}
+
+/* Estilo para los botones secundarios (unificado) */
+/* CAMBIO vFintech: Base blanca, borde gris, hover con acento Índigo */
 .btn-base {
-    /* Clases de Tailwind: px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors shadow-sm */
-    padding: 0.5rem 1rem; /* px-4 py-2 */
-    background-color: #ffffff; /* bg-white */
-    border: 1px solid #d1d5db; /* border-gray-300 */
-    color: #374151; /* text-gray-700 */
-    font-size: 0.875rem; /* text-sm */
-    font-weight: 500; /* font-medium */
-    border-radius: 0.5rem; /* rounded-lg */
-    transition: all 0.2s ease-in-out; /* Velocidad de transición unificada y fluida (0.2s) */
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+    @apply px-4 py-2 bg-white text-gray-700 text-sm font-medium rounded-lg border border-gray-300 shadow-sm
+           hover:bg-gray-50 hover:border-indigo-500 hover:text-indigo-700 transition-colors duration-200;
 }
 
-.btn-base:hover:not(:disabled) {
-    background-color: #f3f4f6; /* hover:bg-gray-100 */
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* Sombra un poco más marcada al pasar el cursor */
-    color: #1f2937; /* text-gray-800 */
+/* Estilo para los botones en las tablas (editar/eliminar) */
+/* CAMBIO vFintech: Botones pequeños con ícono, realce índigo */
+.icon-btn-sm {
+    @apply p-1.5 rounded-md text-gray-500 hover:bg-gray-100 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-300 transition-colors duration-200;
 }
 
-.btn-base:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    box-shadow: none;
+/* Estilos para los resultados de búsqueda (modales) */
+.search-results-container {
+    max-height: 240px; /* Altura máxima para el scroll */
+    overflow-y: auto;
+    /* Estilo de la barra de desplazamiento para navegadores basados en Webkit */
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+    &::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #ccc;
+        border-radius: 10px;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+        background: #999;
+    }
 }
 
-/* Estilo para los iconos de cierre de modal (la "x") */
-.modal-close-icon {
-    transition: all 0.2s ease-in-out;
+.search-result-item {
+    @apply flex items-center justify-between p-2 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 cursor-pointer transition-colors duration-150;
+}
+.search-result-item.selected {
+    @apply bg-indigo-100 text-indigo-800 font-semibold;
 }
 
-.modal-close-icon:hover {
-    color: #4f46e5; /* Índigo al pasar el cursor */
-    transform: rotate(6deg) scale(1.1); /* Rotación suave y pequeño aumento de tamaño */
+
+/* Estilos para tabs de modales (v0.5.0 Bonos, v16.0 Tienda) */
+.tab-btn, .bono-tab-btn, .tienda-tab-btn {
+    @apply px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-600 transition-colors hover:bg-gray-100 duration-200 -mb-px; /* -mb-px para solapar borde */
 }
 
-/* =================================================================== */
-/* ESTILOS DE SCROLLBAR */
-/* =================================================================== */
-
-::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-}
-::-webkit-scrollbar-thumb {
-    background: #cbd5e1; /* gris de tailwind */
-    border-radius: 3px;
-    border: 2px solid transparent; /* para que se vea más moderno */
-    background-clip: padding-box;
-}
-::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8; /* gris más oscuro */
-}
-::-webkit-scrollbar-track {
-    background: #f1f5f9; /* gris claro (como el fondo de la app) */
-    border-radius: 3px;
+/* CAMBIO vFintech: Tabs con acento Índigo */
+.tab-btn.active-tab, .bono-tab-btn.active-tab, .tienda-tab-btn.active-tab {
+    @apply border-indigo-600 text-indigo-600 font-semibold;
 }
 
-/* Ocultar scrollbar */
-.no-scrollbar::-webkit-scrollbar {
-    display: none;
-}
+/* Utilidad para ocultar barras de scroll */
 .no-scrollbar {
-    -ms-overflow-style: none;  /* IE y Edge */
+    -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
 }
-
-/* Estilos para las Pestañas (Tabs) en el modal de administración (FINTECH AZUL) */
-.tab-btn {
-    border-radius: 0;
-    margin-right: 0.5rem;
-}
-/* CAMBIO vFintech: Color de acento a indigo-600 */
-#transaccion-modal .tab-btn.active-tab {
-    border-bottom-color: #4f46e5 !important; /* indigo-600 */
-    color: #4f46e5 !important; /* indigo-600 */
-}
-.tab-content {
-    min-height: 540px; 
+.no-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
 }
 
-/* Estilos para el contenedor de resultados de búsqueda (VUELTA A MODO CLARO) */
-.search-results-container {
-    position: absolute;
-    z-index: 10;
-    width: 100%;
-    /* VUELTA A CLARO */
-    background-color: white; 
-    border: 1px solid #d1d5db; /* border-gray-300 */
-    border-radius: 0.5rem; /* rounded-lg */
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
-    margin-top: 0.25rem; /* mt-1 */
-    max-height: 15rem; /* max-h-60 */
-    overflow-y: auto;
+/* Estilos para los iconos de cierre de modal (X) */
+/* CAMBIO vFintech: Icono de cierre con realce Índigo */
+.modal-close-icon {
+    @apply text-gray-400 text-2xl leading-none font-semibold cursor-pointer
+           hover:text-indigo-600 hover:rotate-90 transition-all duration-200 ease-in-out;
 }
 
-/* =================================================================== */
-/* ESTILOS DE TOOLTIP */
-/* =================================================================== */
-
-.tooltip-container {
-    position: relative;
-    display: inline-block;
+/* Animación de los Tooltips de Tienda */
+.tooltip-tienda {
+    @apply absolute invisible opacity-0 p-2 text-xs text-white bg-gray-800 rounded-md shadow-lg z-50
+           group-hover:visible group-hover:opacity-100 transition-opacity duration-200;
 }
 
-/* El texto del tooltip */
-.tooltip-text {
-    visibility: hidden; /* Oculto por defecto */
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-    background-color: #1f2937; /* bg-gray-800 - se mantiene oscuro para contraste */
-    color: #ffffff;
-    text-align: left;
-    border-radius: 0.5rem; /* rounded-lg */
-    padding: 0.5rem 0.75rem; /* py-2 px-3 */
-    position: absolute;
-    z-index: 50;
-    
-    top: 125%; /* Debajo del elemento */
-    bottom: auto; /* Asegurar que 'bottom' no interfiera */
-    left: 50%;
-    transform: translateX(-50%); /* Centrarlo */
-    
-    display: block !important;
-}
-
-/* Flecha del tooltip */
-.tooltip-text svg {
-    position: absolute;
-    bottom: 100%; /* Arriba del tooltip */
-    top: auto; /* Asegurar que 'top' no interfiera */
-    left: 0;
-    width: 100%;
-    height: 0.5rem; /* h-2 */
-    color: #1f2937; /* text-gray-800 */
-}
-
-/* Mostrar al hacer hover */
-.tooltip-container:hover .tooltip-text {
-    visibility: visible;
-    opacity: 1;
-}
-
-/* Ocultar en móvil (donde el hover no es ideal) */
-@media (max-width: 768px) {
-    .tooltip-text {
-        display: none !important;
-    }
-}
-
-
-/* =================================================================== */
-/* Estilos para Pestañas de Bonos (FINTECH AZUL) */
-/* =================================================================== */
-.bono-tab-btn {
-    border-radius: 0;
-    margin-right: 0.5rem;
-}
-/* CAMBIO vFintech: Color de acento a indigo-600 */
-#bonos-modal .bono-tab-btn.active-tab {
-    border-bottom-color: #4f46e5 !important; /* indigo-600 */
-    color: #4f46e5 !important; /* indigo-600 */
-}
-
-/* =================================================================== */
-/* Estilos para Pestañas de Tienda (FINTECH AZUL) */
-/* =================================================================== */
-
-.tienda-tab-btn {
-    border-radius: 0;
-    margin-right: 0.5rem;
-}
-/* CAMBIO vFintech: Color de acento a indigo-600 */
-#tienda-modal .tienda-tab-btn.active-tab {
-    border-bottom-color: #4f46e5 !important; /* indigo-600 */
-    color: #4f46e5 !important; /* indigo-600 */
-}
-
-/* CORRECCIÓN SALTO VERTICAL (Problema 4): */
-.tienda-tab-content {
-    height: 550px; /* Altura unificada */
-    overflow-y: auto; /* Permitir scroll si el contenido se pasa */
+/* Estilo para los botones de cantidad en la tienda */
+/* CAMBIO vFintech: Botones pequeños con realce Índigo */
+.qty-btn {
+    @apply px-2 py-1 bg-gray-100 text-gray-700 rounded-md
+           hover:bg-indigo-100 hover:text-indigo-700 transition-colors duration-150;
 }
