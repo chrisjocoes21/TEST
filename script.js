@@ -10,9 +10,9 @@ const AppConfig = {
     MAX_RETRIES: 5,
     CACHE_DURATION: 300000,
     
-    // CAMBIO v21.0: Actualización de versión (Monocromo Índigo)
+    // CAMBIO v21.2: Actualización de versión (Tienda Horizontal)
     APP_STATUS: 'Beta', 
-    APP_VERSION: 'v21.0 (Monocromo Índigo)', 
+    APP_VERSION: 'v21.2 (Tienda Horizontal)', 
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -902,6 +902,7 @@ const AppUI = {
     },
 
     // Renderiza las tarjetas de la tienda
+    // CAMBIO V21.2: Se ajusta la estructura para ser HORIZONTAL (Flexbox row)
     renderTiendaItems: function() {
         const container = document.getElementById('tienda-items-container');
         const items = AppState.tienda.items;
@@ -910,7 +911,8 @@ const AppUI = {
 
         if (itemKeys.length === 0) {
             // CAMBIO vMonocromo: Placeholder gris
-            container.innerHTML = `<p class="text-sm text-slate-500 text-center col-span-1 md:col-span-2">No hay artículos configurados en la tienda en este momento.</p>`;
+            // Nota: El col-span ahora es 2, ajustado al nuevo grid de index.html
+            container.innerHTML = `<p class="text-sm text-slate-500 text-center col-span-2">No hay artículos configurados en la tienda en este momento.</p>`;
             return;
         }
 
@@ -923,33 +925,36 @@ const AppUI = {
             const itemIdEscapado = escapeHTML(item.ItemID); // Usar ItemID real
 
             html += `
-                <!-- CAMBIO vMonocromo: Estilo de tarjeta claro con borde Índigo sutil -->
-                <div class="bg-white rounded-xl shadow-lg border border-indigo-100 transition-all flex flex-col p-4 h-full">
-                    <!-- Header de la Tarjeta (Tipo, Stock) -->
-                    <div class="flex justify-between items-center mb-2">
-                        <!-- CAMBIO vMonocromo: Estilo de badge Índigo/Gris -->
-                        <span class="text-xs font-bold bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5">${item.tipo}</span>
-                        <!-- CAMBIO vMonocromo: Texto gris -->
+                <!-- CAMBIO V21.2: Diseño Horizontal (Flexbox row) con padding reducido -->
+                <div class="bg-white rounded-xl shadow-lg shadow-indigo-600/10 border border-indigo-200 transition-all flex p-4 h-auto min-h-24">
+                    
+                    <!-- Columna 1: Tipo y Stock (Izquierda, Fijo) -->
+                    <div class="flex flex-col justify-start items-start w-28 pr-3 border-r border-slate-100 flex-shrink-0">
+                        <!-- Badge Tipo -->
+                        <span class="text-xs font-bold bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5 mb-1">${item.tipo}</span>
+                        <!-- Stock -->
                         <span id="stock-${itemIdEscapado}" class="text-xs font-medium text-slate-500">Stock: ${item.stock}</span>
                     </div>
 
-                    <!-- CAMBIO vMonocromo: Texto oscuro -->
-                    <h4 class="text-lg font-bold text-slate-900 truncate mb-2" title="${escapeHTML(item.descripcion)}">
-                        ${item.nombre}
-                    </h4>
-                    <!-- CAMBIO vMonocromo: Descripción más grande, gris sutil -->
-                    <p class="text-sm text-slate-600 mb-4">${item.descripcion.substring(0, 70)}...</p>
+                    <!-- Columna 2: Nombre y Descripción (Centro, Expansión) -->
+                    <div class="flex-1 px-4 overflow-hidden">
+                        <h4 class="text-base font-bold text-slate-900 truncate mb-1" title="${escapeHTML(item.descripcion)}">
+                            ${item.nombre}
+                        </h4>
+                        <!-- Descripción más pequeña y compacta -->
+                        <p class="text-xs text-slate-600">${item.descripcion.substring(0, 80)}...</p>
+                    </div>
                     
-                    <!-- Footer (Precio y Botón) -->
-                    <div class="flex justify-between items-center mt-auto pt-4 border-t border-slate-100">
-                        <!-- CAMBIO vMonocromo: Acento Índigo -->
-                        <span class="text-2xl font-extrabold text-indigo-600">${AppFormat.formatNumber(costoFinal)} ℙ</span>
+                    <!-- Columna 3: Precio y Botón (Derecha, Fijo) -->
+                    <div class="flex flex-col justify-center items-end pl-4 flex-shrink-0">
+                        <!-- Precio Índigo -->
+                        <span class="text-xl font-extrabold text-indigo-600 mb-1">${AppFormat.formatNumber(costoFinal)} ℙ</span>
                         
                         <!-- Botón de compra (el estilo se actualiza con updateTiendaButtonStates) -->
                         <button id="buy-btn-${itemId}" 
                                 data-item-id="${itemId}"
                                 onclick="AppTransacciones.comprarItem('${itemId}', this)"
-                                class="tienda-buy-btn w-full px-4 py-2 text-sm font-medium rounded-lg transition-colors shadow-sm">
+                                class="tienda-buy-btn w-full px-3 py-1 text-xs font-medium rounded-lg transition-colors shadow-sm">
                             <span class="btn-text">Cargando...</span>
                         </button>
                     </div>
@@ -983,7 +988,7 @@ const AppUI = {
             const costoFinal = Math.round(item.precio * (1 + AppConfig.TASA_ITBIS));
             
             // Reset de todas las clases de estado de color/disponibilidad
-            btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'shadow-md', 'shadow-indigo-600/30', 'bg-gray-300', 'hover:bg-gray-300', 'text-gray-600', 'line-through', 'bg-red-100', 'text-red-700', 'border', 'border-red-200', 'cursor-not-allowed', 'shadow-none', 'bg-gray-200', 'text-gray-500', 'border-indigo-600', 'hover:bg-indigo-50', 'bg-white', 'text-indigo-600', 'bg-slate-300', 'text-slate-600'); 
+            btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'shadow-md', 'shadow-indigo-600/30', 'bg-gray-300', 'hover:bg-gray-300', 'text-gray-600', 'line-through', 'bg-red-100', 'text-red-700', 'border', 'border-red-200', 'cursor-not-allowed', 'shadow-none', 'bg-gray-200', 'text-gray-500', 'border-indigo-600', 'hover:bg-indigo-50', 'bg-white', 'text-indigo-600', 'bg-slate-300', 'text-slate-600', 'bg-slate-100', 'border-slate-300'); 
             btn.disabled = false;
             btnText.textContent = "Comprar"; // Default text
 
@@ -1745,7 +1750,8 @@ const AppUI = {
         if (topN.length > 0) {
             top3Html = topN.map((student, index) => {
                 // REQUERIMIENTO: Fondo blanco puro para las tarjetas de Top 3
-                let cardBg = 'bg-white border border-slate-200'; 
+                // Añadimos la sombra índigo aquí
+                let cardClass = 'bg-white border border-slate-200 rounded-xl shadow-lg shadow-indigo-600/10'; 
                 
                 // REQUERIMIENTO: Rangos en Índigo (sin fondo de color)
                 let rankText = 'text-indigo-600';
@@ -1756,7 +1762,7 @@ const AppUI = {
                 const totalInvertidoF = AppFormat.formatNumber(student.totalInvertidoDepositos);
 
                 return `
-                    <div class="${cardBg} rounded-xl shadow-lg p-3 h-full flex flex-col justify-between transition-all hover:shadow-xl">
+                    <div class="${cardClass} p-3 h-full flex flex-col justify-between transition-all hover:shadow-xl">
                         <div>
                             <div class="flex items-center justify-between mb-1">
                                 <!-- CAMBIO vMonocromo: Texto gris -->
@@ -1791,8 +1797,8 @@ const AppUI = {
         // Rellenar placeholders si Top < 3
         for (let i = topN.length; i < 3; i++) {
             top3Html += `
-                <!-- CAMBIO vMonocromo: Placeholder claro -->
-                <div class="bg-white rounded-xl shadow-lg p-3 opacity-50 h-full flex flex-col justify-between border border-slate-200">
+                <!-- CAMBIO vMonocromo: Placeholder claro con sombra índigo -->
+                <div class="bg-white rounded-xl shadow-lg shadow-indigo-600/10 p-3 opacity-50 h-full flex flex-col justify-between border border-slate-200">
                     <div>
                         <div class="flex items-center justify-between mb-1">
                             <span class="text-sm font-medium text-slate-400">-</span>
@@ -1830,34 +1836,33 @@ const AppUI = {
         // CAMBIO vMonocromo: Texto oscuro
         document.getElementById('main-header-title').textContent = grupo.nombre;
         
-        // CAMBIO vMonocromo: Solo usar gris oscuro/negro para saldos negativos (eliminado el rojo/verde)
-        let totalColor = "text-slate-800"; 
-        if (grupo.total < 0) totalColor = "text-slate-800"; // Mantenemos el color oscuro para negativo
-        if (grupo.total > 0) totalColor = "text-slate-800"; // Mantenemos el color oscuro para positivo
+        // REQUERIMIENTO: Total del grupo en Índigo
+        let totalColor = "text-indigo-700"; 
         
         document.getElementById('page-subtitle').innerHTML = `
-            <!-- CAMBIO vMonocromo: Texto oscuro/negro -->
+            <!-- REQUERIMIENTO: Total del grupo en Índigo -->
             <h2 class="text-xl font-semibold text-slate-900">Total del Grupo: 
                 <span class="${totalColor}">${AppFormat.formatNumber(grupo.total)} ℙ</span>
             </h2>
         `;
         
         const listContainer = document.getElementById('table-container');
-        listContainer.classList.remove('overflow-hidden', 'p-4', 'space-y-0'); // Remover clases de tabla/card interior
+        // REQUERIMIENTO: Eliminar "celdas" - se asegura que el contenedor principal no añada padding/sombra extra
+        listContainer.classList.remove('overflow-hidden', 'p-4', 'space-y-0'); 
 
         const usuariosOrdenados = [...grupo.usuarios].sort((a, b) => b.pinceles - a.pinceles);
 
         // Creamos el contenedor de la lista libre
         const listBody = document.createElement('div');
-        // Usamos flex/grid para la disposición de la lista
-        listBody.className = "divide-y divide-indigo-100 bg-white rounded-b-xl"; // Divisores Índigo
+        // Divisores Índigo
+        listBody.className = "divide-y divide-indigo-100 bg-white rounded-b-xl"; 
 
         usuariosOrdenados.forEach((usuario, index) => {
             const pos = index + 1;
             
-            // CAMBIO vMonocromo: Usar Índigo fuerte para el rank y gris/negro para el saldo
+            // REQUERIMIENTO: Rank y saldo individual en Índigo
             const rankTextClass = 'text-indigo-600';
-            const pincelesColor = usuario.pinceles < 0 ? 'text-slate-800' : 'text-slate-800'; // Negro/Gris oscuro para negativo/positivo
+            const pincelesColor = 'text-indigo-600'; // REQUERIMIENTO: Saldo individual en Índigo
 
             // CORRECCIÓN BUG ONCLICK: Escapar nombres
             const grupoNombreEscapado = escapeHTML(grupo.nombre);
@@ -1865,7 +1870,8 @@ const AppUI = {
 
             const itemDiv = document.createElement('div');
             // Usamos grid-cols-12 para mantener la alineación de la cabecera
-            itemDiv.className = `grid grid-cols-12 px-6 py-3 hover:bg-slate-50 cursor-pointer transition-colors ${index === usuariosOrdenados.length - 1 ? '' : 'border-b border-indigo-100'}`; // Último elemento sin divisor inferior
+            // REQUERIMIENTO: Eliminar celdas internas (solo queda el divisor índigo de la clase listBody)
+            itemDiv.className = `grid grid-cols-12 px-6 py-3 hover:bg-slate-50 cursor-pointer transition-colors`;
 
             itemDiv.setAttribute('onclick', `AppUI.showStudentModal('${grupoNombreEscapado}', '${usuarioNombreEscapado}', ${pos})`);
 
@@ -1876,7 +1882,7 @@ const AppUI = {
                 <div class="col-span-8 text-left text-sm font-medium text-slate-900 truncate">
                     ${usuario.nombre}
                 </div>
-                <div class="col-span-3 text-right text-sm font-semibold ${pincelesColor} text-slate-800">
+                <div class="col-span-3 text-right text-sm font-semibold ${pincelesColor}">
                     ${AppFormat.formatNumber(usuario.pinceles)} ℙ
                 </div>
             `;
@@ -1886,7 +1892,9 @@ const AppUI = {
 
         // Limpiamos el contenedor y lo rellenamos con la cabecera y la nueva lista
         listContainer.innerHTML = '';
-        listContainer.classList.add('bg-white', 'rounded-xl', 'shadow-lg'); // Restaura clases del contenedor principal
+        // Restaura clases del contenedor principal
+        listContainer.classList.remove('overflow-hidden', 'p-4', 'space-y-0'); 
+        listContainer.classList.add('bg-white', 'rounded-xl', 'shadow-lg', 'shadow-indigo-600/10', 'border', 'border-indigo-200');
 
         // Se re-crea la cabecera de la lista para mantener la alineación
         const headerHtml = `
@@ -1927,7 +1935,7 @@ const AppUI = {
 
         if (top6Riesgo.length === 0) {
             // CAMBIO vMonocromo: Placeholder gris
-            lista.innerHTML = `<tr class="bg-white"><td colspan="3" class="p-4 text-sm text-slate-500 text-center">No hay alumnos en riesgo por el momento.</td></tr>`;
+            lista.innerHTML = `<div class="p-4 text-sm text-slate-500 text-center">No hay alumnos en riesgo por el momento.</div>`;
             return;
         }
 
@@ -1937,8 +1945,8 @@ const AppUI = {
             const grupoNombre = student.grupoNombre || 'N/A';
             const pinceles = AppFormat.formatNumber(student.pinceles);
             
-            // CAMBIO vMonocromo: Usar negro/gris oscuro para el saldo (eliminado el rojo)
-            const pincelesColor = 'text-slate-800'; 
+            // REQUERIMIENTO: Usar Índigo para los Pinceles en Riesgo
+            const pincelesColor = 'text-indigo-600'; 
 
             return `
                 <div class="grid grid-cols-3 px-4 py-2 hover:bg-slate-50 transition-colors">
