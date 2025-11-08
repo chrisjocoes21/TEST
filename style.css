@@ -5,14 +5,18 @@ body {
     color: #1f2937; /* text-gray-800 */
 }
 
+/* =================================================================== */
+/* COMPONENTES Y ANIMACIONES MODERNIZADAS */
+/* =================================================================== */
+
 /* Animación de Shake para el modal de clave */
 @keyframes shake {
     0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-    20%, 40%, 60%, 80% { transform: translateX(10px); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); } /* Reducido para mayor fluidez */
+    20%, 40%, 60%, 80% { transform: translateX(6px); } /* Reducido para mayor fluidez */
 }
 .shake {
-    animation: shake 0.5s;
+    animation: shake 0.3s; /* Reducido para mayor fluidez */
 }
 
 /* Animación de puntos de carga (para el indicador de estado) */
@@ -25,10 +29,51 @@ body {
     }
 }
 .animate-pulse-dot {
-    animation: pulse-dot-animation 1.4s infinite ease-in-out;
+    animation: pulse-dot-animation 1.0s infinite ease-in-out; /* Optimizado a 1.0s para ser más rápido */
 }
 
-/* Estilos para el scrollbar (VUELTA A MODO CLARO) */
+/* * ESTILO BASE DE BOTÓN UNIFICADO: 
+ * Reemplaza el estilo de "Ver Reglas" para unificar todos los botones secundarios.
+ */
+.btn-base {
+    /* Clases de Tailwind: px-4 py-2 bg-white border border-gray-300 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-100 transition-colors shadow-sm */
+    padding: 0.5rem 1rem; /* px-4 py-2 */
+    background-color: #ffffff; /* bg-white */
+    border: 1px solid #d1d5db; /* border-gray-300 */
+    color: #374151; /* text-gray-700 */
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 500; /* font-medium */
+    border-radius: 0.5rem; /* rounded-lg */
+    transition: all 0.2s ease-in-out; /* Velocidad de transición unificada y fluida (0.2s) */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+}
+
+.btn-base:hover:not(:disabled) {
+    background-color: #f3f4f6; /* hover:bg-gray-100 */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); /* Sombra un poco más marcada al pasar el cursor */
+    color: #1f2937; /* text-gray-800 */
+}
+
+.btn-base:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Estilo para los iconos de cierre de modal (la "x") */
+.modal-close-icon {
+    transition: all 0.2s ease-in-out;
+}
+
+.modal-close-icon:hover {
+    color: #4f46e5; /* Índigo al pasar el cursor */
+    transform: rotate(6deg) scale(1.1); /* Rotación suave y pequeño aumento de tamaño */
+}
+
+/* =================================================================== */
+/* ESTILOS DE SCROLLBAR */
+/* =================================================================== */
+
 ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -86,7 +131,7 @@ body {
 }
 
 /* =================================================================== */
-/* ESTILOS DE TOOLTIP (VUELTA A MODO CLARO, si se llega a usar) */
+/* ESTILOS DE TOOLTIP */
 /* =================================================================== */
 
 .tooltip-container {
