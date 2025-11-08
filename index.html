@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CAMBIO vFintech: Fondo principal claro (slate-50) -->
+<!-- CAMBIO: Base de la interfaz con uniformidad de botones -->
 <html lang="es" class="h-full bg-slate-50 overflow-hidden">
 <head>
     <meta charset="UTF-8">
@@ -13,7 +13,7 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏦</text></svg>">
 
     <!-- Archivo de estilos personalizados -->
-    <link rel="stylesheet" href="style.css?v=19.3">
+    <link rel="stylesheet" href="style.css?v=19.5">
 </head>
 <!-- CAMBIO vFintech: Texto oscuro por defecto -->
 <body class="h-full overflow-hidden text-gray-800"> 
@@ -44,18 +44,16 @@
                     <!-- Versión se inyecta aquí -->
                 </div>
                 
-                <!-- Botón P2P (Primario Verde) -->
-                <!-- CAMBIO: Aplicamos transición rápida (duration-200) -->
-                <button id="p2p-portal-btn" class="p2p-btn flex items-center justify-center w-full px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-md">
+                <!-- Botón P2P (UNIFICADO) -->
+                <button id="p2p-portal-btn" class="p2p-btn btn-base flex items-center justify-center w-full">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
                     </svg>
                     <span>Portal P2P</span>
                 </button>
                 
-                <!-- Botón de Gestión (Primario Índigo) -->
-                <!-- CAMBIO: Aplicamos transición rápida (duration-200) -->
-                <button id="gestion-btn" class="flex items-center justify-center w-full px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md">
+                <!-- Botón de Gestión (UNIFICADO) -->
+                <button id="gestion-btn" class="btn-base flex items-center justify-center w-full">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
@@ -131,16 +129,16 @@
                             <h3 class="text-base font-semibold text-gray-900 border-b border-gray-200 pb-2">Accesos Rápidos</h3>
                             
                             <div class="flex flex-col gap-3 flex-shrink-0 w-full pt-2">
-                                <!-- BOTÓN REGLAS (Secundario - UNIFICADO con btn-base) -->
+                                <!-- BOTÓN REGLAS (UNIFICADO) -->
                                 <button id="reglas-btn" class="flex-1 btn-base">
                                     Ver Reglas
                                 </button>
-                                <!-- BOTÓN BONOS (Primario Amarillo - transiciones rápidas) -->
-                                <button id="bonos-btn" class="flex-1 px-4 py-2 bg-yellow-400 text-yellow-900 text-sm font-medium rounded-lg hover:bg-yellow-500 transition-colors duration-200 shadow-sm">
+                                <!-- BOTÓN BONOS (UNIFICADO) -->
+                                <button id="bonos-btn" class="flex-1 btn-base">
                                     Bonos
                                 </button>
-                                <!-- BOTÓN TIENDA (Primario Índigo - transiciones rápidas) -->
-                                <button id="tienda-btn" class="flex-1 px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md">
+                                <!-- BOTÓN TIENDA (UNIFICADO) -->
+                                <button id="tienda-btn" class="flex-1 btn-base">
                                     Tienda
                                 </button>
                             </div>
@@ -191,8 +189,8 @@
                     <div id="anuncios-container" class="bg-white rounded-xl shadow-lg lg:col-span-6">
                         <div class="flex justify-between items-center p-4 border-b border-gray-200">
                             <h3 class="text-base font-semibold text-gray-900">Tablón de Anuncios</h3>
-                            <!-- CAMBIO: Botón de texto simple con transición rápida -->
-                            <button id="anuncios-modal-btn" class="text-sm text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-200">Ver Todos</button>
+                            <!-- BOTÓN VER TODOS (UNIFICADO) -->
+                            <button id="anuncios-modal-btn" class="text-sm btn-base !border-transparent !bg-white hover:!bg-indigo-50 shadow-none !px-3 !py-1">Ver Todos</button>
                         </div>
                         <ul id="anuncios-lista" class="divide-y divide-gray-100 p-4 space-y-1">
                             <!-- Anuncios dinámicos se insertarán aquí -->
@@ -250,9 +248,8 @@
                     <input type="password" id="clave-input" placeholder="Ingrese su clave" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
                 <div class="flex justify-end gap-3">
-                    <!-- ELIMINADO: Se elimina el botón de texto "Cancelar" (duplicidad con la X y el backdrop) -->
-                    <!-- CAMBIO: Botón primario Índigo con duración rápida -->
-                    <button id="modal-submit" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md">Acceder</button>
+                    <!-- BOTÓN ACCEDER (UNIFICADO) -->
+                    <button id="modal-submit" class="btn-base">Acceder</button>
                 </div>
             </div>
         </div>
@@ -318,8 +315,8 @@
                         </div>
                     </div>
                     <div class="mt-6 flex justify-end">
-                        <!-- CAMBIO: Botón primario Índigo con duración rápida -->
-                        <button id="transaccion-submit-btn" data-accion="transaccion_multiple" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md w-full md:w-auto">
+                        <!-- BOTÓN REALIZAR TRANSACCIÓN (UNIFICADO) -->
+                        <button id="transaccion-submit-btn" data-accion="transaccion_multiple" class="btn-base w-full md:w-auto">
                             <span id="transaccion-btn-text">Realizar Transacción</span>
                         </button>
                     </div>
@@ -376,15 +373,14 @@
                 </div>
             </div>
             <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-between gap-3 flex-shrink-0">
-                <!-- CAMBIO: Botón primario Verde con transición rápida -->
-                <a id="db-link-btn" href="https." target="_blank" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-sm flex items-center">
+                <!-- BOTÓN VER BASE DE DATOS (UNIFICADO) -->
+                <a id="db-link-btn" href="https." target="_blank" class="btn-base flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-1">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3-3m0 0-3-3m-1.5 1.5H19.5" />
                     </svg>
                     Ver Base de Datos
                 </a>
                 <!-- ELIMINADO: Se elimina el botón de texto "Cerrar" (duplicidad con la X y el backdrop) -->
-                <!-- <button id="transaccion-cancel-btn" ... >Cerrar</button> -->
             </div>
         </div>
     </div>
@@ -405,27 +401,27 @@
             <div class="p-6 space-y-4">
                 <div class="relative">
                     <label for="p2p-search-origen" class="block text-sm font-medium text-gray-700 mb-1">Tu Nombre (Remitente)</label>
-                    <!-- CAMBIO vFintech: Foco verde -->
-                    <input type="text" id="p2p-search-origen" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    <!-- CAMBIO vFintech: Foco verde -> Foco Índigo para uniformidad -->
+                    <input type="text" id="p2p-search-origen" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <div id="p2p-origen-results" class="search-results-container hidden absolute z-20 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
                     </div>
                 </div>
                 <div>
                     <label for="p2p-clave" class="block text-sm font-medium text-gray-700 mb-1">Tu Clave P2P</label>
-                    <!-- CAMBIO vFintech: Foco verde -->
-                    <input type="password" id="p2p-clave" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    <!-- CAMBIO vFintech: Foco verde -> Foco Índigo para uniformidad -->
+                    <input type="password" id="p2p-clave" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
                 <div class="relative">
                     <label for="p2p-search-destino" class="block text-sm font-medium text-gray-700 mb-1">Enviar a (Destinatario)</label>
-                    <!-- CAMBIO vFintech: Foco verde -->
-                    <input type="text" id="p2p-search-destino" placeholder="Busca el nombre del destinatario..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    <!-- CAMBIO vFintech: Foco verde -> Foco Índigo para uniformidad -->
+                    <input type="text" id="p2p-search-destino" placeholder="Busca el nombre del destinatario..." class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                     <div id="p2p-destino-results" class="search-results-container hidden absolute z-10 w-full bg-white border border-gray-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto">
                     </div>
                 </div>
                 <div>
                     <label for="p2p-cantidad" class="block text-sm font-medium text-gray-700 mb-1">Cantidad a Enviar</label>
-                    <!-- CAMBIO vFintech: Foco verde -->
-                    <input type="number" id="p2p-cantidad" placeholder="Ej: 1000" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                    <!-- CAMBIO vFintech: Foco verde -> Foco Índigo para uniformidad -->
+                    <input type="number" id="p2p-cantidad" placeholder="Ej: 1000" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                 </div>
                 <div id="p2p-calculo-impuesto" class="text-sm text-center text-gray-600 h-5">
                 </div>
@@ -433,10 +429,8 @@
                 </div>
             </div>
             <div class="bg-gray-50 p-4 border-t border-gray-200 flex justify-end gap-3 flex-shrink-0">
-                <!-- ELIMINADO: Se elimina el botón de texto "Cerrar" (duplicidad con la X y el backdrop) -->
-                <!-- <button id="p2p-cancel-btn" ... >Cerrar</button> -->
-                <!-- CAMBIO: Botón verde primario con duración rápida -->
-                <button id="p2p-submit-btn" class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-md">
+                <!-- BOTÓN REALIZAR TRANSFERENCIA (UNIFICADO) -->
+                <button id="p2p-submit-btn" class="btn-base">
                     <span id="p2p-btn-text">Realizar Transferencia</span>
                 </button>
             </div>
@@ -560,10 +554,10 @@
                 </div>
                 <!-- CAMBIO vFintech: Pestañas con acento Índigo -->
                 <div class="flex border-b border-gray-200 px-4">
-                    <button data-tab="canjear" class="bono-tab-btn active-tab px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600 transition-colors hover:bg-gray-100 duration-200">
+                    <button data-tab="canjear" class="tab-btn active-tab px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600 transition-colors hover:bg-gray-100 duration-200">
                         Canjear Bono
                     </button>
-                    <button data-tab="admin" class="bono-tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-600 transition-colors hover:bg-gray-100 duration-200">
+                    <button data-tab="admin" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-600 transition-colors hover:bg-gray-100 duration-200">
                         Configuración (Admin)
                     </button>
                 </div>
@@ -592,7 +586,7 @@
                             <div>
                                 <label for="bono-clave-p2p" class="block text-sm font-medium text-gray-700 mb-1">Tu Clave P2P</label>
                                 <!-- CAMBIO vFintech: Input claro, foco Índigo -->
-                                <input type="password" id="bono-clave-p2p" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <input type="password" id="bono-clave-p2p" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                             </div>
                             <!-- 3. Clave del Bono -->
                             <div>
@@ -625,8 +619,8 @@
                             <div class="flex items-center gap-3">
                                 <!-- CAMBIO vFintech: Input claro, foco Índigo -->
                                 <input type="password" id="bono-admin-clave" placeholder="Clave Maestra" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                <!-- CAMBIO: Botón primario Índigo con duración rápida -->
-                                <button id="bono-admin-unlock-btn" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md">
+                                <!-- BOTÓN DESBLOQUEAR (UNIFICADO) -->
+                                <button id="bono-admin-unlock-btn" class="btn-base">
                                     Desbloquear
                                 </button>
                             </div>
@@ -662,12 +656,12 @@
                                     <input type="number" id="bono-admin-usos-input" placeholder="Ej: 100" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                 </div>
                                 <div class="flex items-center justify-end gap-3 pt-2">
-                                    <!-- CAMBIO: Botón secundario UNIFICADO -->
+                                    <!-- BOTÓN LIMPIAR (UNIFICADO) -->
                                     <button type="button" id="bono-admin-clear-btn" class="btn-base">
                                         Limpiar
                                     </button>
-                                    <!-- CAMBIO: Botón primario Índigo con duración rápida -->
-                                    <button type="submit" id="bono-admin-submit-btn" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md">
+                                    <!-- BOTÓN CREAR/ACTUALIZAR BONO (UNIFICADO) -->
+                                    <button type="submit" id="bono-admin-submit-btn" class="btn-base">
                                         Crear / Actualizar Bono
                                     </button>
                                 </div>
@@ -714,10 +708,8 @@
                 </div>
                 <!-- Botones -->
                 <div class="flex gap-3">
-                    <!-- ELIMINADO: Se elimina el botón de texto "Cerrar" (duplicidad con la X y el backdrop) -->
-                    <!-- <button id="bonos-cancel-btn" ... >Cerrar</button> -->
-                    <!-- CAMBIO: Botón primario Amarillo con duración rápida (permanece oculto si no está en la pestaña Canjear) -->
-                    <button id="bono-submit-btn" class="px-4 py-2 bg-yellow-500 text-yellow-900 text-sm font-medium rounded-lg hover:bg-yellow-600 transition-colors duration-200 shadow-sm hidden">
+                    <!-- BOTÓN CANJEAR BONO (UNIFICADO) -->
+                    <button id="bono-submit-btn" class="btn-base hidden">
                         <span id="bono-btn-text">Canjear Bono</span>
                     </button>
                 </div>
@@ -744,10 +736,10 @@
                 </div>
                 <!-- CAMBIO vFintech: Pestañas con acento Índigo -->
                 <div class="flex border-b border-gray-200 px-4">
-                    <button data-tab="comprar" class="tienda-tab-btn active-tab px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600 transition-colors hover:bg-gray-100 duration-200">
+                    <button data-tab="comprar" class="tab-btn active-tab px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600 transition-colors hover:bg-gray-100 duration-200">
                         Comprar
                     </button>
-                    <button data-tab="admin" class="tienda-tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-600 transition-colors hover:bg-gray-100 duration-200">
+                    <button data-tab="admin" class="tab-btn px-4 py-2 text-sm font-medium border-b-2 border-transparent text-gray-600 transition-colors hover:bg-gray-100 duration-200">
                         Gestión de Tienda (Admin)
                     </button>
                 </div>
@@ -808,9 +800,9 @@
                             <p class="text-sm text-gray-600 text-center mb-4">Ingresa la clave maestra para gestionar la tienda.</p>
                             <div class="flex items-center gap-3">
                                 <!-- CAMBIO vFintech: Input claro, foco Índigo -->
-                                <input type="password" id="tienda-admin-clave" placeholder="Clave Maestra" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
-                                <!-- CAMBIO: Botón primario Índigo con duración rápida -->
-                                <button id="tienda-admin-unlock-btn" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md">
+                                <input type="password" id="tienda-admin-clave" placeholder="Clave Maestra" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                                <!-- BOTÓN DESBLOQUEAR (UNIFICADO) -->
+                                <button id="tienda-admin-unlock-btn" class="btn-base">
                                     Desbloquear
                                 </button>
                             </div>
@@ -856,12 +848,12 @@
                                     <input type="number" id="tienda-admin-stock-input" placeholder="Ej: 5 (o 9999 para ilimitado)" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
                                 </div>
                                 <div class="flex items-center justify-end gap-3 pt-2">
-                                    <!-- CAMBIO: Botón secundario UNIFICADO -->
+                                    <!-- BOTÓN LIMPIAR (UNIFICADO) -->
                                     <button type="button" id="tienda-admin-clear-btn" class="btn-base">
                                         Limpiar
                                     </button>
-                                    <!-- CAMBIO: Botón primario Índigo con duración rápida -->
-                                    <button type="submit" id="tienda-admin-submit-btn" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-md">
+                                    <!-- BOTÓN CREAR/ACTUALIZAR (UNIFICADO) -->
+                                    <button type="submit" id="tienda-admin-submit-btn" class="btn-base">
                                         Crear / Actualizar
                                     </button>
                                 </div>
@@ -882,14 +874,14 @@
                                     <span id="tienda-admin-status-label" class="text-sm font-bold text-indigo-600">Cargando...</span> 
                                 </div>
                                 <div class="grid grid-cols-3 gap-2">
-                                    <!-- CAMBIO: Botones primarios (Verde, Rojo, Índigo) con duración rápida -->
-                                    <button type="button" id="tienda-force-open-btn" onclick="AppTransacciones.toggleStoreManual('open')" class="px-3 py-2 bg-green-600 text-white text-xs font-medium rounded-lg hover:bg-green-700 transition-colors duration-200 shadow-sm">
+                                    <!-- BOTONES FORZAR (UNIFICADOS) -->
+                                    <button type="button" id="tienda-force-open-btn" onclick="AppTransacciones.toggleStoreManual('open')" class="btn-base text-xs">
                                         Forzar Apertura
                                     </button>
-                                    <button type="button" id="tienda-force-close-btn" onclick="AppTransacciones.toggleStoreManual('closed')" class="px-3 py-2 bg-red-600 text-white text-xs font-medium rounded-lg hover:bg-red-700 transition-colors duration-200 shadow-sm">
+                                    <button type="button" id="tienda-force-close-btn" onclick="AppTransacciones.toggleStoreManual('closed')" class="btn-base text-xs">
                                         Forzar Cierre
                                     </button>
-                                    <button type="button" id="tienda-force-auto-btn" onclick="AppTransacciones.toggleStoreManual('auto')" class="px-3 py-2 bg-indigo-600 text-white text-xs font-medium rounded-lg hover:bg-indigo-700 transition-colors duration-200 shadow-sm">
+                                    <button type="button" id="tienda-force-auto-btn" onclick="AppTransacciones.toggleStoreManual('auto')" class="btn-base text-xs">
                                         Modo Automático
                                     </button>
                                 </div>
@@ -935,7 +927,6 @@
                 <!-- Botones -->
                 <div class="flex gap-3">
                     <!-- ELIMINADO: Se elimina el botón de texto "Cerrar" (duplicidad con la X y el backdrop) -->
-                    <!-- <button id="tienda-cancel-btn" ... >Cerrar</button> -->
                 </div>
             </div>
 
@@ -943,6 +934,6 @@
     </div>
 
     <!-- Lógica de la Aplicación -->
-    <script src="script.js?v=19.3" type="module" defer></script>
+    <script src="script.js?v=19.5" type="module" defer></script>
 </body>
 </html>
