@@ -311,18 +311,20 @@ const AppUI = {
         
         // Listeners Modales de Gestión (Clave)
         document.getElementById('gestion-btn').addEventListener('click', () => AppUI.showModal('gestion-modal'));
-        document.getElementById('modal-cancel').addEventListener('click', () => AppUI.hideModal('gestion-modal'));
-        document.getElementById('modal-submit').addEventListener('click', AppAuth.verificarClave);
+        // CAMBIO: Se eliminan botones de 'Cerrar' de texto. Solo se deja la 'X' en el HTML.
         document.getElementById('gestion-modal').addEventListener('click', (e) => {
             if (e.target.id === 'gestion-modal') AppUI.hideModal('gestion-modal');
         });
+        document.getElementById('modal-submit').addEventListener('click', AppAuth.verificarClave);
+
         document.getElementById('student-modal').addEventListener('click', (e) => {
             if (e.target.id === 'student-modal') AppUI.hideModal('student-modal');
         });
-
+        
+        // Listener de Botón de Cierre de Student Modal (Se maneja dinámicamente, pero se añade clase en HTML)
+        
         // Listeners Modal de Administración (Tabs)
-        document.getElementById('transaccion-modal-close-btn').addEventListener('click', () => AppUI.hideModal('transaccion-modal'));
-        document.getElementById('transaccion-cancel-btn').addEventListener('click', () => AppUI.hideModal('transaccion-modal'));
+        // CAMBIO: Se eliminan botones de 'Cerrar' de texto. Solo se deja la 'X' en el HTML.
         document.getElementById('transaccion-modal').addEventListener('click', (e) => {
             if (e.target.id === 'transaccion-modal') AppUI.hideModal('transaccion-modal');
         });
@@ -338,8 +340,7 @@ const AppUI = {
         
         // Listeners Modal P2P
         document.getElementById('p2p-portal-btn').addEventListener('click', () => AppUI.showP2PModal());
-        document.getElementById('p2p-modal-close-btn').addEventListener('click', () => AppUI.hideModal('p2p-transfer-modal'));
-        document.getElementById('p2p-cancel-btn').addEventListener('click', () => AppUI.hideModal('p2p-transfer-modal'));
+        // CAMBIO: Se eliminan botones de 'Cerrar' de texto. Solo se deja la 'X' en el HTML.
         document.getElementById('p2p-transfer-modal').addEventListener('click', (e) => {
             if (e.target.id === 'p2p-transfer-modal') AppUI.hideModal('p2p-transfer-modal');
         });
@@ -348,8 +349,7 @@ const AppUI = {
 
         // NUEVO v0.5.0: Listeners Modal Bonos
         document.getElementById('bonos-btn').addEventListener('click', () => AppUI.showBonoModal());
-        document.getElementById('bonos-modal-close').addEventListener('click', () => AppUI.hideModal('bonos-modal'));
-        document.getElementById('bonos-cancel-btn').addEventListener('click', () => AppUI.hideModal('bonos-modal'));
+        // CAMBIO: Se eliminan botones de 'Cerrar' de texto. Solo se deja la 'X' en el HTML.
         document.getElementById('bonos-modal').addEventListener('click', (e) => {
             if (e.target.id === 'bonos-modal') AppUI.hideModal('bonos-modal');
         });
@@ -372,8 +372,7 @@ const AppUI = {
 
         // --- NUEVO v16.0: Listeners Modal Tienda ---
         document.getElementById('tienda-btn').addEventListener('click', () => AppUI.showTiendaModal());
-        document.getElementById('tienda-modal-close').addEventListener('click', () => AppUI.hideModal('tienda-modal'));
-        document.getElementById('tienda-cancel-btn').addEventListener('click', () => AppUI.hideModal('tienda-modal'));
+        // CAMBIO: Se eliminan botones de 'Cerrar' de texto. Solo se deja la 'X' en el HTML.
         document.getElementById('tienda-modal').addEventListener('click', (e) => {
             if (e.target.id === 'tienda-modal') AppUI.hideModal('tienda-modal');
         });
@@ -400,14 +399,12 @@ const AppUI = {
 
         // Listeners Modal Reglas
         document.getElementById('reglas-btn').addEventListener('click', () => AppUI.showModal('reglas-modal'));
-        document.getElementById('reglas-modal-close').addEventListener('click', () => AppUI.hideModal('reglas-modal'));
         document.getElementById('reglas-modal').addEventListener('click', (e) => {
             if (e.target.id === 'reglas-modal') AppUI.hideModal('reglas-modal');
         });
 
         // Listeners Modal Anuncios
         document.getElementById('anuncios-modal-btn').addEventListener('click', () => AppUI.showModal('anuncios-modal'));
-        document.getElementById('anuncios-modal-close').addEventListener('click', () => AppUI.hideModal('anuncios-modal'));
         document.getElementById('anuncios-modal').addEventListener('click', (e) => {
             if (e.target.id === 'anuncios-modal') AppUI.hideModal('anuncios-modal');
         });
@@ -456,13 +453,17 @@ const AppUI = {
     showLoading: function() {
         const overlay = document.getElementById('loading-overlay');
         if (!overlay) return;
+        // CAMBIO: Transición más rápida
         overlay.classList.remove('opacity-0', 'pointer-events-none');
+        overlay.classList.add('transition-opacity', 'duration-200');
     },
 
     hideLoading: function() {
         const overlay = document.getElementById('loading-overlay');
         if (!overlay) return;
+        // CAMBIO: Transición más rápida
         overlay.classList.add('opacity-0', 'pointer-events-none');
+        overlay.classList.add('transition-opacity', 'duration-200');
     },
 
     mostrarVersionApp: function() {
@@ -475,14 +476,18 @@ const AppUI = {
     showModal: function(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
+        // CAMBIO: Transición más rápida
         modal.classList.remove('opacity-0', 'pointer-events-none');
         modal.querySelector('[class*="transform"]').classList.remove('scale-95');
+        modal.classList.add('transition-opacity', 'duration-200');
+        modal.querySelector('[class*="transform"]').classList.add('transition-transform', 'duration-200');
     },
 
     // CAMBIO v16.0: Añadida limpieza de modal de tienda y confirmación
     hideModal: function(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
+        // CAMBIO: Transición más rápida
         modal.classList.add('opacity-0', 'pointer-events-none');
         modal.querySelector('[class*="transform"]').classList.add('scale-95');
 
@@ -903,7 +908,8 @@ const AppUI = {
             // CORRECCIÓN BUG ONCLICK: Escapar comillas
             const nombreEscapado = escapeHTML(bono.nombre);
             const claveEscapada = escapeHTML(bono.clave);
-
+            
+            // Los botones dentro de la tabla deben ser simples botones de texto.
             html += `
                 <tr class="${rowClass}">
                     <!-- CAMBIO vFintech: Texto oscuro -->
@@ -912,10 +918,10 @@ const AppUI = {
                     <td class="px-4 py-2 text-sm text-gray-800 text-right">${recompensa} ℙ</td>
                     <td class="px-4 py-2 text-sm text-gray-700 text-right">${usos}</td>
                     <td class="px-4 py-2 text-right text-sm">
-                        <!-- CAMBIO vFintech: Botón Índigo/Rojo -->
-                        <button onclick="AppUI.handleEditBono('${claveEscapada}', '${nombreEscapado}', ${bono.recompensa}, ${bono.usos_totales})" class="font-medium text-indigo-600 hover:text-indigo-800 edit-bono-btn">Editar</button>
+                        <!-- Botones de texto (para no usar la clase btn-base que es más grande) -->
+                        <button onclick="AppUI.handleEditBono('${claveEscapada}', '${nombreEscapado}', ${bono.recompensa}, ${bono.usos_totales})" class="font-medium text-indigo-600 hover:text-indigo-800 edit-bono-btn transition-colors duration-200">Editar</button>
                         <!-- NUEVO v0.5.4: Botón Eliminar -->
-                        <button onclick="AppTransacciones.eliminarBono('${claveEscapada}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-bono-btn">Eliminar</button>
+                        <button onclick="AppTransacciones.eliminarBono('${claveEscapada}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-bono-btn transition-colors duration-200">Eliminar</button>
                     </td>
                 </tr>
             `;
@@ -1062,7 +1068,7 @@ const AppUI = {
                         <button id="buy-btn-${itemId}" 
                                 data-item-id="${itemId}"
                                 onclick="AppTransacciones.comprarItem('${itemId}', this)"
-                                class="tienda-buy-btn w-full px-4 py-2 text-sm font-medium rounded-lg transition-colors shadow-sm">
+                                class="tienda-buy-btn w-full px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200 shadow-sm">
                             <span class="btn-text">Cargando...</span>
                         </button>
                     </div>
@@ -1194,9 +1200,9 @@ const AppUI = {
         const itemIdEscapado = escapeHTML(itemId);
 
         actionCell.innerHTML = `
-            <!-- CAMBIO vFintech: Botones de confirmación rojo/gris -->
-            <button onclick="AppTransacciones.eliminarItem('${itemIdEscapado}')" class="font-medium text-red-600 hover:text-red-800 confirm-delete-btn">Confirmar</button>
-            <button onclick="AppUI.cancelDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-gray-600 hover:text-gray-800">Cancelar</button>
+            <!-- CAMBIO: Botones con clase btn-base, pero con override de color -->
+            <button onclick="AppTransacciones.eliminarItem('${itemIdEscapado}')" class="btn-base font-medium !text-red-600 hover:!text-red-800 confirm-delete-btn">Confirmar</button>
+            <button onclick="AppUI.cancelDeleteConfirmation('${itemIdEscapado}')" class="ml-2 btn-base font-medium">Cancelar</button>
         `;
     },
 
@@ -1216,9 +1222,9 @@ const AppUI = {
         const itemIdEscapado = escapeHTML(item.ItemID); 
 
         actionCell.innerHTML = `
-            <!-- CAMBIO vFintech: Botones de acción Índigo/Rojo -->
-            <button onclick="AppUI.handleEditItem('${itemIdEscapado}', '${nombreEscapado}', '${descEscapada}', '${tipoEscapado}', ${item.precio}, ${item.stock})" class="font-medium text-indigo-600 hover:text-indigo-800 edit-item-btn">Editar</button>
-            <button onclick="AppUI.handleDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-item-btn">Eliminar</button>
+            <!-- Botones de texto (para no usar la clase btn-base que es más grande) -->
+            <button onclick="AppUI.handleEditItem('${itemIdEscapado}', '${nombreEscapado}', '${descEscapada}', '${tipoEscapado}', ${item.precio}, ${item.stock})" class="font-medium text-indigo-600 hover:text-indigo-800 edit-item-btn transition-colors duration-200">Editar</button>
+            <button onclick="AppUI.handleDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-item-btn transition-colors duration-200">Eliminar</button>
         `;
     },
     // --- FIN FUNCIONES DE CONFIRMACIÓN ---
@@ -1259,9 +1265,9 @@ const AppUI = {
                     <td class="px-4 py-2 text-sm text-gray-800 text-right">${precio} ℙ</td>
                     <td class="px-4 py-2 text-sm text-gray-700 text-right">${stock}</td>
                     <td class="px-4 py-2 text-right text-sm">
-                        <!-- CAMBIO vFintech: Botones de acción Índigo/Rojo -->
-                        <button onclick="AppUI.handleEditItem('${itemIdEscapado}', '${nombreEscapado}', '${descEscapada}', '${tipoEscapado}', ${item.precio}, ${item.stock})" class="font-medium text-indigo-600 hover:text-indigo-800 edit-item-btn">Editar</button>
-                        <button onclick="AppUI.handleDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-item-btn">Eliminar</button>
+                        <!-- Botones de texto (para no usar la clase btn-base que es más grande) -->
+                        <button onclick="AppUI.handleEditItem('${itemIdEscapado}', '${nombreEscapado}', '${descEscapada}', '${tipoEscapado}', ${item.precio}, ${item.stock})" class="font-medium text-indigo-600 hover:text-indigo-800 edit-item-btn transition-colors duration-200">Editar</button>
+                        <button onclick="AppUI.handleDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-item-btn transition-colors duration-200">Eliminar</button>
                     </td>
                 </tr>
             `;
@@ -1406,7 +1412,7 @@ const AppUI = {
                 btnSelectAll.textContent = "Todos";
                 btnSelectAll.dataset.grupo = grupo.nombre; 
                 // CAMBIO vFintech: Botón Índigo
-                btnSelectAll.className = "text-xs font-medium text-indigo-600 hover:text-indigo-800 select-all-users-btn";
+                btnSelectAll.className = "text-xs font-medium text-indigo-600 hover:text-indigo-800 select-all-users-btn transition-colors duration-200";
                 AppState.transaccionSelectAll[grupo.nombre] = false; 
                 btnSelectAll.addEventListener('click', AppUI.toggleSelectAllUsuarios);
                 
@@ -1551,7 +1557,7 @@ const AppUI = {
                         <span class="font-semibold text-gray-800">${pkg.label} (${AppFormat.formatNumber(pkg.monto)} ℙ)</span>
                         <span class="text-xs text-gray-600 block">Cuota: <strong>${AppFormat.formatNumber(cuotaDiaria)} ℙ</strong> (x${pkg.plazoDias} días). Total: ${AppFormat.formatNumber(totalAPagar)} ℙ.</span>
                     </div>
-                    <button onclick="${action}" class="px-3 py-1 text-xs font-medium rounded-lg transition-colors ${buttonClass}" ${buttonDisabled}>
+                    <button onclick="${action}" class="px-3 py-1 text-xs font-medium rounded-lg transition-colors duration-200 ${buttonClass}" ${buttonDisabled}>
                         Otorgar ${isEligible ? '' : eligibilityMessage}
                     </button>
                 </div>
@@ -1632,7 +1638,7 @@ const AppUI = {
                             (Tasa ${pkg.interes}% - Imp. ${AppFormat.formatNumber(impuesto)} ℙ)
                         </span>
                     </div>
-                    <button onclick="${action}" class="px-3 py-1 text-xs font-medium text-white rounded-lg transition-colors ${buttonClass}" ${buttonDisabled}>
+                    <button onclick="${action}" class="px-3 py-1 text-xs font-medium text-white rounded-lg transition-colors duration-200 ${buttonClass}" ${buttonDisabled}>
                         Depositar ${isEligible ? '' : eligibilityMessage}
                     </button>
                 </div>
@@ -1717,7 +1723,7 @@ const AppUI = {
         homeLink.href = '#';
         homeLink.dataset.groupName = "home"; 
         // CAMBIO vFintech: Clases base claras
-        homeLink.className = "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link text-gray-700 hover:bg-gray-100";
+        homeLink.className = "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 nav-link text-gray-700 hover:bg-gray-100";
         homeLink.innerHTML = `<span class="truncate">Inicio</span>`;
         homeLink.addEventListener('click', (e) => {
             e.preventDefault();
@@ -1737,7 +1743,7 @@ const AppUI = {
             link.href = '#';
             link.dataset.groupName = grupo.nombre;
             // CAMBIO vFintech: Clases base claras
-            link.className = "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link text-gray-700 hover:bg-gray-100";
+            link.className = "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200 nav-link text-gray-700 hover:bg-gray-100";
             
             link.innerHTML = `
                 <span class="truncate">${grupo.nombre}</span>
@@ -1798,7 +1804,7 @@ const AppUI = {
         let top3Html = '';
 
         // ===================================================================
-        // CORRECCIÓN 1: BÓVEDA (Total en Cuentas)
+        // CORRECCIÓN 1: BÓVEDA
         // ===================================================================
         const allStudents = AppState.datosAdicionales.allStudents;
         
@@ -1810,13 +1816,14 @@ const AppUI = {
         // Tarjeta de Tesorería
         const tesoreriaSaldo = AppState.datosAdicionales.saldoTesoreria;
         
-        // CAMBIO vFintech: Card Clara con gradiente (Bóveda)
+        // CAMBIO: Card con gradiente normal (Mantiene la estructura original, pero se asegura h-full)
         bovedaHtml = `
             <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl shadow-xl p-4 h-full flex flex-col justify-between text-white">
                 <div>
                     <!-- Fila 1: Título y Badge -->
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-medium opacity-80 truncate">Total en Cuentas</span>
+                        <!-- CAMBIO: Misma etiqueta BÓVEDA que Tesorería -->
                         <span class="text-xs font-bold bg-white/20 text-white rounded-full px-2 py-0.5">BÓVEDA</span>
                     </div>
                     <!-- Fila 2: Subtítulo y Monto (Distribución Horizontal) -->
@@ -1828,21 +1835,21 @@ const AppUI = {
             </div>
         `;
         
-        // CAMBIO vFintech: Card Clara (Tesorería)
+        // CAMBIO: Card con degradado INVERTIDO y texto blanco (Igual tamaño y etiqueta que Bóveda)
         tesoreriaHtml = `
-            <div class="bg-white rounded-xl shadow-lg p-4 h-full flex flex-col justify-between">
+            <div class="bg-gradient-to-l from-indigo-500 to-indigo-600 rounded-xl shadow-xl p-4 h-full flex flex-col justify-between text-white">
                 <div>
                     <!-- Fila 1: Título y Badge -->
                     <div class="flex items-center justify-between">
-                        <span class="text-sm font-medium text-gray-500 truncate">Capital Operativo</span>
-                        <!-- CAMBIO vFintech: Badge Índigo -->
-                        <span class="text-xs font-bold bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5">TESORERÍA</span>
+                        <span class="text-sm font-medium opacity-80 truncate">Capital Operativo</span>
+                        <!-- CAMBIO: Mismo badge que Bóveda -->
+                        <span class="text-xs font-bold bg-white/20 text-white rounded-full px-2 py-0.5">TESORERÍA</span>
                     </div>
                     <!-- Fila 2: Subtítulo y Monto (Distribución Horizontal) -->
                     <div class="flex justify-between items-baseline mt-3">
-                        <p class="text-lg font-semibold text-gray-900 truncate">Fondo del Banco</p>
-                        <!-- CAMBIO vFintech: Monto Índigo -->
-                        <p class="text-3xl font-bold text-indigo-600">${AppFormat.formatNumber(tesoreriaSaldo)} ℙ</p>
+                        <p class="text-lg font-semibold truncate">Fondo del Banco</p>
+                        <!-- Monto se vuelve blanco -->
+                        <p class="text-3xl font-bold">${AppFormat.formatNumber(tesoreriaSaldo)} ℙ</p>
                     </div>
                 </div>
             </div>
@@ -1876,12 +1883,24 @@ const AppUI = {
 
         if (top3.length > 0) {
             top3Html = top3.map((student, index) => {
-                // CAMBIO vFintech: Colores de rank claros
-                let rankColor = 'bg-gray-200 text-gray-600';
+                // CAMBIO: Nueva lógica de borde para unificar el estilo de tarjeta
+                let rankBorder = 'border-gray-200';
                 let rankText = 'text-indigo-600';
-                if (index === 0) { rankColor = 'bg-yellow-100 text-yellow-700'; rankText = 'text-yellow-600'; }
-                if (index === 1) { rankColor = 'bg-gray-200 text-gray-700'; rankText = 'text-gray-700'; }
-                if (index === 2) { rankColor = 'bg-orange-100 text-orange-700'; rankText = 'text-orange-600'; }
+                let rankBg = 'bg-gray-200 text-gray-600';
+
+                if (index === 0) { // 1er Lugar (Dorado)
+                    rankBorder = 'border-yellow-400'; 
+                    rankText = 'text-yellow-600'; 
+                    rankBg = 'bg-yellow-100 text-yellow-700';
+                } else if (index === 1) { // 2do Lugar (Plata/Índigo)
+                    rankBorder = 'border-indigo-400'; 
+                    rankText = 'text-indigo-600'; 
+                    rankBg = 'bg-indigo-100 text-indigo-700';
+                } else if (index === 2) { // 3er Lugar (Bronce/Naranja)
+                    rankBorder = 'border-orange-400'; 
+                    rankText = 'text-orange-600'; 
+                    rankBg = 'bg-orange-100 text-orange-700';
+                }
                 
                 const grupoNombre = student.grupoNombre || 'N/A';
                 
@@ -1889,13 +1908,13 @@ const AppUI = {
                 const totalInvertidoF = AppFormat.formatNumber(student.totalInvertidoDepositos);
 
                 return `
-                    <!-- CAMBIO vFintech: Card clara con sombra suave -->
-                    <div class="bg-white rounded-xl shadow-lg p-3 h-full flex flex-col justify-between">
+                    <!-- CAMBIO: Card con borde de color, sombra unificada y h-full -->
+                    <div class="bg-white rounded-xl shadow-lg p-3 h-full flex flex-col justify-between border-2 ${rankBorder} transition-all hover:shadow-xl duration-200">
                         <div>
                             <div class="flex items-center justify-between mb-1">
                                 <!-- CAMBIO vFintech: Texto gris -->
                                 <span class="text-sm font-medium text-gray-500 truncate">${grupoNombre}</span>
-                                <span class="text-xs font-bold ${rankColor} rounded-full px-2 py-0.5">${index + 1}º</span>
+                                <span class="text-xs font-bold ${rankBg} rounded-full px-2 py-0.5">${index + 1}º</span>
                             </div>
                             <!-- CAMBIO vFintech: Texto oscuro -->
                             <p class="text-base font-semibold text-gray-900 truncate">${student.nombre}</p>
@@ -1903,7 +1922,7 @@ const AppUI = {
                         
                         <div class="text-right mt-2">
                             <div class="tooltip-container relative inline-block">
-                                <!-- CAMBIO vFintech: Monto Índigo -->
+                                <!-- CAMBIO vFintech: Monto con color de acento según rank -->
                                 <p class="text-xl font-bold ${rankText}">
                                     ${AppFormat.formatNumber(student.capitalTotal)} ℙ
                                 </p>
@@ -1923,8 +1942,8 @@ const AppUI = {
         
         for (let i = top3.length; i < 3; i++) {
             top3Html += `
-                <!-- CAMBIO vFintech: Placeholder claro -->
-                <div class="bg-white rounded-xl shadow-lg p-3 opacity-50 h-full flex flex-col justify-between">
+                <!-- CAMBIO vFintech: Placeholder claro con borde gris -->
+                <div class="bg-white rounded-xl shadow-lg p-3 opacity-50 h-full flex flex-col justify-between border-2 border-gray-200">
                     <div>
                         <div class="flex items-center justify-between mb-1">
                             <span class="text-sm font-medium text-gray-400">-</span>
@@ -1991,7 +2010,7 @@ const AppUI = {
 
             return `
                 <!-- CAMBIO vFintech: Hover claro -->
-                <tr class="hover:bg-gray-50 cursor-pointer" onclick="AppUI.showStudentModal('${grupoNombreEscapado}', '${usuarioNombreEscapado}', ${pos})">
+                <tr class="hover:bg-gray-50 cursor-pointer transition-colors duration-200" onclick="AppUI.showStudentModal('${grupoNombreEscapado}', '${usuarioNombreEscapado}', ${pos})">
                     <td class="px-4 py-3 text-center">
                         <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${rankBg}">
                             ${pos}
@@ -2068,7 +2087,7 @@ const AppUI = {
 
             return `
                 <!-- CAMBIO vFintech: Hover claro -->
-                <tr class="hover:bg-gray-50">
+                <tr class="hover:bg-gray-50 transition-colors duration-200">
                     <!-- CAMBIO vFintech: Texto oscuro/gris -->
                     <td class="px-4 py-2 text-sm text-gray-900 font-medium truncate">${student.nombre}</td>
                     <td class="px-4 py-2 text-sm text-gray-500 whitespace-nowrap">${grupoNombre}</td>
@@ -2134,7 +2153,7 @@ const AppUI = {
 
         lista.innerHTML = anuncios.map(anuncio => `
             <!-- CAMBIO vFintech: Hover claro -->
-            <li class="flex items-start p-2 hover:bg-gray-50 rounded-lg transition-colors"> 
+            <li class="flex items-start p-2 hover:bg-gray-50 rounded-lg transition-colors duration-200"> 
                 <span class="text-xs font-bold ${anuncio.bg} ${anuncio.text} rounded-full w-20 text-center py-0.5 mr-3 flex-shrink-0 mt-1">${anuncio.tipo}</span>
                 <span class="text-sm text-gray-700 flex-1">${anuncio.texto}</span>
             </li>
@@ -2222,7 +2241,8 @@ const AppUI = {
                         <h2 class="text-xl font-semibold text-gray-900">${student.nombre}</h2>
                         <p class="text-sm font-medium text-gray-500">${grupo.nombre}</p>
                     </div>
-                    <button onclick="AppUI.hideModal('student-modal')" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                    <!-- CAMBIO: Se usa la nueva clase para el efecto de la 'X' -->
+                    <button onclick="AppUI.hideModal('student-modal')" class="modal-close-icon text-gray-400 text-2xl">&times;</button>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     ${createStat('Rank en Grupo', `${rank}º`, 'text-indigo-600')}
@@ -2256,8 +2276,10 @@ const AppUI = {
         const storeOpen = new Date(storeDay.getFullYear(), storeDay.getMonth(), storeDay.getDate(), 0, 0, 0); 
         const storeClose = new Date(storeDay.getFullYear(), storeDay.getMonth(), storeDay.getDate(), 23, 59, 59); 
 
-        const timerEl = document.getElementById('countdown-timer');
-        const messageEl = document.getElementById('store-message'); 
+        // CAMBIO: Se eliminó countdown-timer del HTML principal
+        // const timerEl = document.getElementById('countdown-timer');
+        // const messageEl = document.getElementById('store-message'); 
+        
         const tiendaBtn = document.getElementById('tienda-btn');
         const tiendaTimerStatus = document.getElementById('tienda-timer-status');
         
@@ -2280,9 +2302,9 @@ const AppUI = {
 
         if (manualStatus === 'open') {
             // TIENDA FORZADA ABIERTA
-            timerEl.classList.add('hidden');
-            messageEl.classList.remove('hidden');
-            messageEl.textContent = "¡La tienda está abierta!"; 
+            // timerEl.classList.add('hidden');
+            // messageEl.classList.remove('hidden');
+            // messageEl.textContent = "¡La tienda está abierta!"; 
             if (tiendaTimerStatus) { 
                 tiendaTimerStatus.innerHTML = `¡TIENDA ABIERTA!`; 
                 tiendaTimerStatus.classList.add(...openStatusClasses.split(' ').filter(c => c));
@@ -2291,8 +2313,8 @@ const AppUI = {
 
         } else if (manualStatus === 'closed') {
             // TIENDA FORZADA CERRADA
-            timerEl.classList.add('hidden'); // Ocultamos el timer principal
-            messageEl.classList.add('hidden'); // Ocultamos el mensaje principal
+            // timerEl.classList.add('hidden'); // Ocultamos el timer principal
+            // messageEl.classList.add('hidden'); // Ocultamos el mensaje principal
             
             if (tiendaTimerStatus) {
                 tiendaTimerStatus.innerHTML = `TIENDA CERRADA`;
@@ -2303,9 +2325,9 @@ const AppUI = {
         } else {
             // MODO AUTOMÁTICO (lógica original)
             if (now >= storeOpen && now <= storeClose) { 
-                timerEl.classList.add('hidden');
-                messageEl.classList.remove('hidden');
-                messageEl.textContent = "¡La tienda está abierta!"; // Mensaje original
+                // timerEl.classList.add('hidden');
+                // messageEl.classList.remove('hidden');
+                // messageEl.textContent = "¡La tienda está abierta!"; // Mensaje original
                 if (tiendaTimerStatus) { 
                     tiendaTimerStatus.innerHTML = `
                         <span class="text-green-600 font-bold">¡TIENDA ABIERTA!</span> Oportunidad única.
@@ -2314,8 +2336,8 @@ const AppUI = {
                 }
                 AppState.tienda.isStoreOpen = true;
             } else {
-                timerEl.classList.remove('hidden');
-                messageEl.classList.add('hidden');
+                // timerEl.classList.remove('hidden');
+                // messageEl.classList.add('hidden');
                 
                 let targetDate = storeOpen; 
                 if (now > storeClose) { 
