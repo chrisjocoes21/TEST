@@ -10,9 +10,9 @@ const AppConfig = {
     MAX_RETRIES: 5,
     CACHE_DURATION: 300000,
     
-    // CAMBIO v16.1: Actualización de versión
+    // CAMBIO v21.0: Actualización de versión (Monocromo Índigo)
     APP_STATUS: 'Beta', 
-    APP_VERSION: 'v19.3 (Fintech)', // ACTUALIZADO A v19.3 (Fintech)
+    APP_VERSION: 'v21.0 (Monocromo Índigo)', 
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -68,17 +68,14 @@ const AppState = {
     // NUEVO v0.5.0: Estado de Bonos
     bonos: {
         disponibles: [], // Bonos que aún tienen usos
-        canjeados: [], // Bonos que el usuario actual (hipotético) ha canjeado
-        adminPanelUnlocked: false // Para el panel de admin
+        canjeados: [], // Bonos que el usuario actual (hipotético) ha canjeados
     },
 
     // CAMBIO v17.0: Simplificación de Tienda
     tienda: {
         items: {}, // Almacenará los artículos de la API
-        adminPanelUnlocked: false,
         isStoreOpen: false, // Controlado por updateCountdown
         storeManualStatus: 'auto', // NUEVO v16.1 (Problema 3): Control manual (auto, open, closed)
-        // currentItemToConfirm: null ELIMINADO V17.0
     }
 };
 
@@ -92,9 +89,10 @@ const AppAuth = {
             AppUI.showTransaccionModal('transaccion'); // Abrir en la pestaña 'transaccion'
             
             claveInput.value = '';
+            // CAMBIO vMonocromo: Eliminar clase de color rojo, dejar solo 'shake'
             claveInput.classList.remove('shake', 'border-red-500');
         } else {
-            // CAMBIO vFintech: Clase de borde para el error
+            // CAMBIO vMonocromo: Usar 'border-red-500' para el error visual
             claveInput.classList.add('shake', 'border-red-500'); 
             claveInput.focus();
             setTimeout(() => {
@@ -108,12 +106,12 @@ const AppAuth = {
 const AppFormat = {
     // CAMBIO v0.4.4: Formato de Pinceles sin decimales
     formatNumber: (num) => new Intl.NumberFormat('es-DO', { maximumFractionDigits: 0 }).format(num),
-    // formatNumber: (num) => new Intl.NumberFormat('es-DO').format(num), // <-- ORIGINAL
     // NUEVO v0.4.0: Formateo de Pinceles (2 decimales) - REEMPLAZADO por formatNumber
     formatPincel: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)
 };
 
 // --- BASE DE DATOS DE ANUNCIOS ---
+// CAMBIO vMonocromo: Actualizado para usar solo colores monocromáticos en UI.
 const AnunciosDB = {
     'AVISO': [
         "La tienda de fin de mes abre el último Jueves de cada mes.", 
@@ -147,7 +145,8 @@ const AppData = {
     isCacheValid: () => AppState.cachedData && AppState.lastCacheTime && (Date.now() - AppState.lastCacheTime < AppConfig.CACHE_DURATION),
 
     cargarDatos: async function(isRetry = false) {
-        if (AppState.actualizacionEnProceso) return;
+        // FIX V19.7: Verificar si ya hay una actualización en curso
+        if (AppState.actualizacionEnProceso && !isRetry) return;
         AppState.actualizacionEnProceso = true;
 
         if (!isRetry) {
@@ -155,9 +154,11 @@ const AppData = {
             AppState.retryDelay = AppConfig.INITIAL_RETRY_DELAY;
         }
 
+        // Mostrar loading solo si es la carga inicial
         if (!AppState.datosActuales) {
             AppUI.showLoading(); 
         } else {
+            // CAMBIO vMonocromo: Usar índigo para el estado de carga
             AppUI.setConnectionStatus('loading', 'Cargando...');
         }
 
@@ -191,11 +192,13 @@ const AppData = {
                 AppState.cachedData = data;
                 AppState.lastCacheTime = Date.now();
                 AppState.retryCount = 0;
+                // CAMBIO vMonocromo: Usar índigo para el estado OK (conectado)
                 AppUI.setConnectionStatus('ok', 'Conectado');
             }
 
         } catch (error) {
             console.error("Error al cargar datos:", error.message);
+            // CAMBIO vMonocromo: Usar gris para el estado de error
             AppUI.setConnectionStatus('error', 'Error de conexión.');
             
             if (AppState.retryCount < AppConfig.MAX_RETRIES) {
@@ -209,6 +212,7 @@ const AppData = {
                 console.error("Fallaron todos los reintentos y no hay caché.");
             }
         } finally {
+            // FIX V19.7: Asegurar que el estado se libere y el loading se oculte SIEMPRE
             AppState.actualizacionEnProceso = false;
             AppUI.hideLoading(); 
         }
@@ -285,18 +289,24 @@ const AppData = {
         // 9. NUEVO v0.5.0: Actualizar UI de Bonos (si está abierta)
         if (document.getElementById('bonos-modal').classList.contains('opacity-0') === false) {
             AppUI.populateBonoList();
-            AppUI.populateBonoAdminList();
+            // Ya no llama a populateBonoAdminList() aquí, sino al abrir la pestaña en transaccion-modal
         }
-
         // 10. NUEVO v16.0: Actualizar UI de Tienda (si está abierta)
         if (document.getElementById('tienda-modal').classList.contains('opacity-0') === false) {
-            // CORRECCIÓN v16.1 (Problema 1 - Sincronización):
-            // Forzar el re-renderizado de la lista de estudiantes Y admin
-            // para reflejar cambios (ej: crear item) en tiempo real.
             AppUI.renderTiendaItems(); 
-            AppUI.populateTiendaAdminList();
-            AppUI.updateTiendaAdminStatusLabel(); // v16.1
-            // AppUI.updateTiendaButtonStates(); // renderTiendaItems() ya llama a esto.
+        }
+
+        // Si el panel de admin está abierto, actualizar las listas de admin
+        if (document.getElementById('transaccion-modal').classList.contains('opacity-0') === false) {
+            const activeTab = document.querySelector('#transaccion-modal .tab-btn.active-tab');
+            const tabId = activeTab ? activeTab.dataset.tab : '';
+            if (tabId === 'bonos_admin') {
+                AppUI.populateBonoAdminList();
+            } else if (tabId === 'tienda_gestion' || tabId === 'tienda_inventario') {
+                // CAMBIO V19.5: La lista de inventario y la etiqueta de estado se actualizan en ambas nuevas pestañas de tienda
+                AppUI.populateTiendaAdminList();
+                AppUI.updateTiendaAdminStatusLabel();
+            }
         }
 
         AppState.datosActuales = activeGroups; // Actualizar el estado al final
@@ -311,8 +321,18 @@ const AppUI = {
         
         // Listeners Modales de Gestión (Clave)
         document.getElementById('gestion-btn').addEventListener('click', () => AppUI.showModal('gestion-modal'));
-        document.getElementById('modal-cancel').addEventListener('click', () => AppUI.hideModal('gestion-modal'));
         document.getElementById('modal-submit').addEventListener('click', AppAuth.verificarClave);
+        
+        // NUEVO v21.0: Listener para el botón X de cierre de Modales
+        document.getElementById('modal-cancel').addEventListener('click', () => AppUI.hideModal('gestion-modal'));
+        document.getElementById('transaccion-modal-close-btn').addEventListener('click', () => AppUI.hideModal('transaccion-modal'));
+        document.getElementById('p2p-modal-close-btn').addEventListener('click', () => AppUI.hideModal('p2p-transfer-modal'));
+        document.getElementById('bonos-modal-close').addEventListener('click', () => AppUI.hideModal('bonos-modal'));
+        document.getElementById('tienda-modal-close').addEventListener('click', () => AppUI.hideModal('tienda-modal'));
+        document.getElementById('reglas-modal-close').addEventListener('click', () => AppUI.hideModal('reglas-modal'));
+        document.getElementById('anuncios-modal-close').addEventListener('click', () => AppUI.hideModal('anuncios-modal'));
+
+
         document.getElementById('gestion-modal').addEventListener('click', (e) => {
             if (e.target.id === 'gestion-modal') AppUI.hideModal('gestion-modal');
         });
@@ -321,8 +341,6 @@ const AppUI = {
         });
 
         // Listeners Modal de Administración (Tabs)
-        document.getElementById('transaccion-modal-close-btn').addEventListener('click', () => AppUI.hideModal('transaccion-modal'));
-        document.getElementById('transaccion-cancel-btn').addEventListener('click', () => AppUI.hideModal('transaccion-modal'));
         document.getElementById('transaccion-modal').addEventListener('click', (e) => {
             if (e.target.id === 'transaccion-modal') AppUI.hideModal('transaccion-modal');
         });
@@ -338,8 +356,6 @@ const AppUI = {
         
         // Listeners Modal P2P
         document.getElementById('p2p-portal-btn').addEventListener('click', () => AppUI.showP2PModal());
-        document.getElementById('p2p-modal-close-btn').addEventListener('click', () => AppUI.hideModal('p2p-transfer-modal'));
-        document.getElementById('p2p-cancel-btn').addEventListener('click', () => AppUI.hideModal('p2p-transfer-modal'));
         document.getElementById('p2p-transfer-modal').addEventListener('click', (e) => {
             if (e.target.id === 'p2p-transfer-modal') AppUI.hideModal('p2p-transfer-modal');
         });
@@ -348,66 +364,40 @@ const AppUI = {
 
         // NUEVO v0.5.0: Listeners Modal Bonos
         document.getElementById('bonos-btn').addEventListener('click', () => AppUI.showBonoModal());
-        document.getElementById('bonos-modal-close').addEventListener('click', () => AppUI.hideModal('bonos-modal'));
-        document.getElementById('bonos-cancel-btn').addEventListener('click', () => AppUI.hideModal('bonos-modal'));
         document.getElementById('bonos-modal').addEventListener('click', (e) => {
             if (e.target.id === 'bonos-modal') AppUI.hideModal('bonos-modal');
         });
-        // Listeners Pestañas de Bonos
-        document.querySelectorAll('#bonos-modal .bono-tab-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const tabId = e.target.dataset.tab;
-                AppUI.changeBonoTab(tabId);
-            });
-        });
         // Listeners Canje de Bono (Usuario)
         document.getElementById('bono-submit-btn').addEventListener('click', AppTransacciones.canjearBono);
-        // Listeners Admin de Bonos
-        document.getElementById('bono-admin-unlock-btn').addEventListener('click', AppUI.toggleBonoAdminPanel);
+        // Listeners Admin de Bonos (Ahora en transaccion-modal)
         document.getElementById('bono-admin-form').addEventListener('submit', (e) => {
             e.preventDefault();
             AppTransacciones.crearActualizarBono();
         });
+        // CAMBIO v21.0: Botón "Limpiar" ahora usa estilo Outline Índigo
         document.getElementById('bono-admin-clear-btn').addEventListener('click', AppUI.clearBonoAdminForm);
 
         // --- NUEVO v16.0: Listeners Modal Tienda ---
         document.getElementById('tienda-btn').addEventListener('click', () => AppUI.showTiendaModal());
-        document.getElementById('tienda-modal-close').addEventListener('click', () => AppUI.hideModal('tienda-modal'));
-        document.getElementById('tienda-cancel-btn').addEventListener('click', () => AppUI.hideModal('tienda-modal'));
         document.getElementById('tienda-modal').addEventListener('click', (e) => {
             if (e.target.id === 'tienda-modal') AppUI.hideModal('tienda-modal');
         });
-        // Listeners Pestañas de Tienda
-        document.querySelectorAll('#tienda-modal .tienda-tab-btn').forEach(button => {
-            button.addEventListener('click', (e) => {
-                const tabId = e.target.dataset.tab;
-                AppUI.changeTiendaTab(tabId);
-            });
-        });
-        // Listeners Admin de Tienda
-        document.getElementById('tienda-admin-unlock-btn').addEventListener('click', AppUI.toggleTiendaAdminPanel);
+        // Listeners Admin de Tienda (Ahora en transaccion-modal)
         document.getElementById('tienda-admin-form').addEventListener('submit', (e) => {
             e.preventDefault();
             AppTransacciones.crearActualizarItem();
         });
+        // CAMBIO v21.0: Botón "Limpiar" ahora usa estilo Outline Índigo
         document.getElementById('tienda-admin-clear-btn').addEventListener('click', AppUI.clearTiendaAdminForm);
         
-        // NUEVO v16.1: Listeners para Control Manual de Tienda
-        // Los listeners ya están en el HTML con onclick="AppTransacciones.toggleStoreManual('status')"
-
-        // --- ELIMINADO v17.0: Listeners para Modal Confirmación de Compra ---
-
-
         // Listeners Modal Reglas
         document.getElementById('reglas-btn').addEventListener('click', () => AppUI.showModal('reglas-modal'));
-        document.getElementById('reglas-modal-close').addEventListener('click', () => AppUI.hideModal('reglas-modal'));
         document.getElementById('reglas-modal').addEventListener('click', (e) => {
             if (e.target.id === 'reglas-modal') AppUI.hideModal('reglas-modal');
         });
 
         // Listeners Modal Anuncios
         document.getElementById('anuncios-modal-btn').addEventListener('click', () => AppUI.showModal('anuncios-modal'));
-        document.getElementById('anuncios-modal-close').addEventListener('click', () => AppUI.hideModal('anuncios-modal'));
         document.getElementById('anuncios-modal').addEventListener('click', (e) => {
             if (e.target.id === 'anuncios-modal') AppUI.hideModal('anuncios-modal');
         });
@@ -423,7 +413,7 @@ const AppUI = {
         sidebar.addEventListener('mouseleave', () => AppUI.resetSidebarTimer());
         
 
-        // Listeners de cambio de Pestaña (Admin)
+        // Listeners de cambio de Pestaña (Admin) - AHORA MANEJA TODOS LOS TABS ADMIN
         document.querySelectorAll('#transaccion-modal .tab-btn').forEach(button => {
             button.addEventListener('click', (e) => {
                 const tabId = e.target.dataset.tab;
@@ -435,7 +425,6 @@ const AppUI = {
         AppUI.mostrarVersionApp();
         
         // Listeners para los buscadores (autocomplete)
-        // CAMBIO vFintech: Foco Índigo
         AppUI.setupSearchInput('prestamo-alumno-search', 'prestamo-search-results', 'prestamo', (student) => AppUI.loadPrestamoPaquetes(student ? student.nombre : null));
         AppUI.setupSearchInput('deposito-alumno-search', 'deposito-search-results', 'deposito', (student) => AppUI.loadDepositoPaquetes(student ? student.nombre : null));
         AppUI.setupSearchInput('p2p-search-origen', 'p2p-origen-results', 'p2pOrigen', AppUI.selectP2PStudent);
@@ -467,8 +456,8 @@ const AppUI = {
 
     mostrarVersionApp: function() {
         const versionContainer = document.getElementById('app-version-container');
-        // CAMBIO vFintech: Texto gris sutil
-        versionContainer.classList.add('text-gray-400'); 
+        // CAMBIO vMonocromo: Texto gris sutil
+        versionContainer.classList.add('text-slate-400'); 
         versionContainer.innerHTML = `Estado: ${AppConfig.APP_STATUS} | ${AppConfig.APP_VERSION}`;
     },
 
@@ -479,7 +468,7 @@ const AppUI = {
         modal.querySelector('[class*="transform"]').classList.remove('scale-95');
     },
 
-    // CAMBIO v16.0: Añadida limpieza de modal de tienda y confirmación
+    // CAMBIO v21.0: Se eliminó la lógica de limpieza de los botones de cierre eliminados.
     hideModal: function(modalId) {
         const modal = document.getElementById(modalId);
         if (!modal) return;
@@ -494,11 +483,17 @@ const AppUI = {
             document.getElementById('transaccion-calculo-impuesto').textContent = ""; 
             AppUI.resetSearchInput('prestamo');
             AppUI.resetSearchInput('deposito');
-            // CAMBIO vFintech: Placeholder gris
-            document.getElementById('prestamo-paquetes-container').innerHTML = '<div class="text-sm text-gray-500">Seleccione un alumno para ver las opciones de préstamo.</div>';
-            document.getElementById('deposito-paquetes-container').innerHTML = '<div class="text-sm text-gray-500">Seleccione un alumno para ver las opciones de depósito.</div>';
+            // CAMBIO vMonocromo: Placeholder gris
+            document.getElementById('prestamo-paquetes-container').innerHTML = '<div class="text-sm text-slate-500">Seleccione un alumno para ver las opciones de préstamo.</div>';
+            document.getElementById('deposito-paquetes-container').innerHTML = '<div class="text-sm text-slate-500">Seleccione un alumno para ver las opciones de depósito.</div>';
             AppState.transaccionSelectAll = {}; 
             AppTransacciones.setLoadingState(document.getElementById('transaccion-submit-btn'), document.getElementById('transaccion-btn-text'), false, 'Realizar Transacción');
+            
+            // Limpiar formularios de admin (Bonos/Tienda)
+            AppUI.clearBonoAdminForm();
+            document.getElementById('bono-admin-status-msg').textContent = "";
+            AppUI.clearTiendaAdminForm();
+            document.getElementById('tienda-admin-status-msg').textContent = "";
         }
         
         // Limpiar campos de P2P
@@ -520,16 +515,6 @@ const AppUI = {
             document.getElementById('bono-clave-input').value = "";
             document.getElementById('bono-status-msg').textContent = "";
             AppTransacciones.setLoadingState(document.getElementById('bono-submit-btn'), document.getElementById('bono-btn-text'), false, 'Canjear Bono');
-
-            // Pestaña Admin
-            document.getElementById('bono-admin-clave').value = "";
-            AppUI.clearBonoAdminForm();
-            document.getElementById('bono-admin-status-msg').textContent = "";
-            
-            // Ocultar panel de admin y resetear estado
-            document.getElementById('bono-admin-gate').classList.remove('hidden');
-            document.getElementById('bono-admin-panel').classList.add('hidden');
-            AppState.bonos.adminPanelUnlocked = false;
         }
 
         // NUEVO v16.0: Limpiar campos de Tienda
@@ -539,53 +524,53 @@ const AppUI = {
             document.getElementById('tienda-clave-p2p').value = "";
             
             // CORRECCIÓN BUG "Cargando...": Resetear al estado inicial para forzar recarga
-            // CAMBIO vFintech: Placeholder gris
-            document.getElementById('tienda-items-container').innerHTML = '<p class="text-sm text-gray-500 text-center col-span-2">Cargando artículos...</p>';
+            // CAMBIO vMonocromo: Placeholder gris
+            document.getElementById('tienda-items-container').innerHTML = '<p class="text-sm text-slate-500 text-center col-span-2">Cargando artículos...</p>';
             
             document.getElementById('tienda-status-msg').textContent = "";
-            
-            // Pestaña Admin
-            document.getElementById('tienda-admin-clave').value = "";
-            AppUI.clearTiendaAdminForm();
-            document.getElementById('tienda-admin-status-msg').textContent = "";
-            
-            // Ocultar panel de admin
-            document.getElementById('tienda-admin-gate').classList.remove('hidden');
-            document.getElementById('tienda-admin-panel').classList.add('hidden');
-            AppState.tienda.adminPanelUnlocked = false;
         }
-        
-        // --- ELIMINADO v17.0: Limpieza de modal de confirmación ---
         
         if (modalId === 'gestion-modal') {
              document.getElementById('clave-input').value = "";
+             // CAMBIO vMonocromo: Limpiar clase de error
              document.getElementById('clave-input').classList.remove('shake', 'border-red-500');
         }
     },
     
     // Función para cambiar entre pestañas del modal de administración
     changeAdminTab: function(tabId) {
+        
+        // 2. Cambiar clases de pestañas y contenido (lógica anterior)
         document.querySelectorAll('#transaccion-modal .tab-btn').forEach(btn => {
-            // CAMBIO vFintech: Clases inactivas claras
+            // CAMBIO vMonocromo: Clases inactivas claras/grises
             btn.classList.remove('active-tab', 'border-indigo-600', 'text-indigo-600');
-            btn.classList.add('border-transparent', 'text-gray-600', 'hover:bg-gray-100');
+            btn.classList.add('border-transparent', 'text-slate-700', 'hover:bg-slate-100');
         });
 
         document.querySelectorAll('#transaccion-modal .tab-content').forEach(content => {
             content.classList.add('hidden');
         });
 
-        // CAMBIO vFintech: Clases activas Índigo
+        // CAMBIO vMonocromo: Clases activas Índigo
         document.querySelector(`#transaccion-modal [data-tab="${tabId}"]`).classList.add('active-tab', 'border-indigo-600', 'text-indigo-600');
-        document.querySelector(`#transaccion-modal [data-tab="${tabId}"]`).classList.remove('border-transparent', 'text-gray-600', 'hover:bg-gray-100');
+        document.querySelector(`#transaccion-modal [data-tab="${tabId}"]`).classList.remove('border-transparent', 'text-slate-700', 'hover:bg-slate-100');
         document.getElementById(`tab-${tabId}`).classList.remove('hidden');
         
+        // 3. Lógica específica para cada pestaña
         if (tabId === 'transaccion') {
             AppUI.populateGruposTransaccion();
         } else if (tabId === 'prestamos') {
             AppUI.loadPrestamoPaquetes(null);
         } else if (tabId === 'depositos') {
             AppUI.loadDepositoPaquetes(null);
+        } else if (tabId === 'bonos_admin') { 
+            AppUI.populateBonoAdminList();
+            AppUI.clearBonoAdminForm(); 
+        } else if (tabId === 'tienda_gestion') { // CAMBIO V19.5: Nueva pestaña de formularios
+            AppUI.updateTiendaAdminStatusLabel();
+            AppUI.clearTiendaAdminForm(); // Limpiar el formulario al cambiar
+        } else if (tabId === 'tienda_inventario') { // CAMBIO V19.5: Nueva pestaña de tabla
+            AppUI.populateTiendaAdminList();
         }
         
         document.getElementById('transaccion-status-msg').textContent = "";
@@ -650,13 +635,13 @@ const AppUI = {
 
         resultsContainer.innerHTML = '';
         if (filteredStudents.length === 0) {
-            // CAMBIO vFintech: Texto gris
-            resultsContainer.innerHTML = `<div class="p-2 text-sm text-gray-500">No se encontraron alumnos.</div>`;
+            // CAMBIO vMonocromo: Texto gris
+            resultsContainer.innerHTML = `<div class="p-2 text-sm text-slate-500">No se encontraron alumnos.</div>`;
         } else {
             filteredStudents.forEach(student => {
                 const div = document.createElement('div');
-                // CAMBIO vFintech: Fondo y texto claro
-                div.className = 'p-2 hover:bg-gray-100 cursor-pointer text-sm text-gray-900';
+                // CAMBIO vMonocromo: Fondo y texto claro/oscuro
+                div.className = 'p-2 hover:bg-slate-100 cursor-pointer text-sm text-slate-900';
                 div.textContent = `${student.nombre} (${student.grupoNombre})`;
                 div.onclick = () => {
                     const input = document.getElementById(inputId);
@@ -735,8 +720,8 @@ const AppUI = {
         const impuesto = Math.ceil(cantidad * AppConfig.IMPUESTO_P2P_TASA);
         const total = cantidad + impuesto;
         
-        // CAMBIO vFintech: Acento Verde
-        calculoMsg.innerHTML = `<span class="text-green-600">Impuesto (10%): ${AppFormat.formatNumber(impuesto)} ℙ | Total a debitar: ${AppFormat.formatNumber(total)} ℙ</span>`;
+        // CAMBIO vMonocromo: Usar Índigo para el texto de cálculo
+        calculoMsg.innerHTML = `<span class="text-indigo-600">Impuesto (10%): ${AppFormat.formatNumber(impuesto)} ℙ | Total a debitar: ${AppFormat.formatNumber(total)} ℙ</span>`;
     },
 
     // --- FIN FUNCIONES P2P ---
@@ -753,53 +738,12 @@ const AppUI = {
         document.getElementById('bono-status-msg').textContent = "";
         AppTransacciones.setLoadingState(document.getElementById('bono-submit-btn'), document.getElementById('bono-btn-text'), false, 'Canjear Bono');
 
-        // Resetear pestaña de admin
-        document.getElementById('bono-admin-clave').value = "";
-        AppUI.clearBonoAdminForm();
-        document.getElementById('bono-admin-status-msg').textContent = "";
-        document.getElementById('bono-admin-gate').classList.remove('hidden');
-        document.getElementById('bono-admin-panel').classList.add('hidden');
-        AppState.bonos.adminPanelUnlocked = false;
-        
-        // Resetear a la pestaña 1
-        AppUI.changeBonoTab('canjear');
+        // Resetear a la pestaña 1 (solo canje)
 
         // Poblar listas
         AppUI.populateBonoList();
-        AppUI.populateBonoAdminList();
         
         AppUI.showModal('bonos-modal');
-    },
-
-    // Cambia entre pestañas en el modal de Bonos
-    changeBonoTab: function(tabId) {
-        document.querySelectorAll('#bonos-modal .bono-tab-btn').forEach(btn => {
-            // CAMBIO vFintech: Clases inactivas claras
-            btn.classList.remove('active-tab', 'border-indigo-600', 'text-indigo-600');
-            btn.classList.add('border-transparent', 'text-gray-600', 'hover:bg-gray-100');
-        });
-
-        document.querySelectorAll('#bonos-modal .bono-tab-content').forEach(content => {
-            content.classList.add('hidden');
-        });
-
-        // CAMBIO vFintech: Clases activas Índigo
-        const activeBtn = document.querySelector(`#bonos-modal [data-tab="${tabId}"]`);
-        activeBtn.classList.add('active-tab', 'border-indigo-600', 'text-indigo-600');
-        activeBtn.classList.remove('border-transparent', 'text-gray-600', 'hover:bg-gray-100');
-        document.getElementById(`bono-tab-${tabId}`).classList.remove('hidden');
-
-        // CAMBIO v0.5.4: Ocultar/mostrar el botón de canje
-        const bonoSubmitBtn = document.getElementById('bono-submit-btn');
-        if (tabId === 'canjear') {
-            bonoSubmitBtn.classList.remove('hidden');
-        } else {
-            bonoSubmitBtn.classList.add('hidden');
-        }
-
-        // Limpiar mensajes
-        document.getElementById('bono-status-msg').textContent = "";
-        document.getElementById('bono-admin-status-msg').textContent = "";
     },
     
     // CAMBIO v16.0: La firma de la función cambió (recibe objeto)
@@ -816,8 +760,8 @@ const AppUI = {
         const bonosActivos = bonos.filter(b => b.usos_actuales < b.usos_totales);
 
         if (bonosActivos.length === 0) {
-            // CAMBIO vFintech: Placeholder gris
-            container.innerHTML = `<p class="text-sm text-gray-500 text-center col-span-1 md:col-span-2">No hay bonos disponibles en este momento.</p>`;
+            // CAMBIO vMonocromo: Placeholder gris
+            container.innerHTML = `<p class="text-sm text-slate-500 text-center col-span-1 md:col-span-2">No hay bonos disponibles en este momento.</p>`;
             return;
         }
 
@@ -827,27 +771,27 @@ const AppUI = {
             
             // Lógica de "canjeado" (a futuro, si la API lo soporta)
             const isCanjeado = AppState.bonos.canjeados.includes(bono.clave);
-            // CAMBIO vFintech: Estilo de tarjeta claro
-            const cardClass = isCanjeado ? 'bg-gray-50 shadow-inner border-gray-200 opacity-60' : 'bg-white shadow-md border-gray-200';
+            // CAMBIO vMonocromo: Estilo de tarjeta y colores monocromáticos
+            const cardClass = isCanjeado ? 'bg-slate-50 shadow-inner border-slate-200 opacity-60' : 'bg-white shadow-md border-slate-200';
             
-            // CAMBIO vFintech: Estilos de Badge y Color de Texto
+            // CAMBIO vMonocromo: Estilos de Badge y Color de Texto (Usamos Índigo para destacar, Gris para canjeado)
             const badge = isCanjeado ? 
-                `<span class="text-xs font-bold bg-green-100 text-green-700 rounded-full px-2 py-0.5">CANJEADO</span>` :
-                `<span class="text-xs font-bold bg-yellow-100 text-yellow-700 rounded-full px-2 py-0.5">DISPONIBLE</span>`;
+                `<span class="text-xs font-bold bg-slate-200 text-slate-700 rounded-full px-2 py-0.5">CANJEADO</span>` :
+                `<span class="text-xs font-bold bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5">DISPONIBLE</span>`;
 
             return `
                 <div class="rounded-lg shadow-sm p-4 border transition-all ${cardClass}">
                     <div class="flex justify-between items-center mb-2">
-                        <!-- CAMBIO vFintech: Texto gris -->
-                        <span class="text-sm font-medium text-gray-500 truncate">${bono.clave}</span>
+                        <!-- CAMBIO vMonocromo: Texto gris -->
+                        <span class="text-sm font-medium text-slate-500 truncate">${bono.clave}</span>
                         ${badge}
                     </div>
-                    <!-- CAMBIO vFintech: Texto oscuro -->
-                    <p class="text-base font-semibold text-gray-800 truncate">${bono.nombre}</p>
+                    <!-- CAMBIO vMonocromo: Texto oscuro -->
+                    <p class="text-base font-semibold text-slate-900 truncate">${bono.nombre}</p>
                     <div class="flex justify-between items-baseline mt-3">
-                        <!-- CAMBIO vFintech: Texto gris -->
-                        <span class="text-xs text-gray-500">Quedan ${usosRestantes}</span>
-                        <!-- CAMBIO vFintech: Acento Índigo -->
+                        <!-- CAMBIO vMonocromo: Texto gris -->
+                        <span class="text-xs text-slate-500">Quedan ${usosRestantes}</span>
+                        <!-- CAMBIO vMonocromo: Acento Índigo -->
                         <span class="text-xl font-bold text-indigo-600">${recompensa} ℙ</span>
                     </div>
                 </div>
@@ -855,28 +799,7 @@ const AppUI = {
         }).join('');
     },
     
-    // --- Funciones del Panel de Admin de Bonos ---
-    
-    toggleBonoAdminPanel: function() {
-        const claveInput = document.getElementById('bono-admin-clave');
-        const gate = document.getElementById('bono-admin-gate');
-        const panel = document.getElementById('bono-admin-panel');
-        
-        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
-            AppState.bonos.adminPanelUnlocked = true;
-            gate.classList.add('hidden');
-            panel.classList.remove('hidden');
-            claveInput.value = ""; // Limpiar
-            // CAMBIO vFintech: Clase de borde para el error
-            claveInput.classList.remove('shake', 'border-red-500');
-        } else {
-            claveInput.classList.add('shake', 'border-red-500');
-            claveInput.focus();
-            setTimeout(() => {
-                claveInput.classList.remove('shake');
-            }, 500);
-        }
-    },
+    // --- Funciones del Panel de Admin de Bonos (MOVIDAS A transaccion-modal) ---
     
     // Puebla la tabla de bonos configurados (Vista de Admin)
     populateBonoAdminList: function() {
@@ -884,8 +807,8 @@ const AppUI = {
         const bonos = AppState.bonos.disponibles; // La API (v13.6) envía todos (activos y agotados)
 
         if (bonos.length === 0) {
-            // CAMBIO vFintech: Placeholder gris
-            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay bonos configurados.</td></tr>`;
+            // CAMBIO vMonocromo: Placeholder gris
+            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay bonos configurados.</td></tr>`;
             return;
         }
 
@@ -897,8 +820,8 @@ const AppUI = {
             const recompensa = AppFormat.formatNumber(bono.recompensa);
             const usos = `${bono.usos_actuales} / ${bono.usos_totales}`;
             const isAgotado = bono.usos_actuales >= bono.usos_totales;
-            // CAMBIO vFintech: Filas claras
-            const rowClass = isAgotado ? 'opacity-60 bg-gray-50' : 'hover:bg-gray-100';
+            // CAMBIO vMonocromo: Filas claras
+            const rowClass = isAgotado ? 'opacity-60 bg-slate-50' : 'hover:bg-slate-100';
             
             // CORRECCIÓN BUG ONCLICK: Escapar comillas
             const nombreEscapado = escapeHTML(bono.nombre);
@@ -906,16 +829,16 @@ const AppUI = {
 
             html += `
                 <tr class="${rowClass}">
-                    <!-- CAMBIO vFintech: Texto oscuro -->
-                    <td class="px-4 py-2 text-sm font-semibold text-gray-800">${bono.clave}</td>
-                    <td class="px-4 py-2 text-sm text-gray-700">${bono.nombre}</td>
-                    <td class="px-4 py-2 text-sm text-gray-800 text-right">${recompensa} ℙ</td>
-                    <td class="px-4 py-2 text-sm text-gray-700 text-right">${usos}</td>
+                    <!-- CAMBIO vMonocromo: Texto oscuro -->
+                    <td class="px-4 py-2 text-sm font-semibold text-slate-800">${bono.clave}</td>
+                    <td class="px-4 py-2 text-sm text-slate-700">${bono.nombre}</td>
+                    <td class="px-4 py-2 text-sm text-slate-800 text-right">${recompensa} ℙ</td>
+                    <td class="px-4 py-2 text-sm text-slate-700 text-right">${usos}</td>
                     <td class="px-4 py-2 text-right text-sm">
-                        <!-- CAMBIO vFintech: Botón Índigo/Rojo -->
+                        <!-- CAMBIO vMonocromo: Botones Índigo/Gris (Outline Índigo para Editar) -->
                         <button onclick="AppUI.handleEditBono('${claveEscapada}', '${nombreEscapado}', ${bono.recompensa}, ${bono.usos_totales})" class="font-medium text-indigo-600 hover:text-indigo-800 edit-bono-btn">Editar</button>
-                        <!-- NUEVO v0.5.4: Botón Eliminar -->
-                        <button onclick="AppTransacciones.eliminarBono('${claveEscapada}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-bono-btn">Eliminar</button>
+                        <!-- NUEVO v0.5.4: Botón Eliminar (Gris oscuro) -->
+                        <button onclick="AppTransacciones.eliminarBono('${claveEscapada}')" class="ml-2 font-medium text-slate-600 hover:text-slate-800 delete-bono-btn">Eliminar</button>
                     </td>
                 </tr>
             `;
@@ -953,17 +876,6 @@ const AppUI = {
         document.getElementById('tienda-clave-p2p').value = "";
         document.getElementById('tienda-status-msg').textContent = "";
         
-        // Resetear pestaña de admin
-        document.getElementById('tienda-admin-clave').value = "";
-        AppUI.clearTiendaAdminForm();
-        document.getElementById('tienda-admin-status-msg').textContent = "";
-        document.getElementById('tienda-admin-gate').classList.remove('hidden');
-        document.getElementById('tienda-admin-panel').classList.add('hidden');
-        AppState.tienda.adminPanelUnlocked = false;
-        
-        // Resetear a la pestaña 1
-        AppUI.changeTiendaTab('comprar');
-
         // Poblar listas
         const container = document.getElementById('tienda-items-container');
         // CORRECCIÓN BUG "Cargando...": Revisar si el contenedor solo tiene el placeholder
@@ -976,35 +888,10 @@ const AppUI = {
             AppUI.updateTiendaButtonStates();
         }
         
-        // Poblar la lista de admin
-        AppUI.populateTiendaAdminList();
         // v16.1: Actualizar etiqueta de estado manual
         AppUI.updateTiendaAdminStatusLabel();
         
         AppUI.showModal('tienda-modal');
-    },
-
-    // Cambia entre pestañas en el modal de Tienda
-    changeTiendaTab: function(tabId) {
-        document.querySelectorAll('#tienda-modal .tienda-tab-btn').forEach(btn => {
-            // CAMBIO vFintech: Clases inactivas claras
-            btn.classList.remove('active-tab', 'border-indigo-600', 'text-indigo-600');
-            btn.classList.add('border-transparent', 'text-gray-600', 'hover:bg-gray-100');
-        });
-
-        document.querySelectorAll('#tienda-modal .tienda-tab-content').forEach(content => {
-            content.classList.add('hidden');
-        });
-
-        // CAMBIO vFintech: Clases activas Índigo
-        const activeBtn = document.querySelector(`#tienda-modal [data-tab="${tabId}"]`);
-        activeBtn.classList.add('active-tab', 'border-indigo-600', 'text-indigo-600');
-        activeBtn.classList.remove('border-transparent', 'text-gray-600', 'hover:bg-gray-100');
-        document.getElementById(`tienda-tab-${tabId}`).classList.remove('hidden');
-
-        // Limpiar mensajes
-        document.getElementById('tienda-status-msg').textContent = "";
-        document.getElementById('tienda-admin-status-msg').textContent = "";
     },
 
     // Callback para el buscador de alumno en la tienda
@@ -1022,8 +909,8 @@ const AppUI = {
         const itemKeys = Object.keys(items);
 
         if (itemKeys.length === 0) {
-            // CAMBIO vFintech: Placeholder gris
-            container.innerHTML = `<p class="text-sm text-gray-500 text-center col-span-1 md:col-span-2">No hay artículos configurados en la tienda en este momento.</p>`;
+            // CAMBIO vMonocromo: Placeholder gris
+            container.innerHTML = `<p class="text-sm text-slate-500 text-center col-span-1 md:col-span-2">No hay artículos configurados en la tienda en este momento.</p>`;
             return;
         }
 
@@ -1036,26 +923,26 @@ const AppUI = {
             const itemIdEscapado = escapeHTML(item.ItemID); // Usar ItemID real
 
             html += `
-                <!-- CAMBIO vFintech: Estilo de tarjeta claro con borde Índigo sutil -->
+                <!-- CAMBIO vMonocromo: Estilo de tarjeta claro con borde Índigo sutil -->
                 <div class="bg-white rounded-xl shadow-lg border border-indigo-100 transition-all flex flex-col p-4 h-full">
                     <!-- Header de la Tarjeta (Tipo, Stock) -->
                     <div class="flex justify-between items-center mb-2">
-                        <!-- CAMBIO vFintech: Estilo de badge Índigo/Azul -->
+                        <!-- CAMBIO vMonocromo: Estilo de badge Índigo/Gris -->
                         <span class="text-xs font-bold bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5">${item.tipo}</span>
-                        <!-- CAMBIO vFintech: Texto gris -->
-                        <span id="stock-${itemIdEscapado}" class="text-xs font-medium text-gray-500">Stock: ${item.stock}</span>
+                        <!-- CAMBIO vMonocromo: Texto gris -->
+                        <span id="stock-${itemIdEscapado}" class="text-xs font-medium text-slate-500">Stock: ${item.stock}</span>
                     </div>
 
-                    <!-- CAMBIO vFintech: Texto oscuro -->
-                    <h4 class="text-lg font-bold text-gray-900 truncate mb-2" title="${escapeHTML(item.descripcion)}">
+                    <!-- CAMBIO vMonocromo: Texto oscuro -->
+                    <h4 class="text-lg font-bold text-slate-900 truncate mb-2" title="${escapeHTML(item.descripcion)}">
                         ${item.nombre}
                     </h4>
-                    <!-- CAMBIO vFintech: Descripción más grande, gris sutil -->
-                    <p class="text-sm text-gray-600 mb-4">${item.descripcion.substring(0, 70)}...</p>
+                    <!-- CAMBIO vMonocromo: Descripción más grande, gris sutil -->
+                    <p class="text-sm text-slate-600 mb-4">${item.descripcion.substring(0, 70)}...</p>
                     
                     <!-- Footer (Precio y Botón) -->
-                    <div class="flex justify-between items-center mt-auto pt-4 border-t border-gray-100">
-                        <!-- CAMBIO vFintech: Acento Índigo -->
+                    <div class="flex justify-between items-center mt-auto pt-4 border-t border-slate-100">
+                        <!-- CAMBIO vMonocromo: Acento Índigo -->
                         <span class="text-2xl font-extrabold text-indigo-600">${AppFormat.formatNumber(costoFinal)} ℙ</span>
                         
                         <!-- Botón de compra (el estilo se actualiza con updateTiendaButtonStates) -->
@@ -1078,6 +965,7 @@ const AppUI = {
 
     // Optimización v16.0: Solo actualiza el estado de los botones
     // CAMBIO v17.0: Actualiza el .btn-text interno
+    // CAMBIO v21.0: Colores de botones actualizados a la paleta Monocromática
     updateTiendaButtonStates: function() {
         const items = AppState.tienda.items;
         // CORRECCIÓN CRUCIAL: Obtener el estudiante seleccionado del estado de búsqueda
@@ -1095,65 +983,42 @@ const AppUI = {
             const costoFinal = Math.round(item.precio * (1 + AppConfig.TASA_ITBIS));
             
             // Reset de todas las clases de estado de color/disponibilidad
-            btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'shadow-md', 'shadow-indigo-600/30', 'bg-gray-300', 'hover:bg-gray-300', 'text-gray-600', 'line-through', 'bg-red-100', 'text-red-700', 'border', 'border-red-200', 'cursor-not-allowed', 'shadow-none', 'bg-gray-200', 'text-gray-500');
+            btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700', 'text-white', 'shadow-md', 'shadow-indigo-600/30', 'bg-gray-300', 'hover:bg-gray-300', 'text-gray-600', 'line-through', 'bg-red-100', 'text-red-700', 'border', 'border-red-200', 'cursor-not-allowed', 'shadow-none', 'bg-gray-200', 'text-gray-500', 'border-indigo-600', 'hover:bg-indigo-50', 'bg-white', 'text-indigo-600', 'bg-slate-300', 'text-slate-600'); 
             btn.disabled = false;
             btnText.textContent = "Comprar"; // Default text
 
             if (item.stock <= 0 && item.ItemID !== 'filantropo') { 
                 // Agotado
-                btn.classList.add('bg-gray-200', 'text-gray-500', 'line-through', 'cursor-not-allowed', 'shadow-none');
+                btn.classList.add('bg-slate-300', 'text-slate-600', 'line-through', 'cursor-not-allowed', 'shadow-none', 'border', 'border-slate-300');
+                btn.disabled = true;
                 btnText.textContent = "Agotado";
-                btn.disabled = true;
             } else if (!isStoreOpen) {
-                // Tienda Cerrada
-                btn.classList.add('bg-gray-300', 'text-gray-600', 'hover:bg-gray-300', 'cursor-not-allowed', 'shadow-none');
+                // Tienda Cerrada (Gris fuerte)
+                btn.classList.add('bg-slate-300', 'text-slate-600', 'cursor-not-allowed', 'shadow-none', 'border', 'border-slate-300');
+                btn.disabled = true;
                 btnText.textContent = "Cerrada"; 
-                btn.disabled = true;
             } else if (!student) {
-                // Requiere seleccionar un alumno
-                btn.classList.add('bg-gray-300', 'text-gray-600', 'hover:bg-gray-300', 'cursor-not-allowed', 'shadow-none');
+                // Requiere seleccionar un alumno (Gris fuerte)
+                btn.classList.add('bg-slate-300', 'text-slate-600', 'cursor-not-allowed', 'shadow-none', 'border', 'border-slate-300');
+                btn.disabled = true;
                 btnText.textContent = "Selecciona Alumno"; 
-                btn.disabled = true;
             } else if (student && student.pinceles < costoFinal) { 
-                // Sin Fondos
-                btn.classList.add('bg-red-100', 'text-red-700', 'border', 'border-red-200', 'cursor-not-allowed', 'shadow-none', 'hover:bg-red-100');
-                btnText.textContent = "Sin Fondos"; 
+                // Sin Fondos (Gris claro con borde sutil - sin rojo)
+                btn.classList.add('bg-slate-100', 'text-slate-600', 'border', 'border-slate-300', 'cursor-not-allowed', 'shadow-none', 'hover:bg-slate-100');
                 btn.disabled = true;
+                btnText.textContent = "Sin Fondos"; 
             } else {
-                // Habilitado (Índigo Primario)
-                btn.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700', 'shadow-md', 'shadow-indigo-600/30');
+                // Habilitado (Outline Índigo - Estilo estándar)
+                btn.classList.add('bg-white', 'border', 'border-indigo-600', 'text-indigo-600', 'hover:bg-indigo-50', 'shadow-sm');
                 btnText.textContent = "Comprar";
             }
         });
     },
 
-    // --- ELIMINADO v17.0: showTiendaConfirmModal ---
-
-    // --- Funciones del Panel de Admin de Tienda ---
-    
-    toggleTiendaAdminPanel: function() {
-        const claveInput = document.getElementById('tienda-admin-clave');
-        const gate = document.getElementById('tienda-admin-gate');
-        const panel = document.getElementById('tienda-admin-panel');
-        
-        if (claveInput.value === AppConfig.CLAVE_MAESTRA) {
-            AppState.tienda.adminPanelUnlocked = true;
-            gate.classList.add('hidden');
-            panel.classList.remove('hidden');
-            claveInput.value = ""; // Limpiar
-            // CAMBIO vFintech: Clase de borde para el error
-            claveInput.classList.remove('shake', 'border-red-500');
-        } else {
-            claveInput.classList.add('shake', 'border-red-500');
-            claveInput.focus();
-            setTimeout(() => {
-                claveInput.classList.remove('shake');
-            }, 500);
-        }
-    },
+    // --- Funciones del Panel de Admin de Tienda (MOVIDAS A transaccion-modal) ---
     
     // NUEVO v16.1 (Problema 3): Actualiza la etiqueta de estado en el panel de admin
-    // CAMBIO v17.1: Se eliminan las etiquetas "(Control Manual)"
+    // CAMBIO v21.0: Colores de estado ajustados a la paleta monocromática
     updateTiendaAdminStatusLabel: function() {
         const label = document.getElementById('tienda-admin-status-label');
         const container = label ? label.closest('div') : null;
@@ -1161,30 +1026,32 @@ const AppUI = {
         
         const status = AppState.tienda.storeManualStatus;
         
-        // CAMBIO vFintech: Clases de color para light mode
-        label.classList.remove('text-indigo-600', 'text-green-600', 'text-red-600', 'text-gray-600');
-        container.classList.remove('bg-indigo-100', 'bg-green-100', 'bg-red-100', 'bg-gray-50');
-        container.classList.add('bg-gray-50'); // Base clara
+        // CAMBIO vMonocromo: Clases de color para light mode
+        label.classList.remove('text-indigo-600', 'text-green-600', 'text-red-600', 'text-slate-600');
+        container.classList.remove('bg-indigo-100', 'bg-green-100', 'bg-red-100', 'bg-slate-50');
+        
+        container.classList.add('bg-slate-50'); // Base clara (según HTML)
 
         if (status === 'auto') {
             label.textContent = "Automático (por Temporizador)";
-            label.classList.add('text-indigo-600');
+            label.classList.add('text-indigo-600'); // Índigo para el modo por defecto/operativo
         } else if (status === 'open') {
             label.textContent = "Forzado Abierto";
-            label.classList.add('text-green-600');
-            container.classList.add('bg-green-100');
+            label.classList.add('text-slate-800'); // Negro/Gris oscuro para estado "ON"
+            container.classList.add('bg-indigo-100'); // Índigo claro para el fondo
         } else if (status === 'closed') {
             label.textContent = "Forzado Cerrado";
-            label.classList.add('text-red-600');
-            container.classList.add('bg-red-100');
+            label.classList.add('text-slate-800'); // Negro/Gris oscuro para estado "OFF"
+            container.classList.add('bg-slate-200'); // Gris claro para el fondo
         } else {
             label.textContent = "Desconocido";
-            label.classList.add('text-gray-600');
+            label.classList.add('text-slate-600');
         }
     },
 
     // --- NUEVAS FUNCIONES DE CONFIRMACIÓN DE BORRADO (v17.0) ---
     handleDeleteConfirmation: function(itemId) {
+        // NOTA: Usaremos el ID tiend-admin-status-msg para mostrar mensajes de la gestión.
         const row = document.getElementById(`tienda-item-row-${itemId}`);
         if (!row) return;
 
@@ -1194,9 +1061,9 @@ const AppUI = {
         const itemIdEscapado = escapeHTML(itemId);
 
         actionCell.innerHTML = `
-            <!-- CAMBIO vFintech: Botones de confirmación rojo/gris -->
-            <button onclick="AppTransacciones.eliminarItem('${itemIdEscapado}')" class="font-medium text-red-600 hover:text-red-800 confirm-delete-btn">Confirmar</button>
-            <button onclick="AppUI.cancelDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-gray-600 hover:text-gray-800">Cancelar</button>
+            <!-- CAMBIO vMonocromo: Botones de confirmación Índigo/Gris -->
+            <button onclick="AppTransacciones.eliminarItem('${itemIdEscapado}')" class="font-medium text-indigo-600 hover:text-indigo-800 confirm-delete-btn">Confirmar</button>
+            <button onclick="AppUI.cancelDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-slate-600 hover:text-slate-800">Cancelar</button>
         `;
     },
 
@@ -1216,22 +1083,23 @@ const AppUI = {
         const itemIdEscapado = escapeHTML(item.ItemID); 
 
         actionCell.innerHTML = `
-            <!-- CAMBIO vFintech: Botones de acción Índigo/Rojo -->
+            <!-- CAMBIO vMonocromo: Botones de acción Índigo/Gris -->
             <button onclick="AppUI.handleEditItem('${itemIdEscapado}', '${nombreEscapado}', '${descEscapada}', '${tipoEscapado}', ${item.precio}, ${item.stock})" class="font-medium text-indigo-600 hover:text-indigo-800 edit-item-btn">Editar</button>
-            <button onclick="AppUI.handleDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-item-btn">Eliminar</button>
+            <button onclick="AppUI.handleDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-slate-600 hover:text-slate-800 delete-item-btn">Eliminar</button>
         `;
     },
     // --- FIN FUNCIONES DE CONFIRMACIÓN ---
 
 
+    // CAMBIO V19.5: Esta función ahora se utiliza para la nueva pestaña 'tienda_inventario'
     populateTiendaAdminList: function() {
         const tbody = document.getElementById('tienda-admin-lista');
         const items = AppState.tienda.items;
         const itemKeys = Object.keys(items);
 
         if (itemKeys.length === 0) {
-            // CAMBIO vFintech: Placeholder gris
-            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-500">No hay artículos configurados.</td></tr>`;
+            // CAMBIO vMonocromo: Placeholder gris
+            tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500">No hay artículos configurados.</td></tr>`;
             return;
         }
 
@@ -1242,8 +1110,8 @@ const AppUI = {
             const item = items[itemId];
             const precio = AppFormat.formatNumber(item.precio);
             const stock = item.stock;
-            // CAMBIO vFintech: Filas claras
-            const rowClass = (stock <= 0 && item.ItemID !== 'filantropo') ? 'opacity-60 bg-gray-50' : 'hover:bg-gray-100';
+            // CAMBIO vMonocromo: Filas claras
+            const rowClass = (stock <= 0 && item.ItemID !== 'filantropo') ? 'opacity-60 bg-slate-50' : 'hover:bg-slate-100';
             
             // CORRECCIÓN BUG ONCLICK: Escapar datos para los botones
             const itemIdEscapado = escapeHTML(item.ItemID); // Usar ItemID real
@@ -1253,15 +1121,15 @@ const AppUI = {
 
             html += `
                 <tr id="tienda-item-row-${itemIdEscapado}" class="${rowClass}">
-                    <!-- CAMBIO vFintech: Texto oscuro -->
-                    <td class="px-4 py-2 text-sm font-semibold text-gray-800">${item.ItemID}</td>
-                    <td class="px-4 py-2 text-sm text-gray-700 truncate" title="${item.nombre}">${item.nombre}</td>
-                    <td class="px-4 py-2 text-sm text-gray-800 text-right">${precio} ℙ</td>
-                    <td class="px-4 py-2 text-sm text-gray-700 text-right">${stock}</td>
+                    <!-- CAMBIO vMonocromo: Texto oscuro -->
+                    <td class="px-4 py-2 text-sm font-semibold text-slate-800">${item.ItemID}</td>
+                    <td class="px-4 py-2 text-sm text-slate-700 truncate" title="${item.nombre}">${item.nombre}</td>
+                    <td class="px-4 py-2 text-sm text-slate-800 text-right">${precio} ℙ</td>
+                    <td class="px-4 py-2 text-sm text-slate-700 text-right">${stock}</td>
                     <td class="px-4 py-2 text-right text-sm">
-                        <!-- CAMBIO vFintech: Botones de acción Índigo/Rojo -->
+                        <!-- CAMBIO vMonocromo: Botones de acción Índigo/Gris -->
                         <button onclick="AppUI.handleEditItem('${itemIdEscapado}', '${nombreEscapado}', '${descEscapada}', '${tipoEscapado}', ${item.precio}, ${item.stock})" class="font-medium text-indigo-600 hover:text-indigo-800 edit-item-btn">Editar</button>
-                        <button onclick="AppUI.handleDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-red-600 hover:text-red-800 delete-item-btn">Eliminar</button>
+                        <button onclick="AppUI.handleDeleteConfirmation('${itemIdEscapado}')" class="ml-2 font-medium text-slate-600 hover:text-slate-800 delete-item-btn">Eliminar</button>
                     </td>
                 </tr>
             `;
@@ -1282,8 +1150,8 @@ const AppUI = {
         document.getElementById('tienda-admin-itemid-input').disabled = true;
         document.getElementById('tienda-admin-submit-btn').textContent = 'Guardar Cambios';
         
-        // CAMBIO vFintech: Deshabilitar Input claro
-        document.getElementById('tienda-admin-itemid-input').classList.add('disabled:bg-gray-100', 'disabled:opacity-70');
+        // CAMBIO vMonocromo: Deshabilitar Input claro
+        document.getElementById('tienda-admin-itemid-input').classList.add('disabled:bg-slate-100', 'disabled:opacity-70');
 
 
         // Hacer scroll al formulario
@@ -1298,8 +1166,8 @@ const AppUI = {
         document.getElementById('tienda-admin-submit-btn').textContent = 'Crear / Actualizar';
         document.getElementById('tienda-admin-status-msg').textContent = "";
         
-        // CAMBIO vFintech: Habilitar Input claro
-        document.getElementById('tienda-admin-itemid-input').classList.remove('disabled:bg-gray-100', 'disabled:opacity-70');
+        // CAMBIO vMonocromo: Habilitar Input claro
+        document.getElementById('tienda-admin-itemid-input').classList.remove('disabled:bg-slate-100', 'disabled:opacity-70');
     },
     
     // --- FIN FUNCIONES DE TIENDA ---
@@ -1318,14 +1186,9 @@ const AppUI = {
         const comision = Math.round(cantidad * AppConfig.IMPUESTO_DEPOSITO_ADMIN);
         const costoNeto = cantidad - comision;
 
-        // CAMBIO vFintech: Acento Índigo
+        // CAMBIO vMonocromo: Acento Índigo
         calculoMsg.innerHTML = `<span class="text-indigo-600">Monto a depositar: ${AppFormat.formatNumber(cantidad)} ℙ | Costo Neto Tesorería: ${AppFormat.formatNumber(costoNeto)} ℙ (Comisión: ${AppFormat.formatNumber(comision)} ℙ)</span>`;
     },
-
-
-    // --- ELIMINADO v0.4.1: FUNCIONES FONDO DE INVERSIÓN ---
-
-    // --- FIN FUNCIONES FONDO DE INVERSIÓN ---
 
 
     // --- FUNCIÓN CENTRAL: Mostrar Modal de Administración y pestaña inicial ---
@@ -1347,34 +1210,34 @@ const AppUI = {
         AppState.datosActuales.forEach(grupo => {
             if (grupo.nombre === 'Cicla' || grupo.total === 0) return;
 
-            // CAMBIO vFintech: Hover claro
+            // CAMBIO vMonocromo: Hover claro
             const div = document.createElement('div');
-            div.className = "flex items-center p-1 rounded hover:bg-gray-200";
+            div.className = "flex items-center p-1 rounded hover:bg-slate-200";
             
             const input = document.createElement('input');
             input.type = "checkbox";
             input.id = `group-cb-${grupo.nombre}`;
             input.value = grupo.nombre;
-            // CAMBIO vFintech: Checkbox Índigo
-            input.className = "h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 bg-white group-checkbox";
+            // CAMBIO vMonocromo: Checkbox Índigo
+            input.className = "h-4 w-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 bg-white group-checkbox";
             input.addEventListener('change', AppUI.populateUsuariosTransaccion);
 
             const label = document.createElement('label');
             label.htmlFor = input.id;
-            // CAMBIO vFintech: Texto oscuro
+            // CAMBIO vMonocromo: Texto oscuro
             label.textContent = `${grupo.nombre} (${AppFormat.formatNumber(grupo.total)} ℙ)`;
-            label.className = "ml-2 block text-sm text-gray-900 cursor-pointer flex-1";
+            label.className = "ml-2 block text-sm text-slate-900 cursor-pointer flex-1";
 
             div.appendChild(input);
             div.appendChild(label);
             grupoContainer.appendChild(div);
         });
 
-        // CAMBIO vFintech: Placeholder gris
-        document.getElementById('transaccion-lista-usuarios-container').innerHTML = '<span class="text-sm text-gray-500 p-2">Seleccione un grupo...</span>';
+        // CAMBIO vMonocromo: Placeholder gris
+        document.getElementById('transaccion-lista-usuarios-container').innerHTML = '<span class="text-sm text-slate-500 p-2">Seleccione un grupo...</span>';
         AppState.transaccionSelectAll = {}; 
         
-        // CAMBIO vFintech: Acento Índigo
+        // CAMBIO vMonocromo: Acento Índigo
         document.getElementById('tesoreria-saldo-transaccion').textContent = `(Fondos disponibles: ${AppFormat.formatNumber(AppState.datosAdicionales.saldoTesoreria)} ℙ)`;
     },
 
@@ -1387,8 +1250,8 @@ const AppUI = {
         listaContainer.innerHTML = ''; 
 
         if (selectedGroupNames.length === 0) {
-            // CAMBIO vFintech: Placeholder gris
-            listaContainer.innerHTML = '<span class="text-sm text-gray-500 p-2">Seleccione un grupo...</span>';
+            // CAMBIO vMonocromo: Placeholder gris
+            listaContainer.innerHTML = '<span class="text-sm text-slate-500 p-2">Seleccione un grupo...</span>';
             return;
         }
 
@@ -1396,16 +1259,16 @@ const AppUI = {
             const grupo = AppState.datosActuales.find(g => g.nombre === grupoNombre);
 
             if (grupo && grupo.usuarios && grupo.usuarios.length > 0) {
-                // CAMBIO vFintech: Encabezado claro
+                // CAMBIO vMonocromo: Encabezado claro
                 const headerDiv = document.createElement('div');
-                headerDiv.className = "flex justify-between items-center bg-gray-200 p-2 mt-2 sticky top-0 border-b border-gray-300"; 
-                // CAMBIO vFintech: Texto oscuro
-                headerDiv.innerHTML = `<span class="text-sm font-semibold text-gray-700">${grupo.nombre}</span>`;
+                headerDiv.className = "flex justify-between items-center bg-slate-200 p-2 mt-2 sticky top-0 border-b border-slate-300"; 
+                // CAMBIO vMonocromo: Texto oscuro
+                headerDiv.innerHTML = `<span class="text-sm font-semibold text-slate-700">${grupo.nombre}</span>`;
                 
                 const btnSelectAll = document.createElement('button');
                 btnSelectAll.textContent = "Todos";
                 btnSelectAll.dataset.grupo = grupo.nombre; 
-                // CAMBIO vFintech: Botón Índigo
+                // CAMBIO vMonocromo: Botón Índigo (Texto plano)
                 btnSelectAll.className = "text-xs font-medium text-indigo-600 hover:text-indigo-800 select-all-users-btn";
                 AppState.transaccionSelectAll[grupo.nombre] = false; 
                 btnSelectAll.addEventListener('click', AppUI.toggleSelectAllUsuarios);
@@ -1416,24 +1279,24 @@ const AppUI = {
                 const usuariosOrdenados = [...grupo.usuarios].sort((a, b) => a.nombre.localeCompare(b.nombre));
 
                 usuariosOrdenados.forEach(usuario => {
-                    // CAMBIO vFintech: Hover claro
+                    // CAMBIO vMonocromo: Hover claro
                     const div = document.createElement('div');
-                    div.className = "flex items-center p-1 rounded hover:bg-gray-200 ml-2"; 
+                    div.className = "flex items-center p-1 rounded hover:bg-slate-200 ml-2"; 
                     
                     const input = document.createElement('input');
                     input.type = "checkbox";
                     input.id = `user-cb-${grupo.nombre}-${usuario.nombre.replace(/\s/g, '-')}`; 
                     input.value = usuario.nombre;
                     input.dataset.grupo = grupo.nombre; 
-                    // CAMBIO vFintech: Checkbox Índigo
-                    input.className = "h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 bg-white user-checkbox";
+                    // CAMBIO vMonocromo: Checkbox Índigo
+                    input.className = "h-4 w-4 text-indigo-600 border-slate-300 rounded focus:ring-indigo-500 bg-white user-checkbox";
                     input.dataset.checkboxGrupo = grupo.nombre; 
 
                     const label = document.createElement('label');
                     label.htmlFor = input.id;
-                    // CAMBIO vFintech: Texto oscuro
+                    // CAMBIO vMonocromo: Texto oscuro
                     label.textContent = usuario.nombre;
-                    label.className = "ml-2 block text-sm text-gray-900 cursor-pointer flex-1";
+                    label.className = "ml-2 block text-sm text-slate-900 cursor-pointer flex-1";
 
                     div.appendChild(input);
                     div.appendChild(label);
@@ -1443,8 +1306,8 @@ const AppUI = {
         });
         
         if (listaContainer.innerHTML === '') {
-             // CAMBIO vFintech: Placeholder gris
-             listaContainer.innerHTML = '<span class="text-sm text-gray-500 p-2">Los grupos seleccionados no tienen usuarios.</span>';
+             // CAMBIO vMonocromo: Placeholder gris
+             listaContainer.innerHTML = '<span class="text-sm text-slate-500 p-2">Los grupos seleccionados no tienen usuarios.</span>';
         }
     },
     
@@ -1467,16 +1330,17 @@ const AppUI = {
     },
 
     // --- FUNCIONES DE PRÉSTAMOS (PESTAÑA 2) ---
+    // CAMBIO v21.0: Colores de la UI ajustados a monocromo
     loadPrestamoPaquetes: function(selectedStudentName) {
         const container = document.getElementById('prestamo-paquetes-container');
         const saldoSpan = document.getElementById('prestamo-alumno-saldo');
         
-        // CAMBIO vFintech: Acento Índigo
+        // CAMBIO vMonocromo: Acento Índigo
         document.getElementById('tesoreria-saldo-prestamo').textContent = `(Tesorería: ${AppFormat.formatNumber(AppState.datosAdicionales.saldoTesoreria)} ℙ)`;
 
         if (!selectedStudentName) {
-            // CAMBIO vFintech: Placeholder gris
-            container.innerHTML = '<div class="text-sm text-gray-500">Busque y seleccione un alumno para ver las opciones.</div>';
+            // CAMBIO vMonocromo: Placeholder gris
+            container.innerHTML = '<div class="text-sm text-slate-500">Busque y seleccione un alumno para ver las opciones.</div>';
             saldoSpan.textContent = '';
             return;
         }
@@ -1484,7 +1348,7 @@ const AppUI = {
         const student = AppState.datosAdicionales.allStudents.find(s => s.nombre === selectedStudentName);
         if (!student) return;
         
-        // CAMBIO vFintech: Texto gris
+        // CAMBIO vMonocromo: Texto gris
         saldoSpan.textContent = `(Saldo actual: ${AppFormat.formatNumber(student.pinceles)} ℙ)`;
 
         const paquetes = {
@@ -1497,8 +1361,8 @@ const AppUI = {
         let hasActiveLoan = AppState.datosAdicionales.prestamosActivos.some(p => p.alumno === selectedStudentName);
 
         if (hasActiveLoan) {
-             // CAMBIO vFintech: Alerta clara
-             container.innerHTML = `<div class="p-3 text-sm font-semibold text-red-700 bg-red-100 rounded-lg border border-red-200">🚫 El alumno ya tiene un préstamo activo.</div>`;
+             // CAMBIO vMonocromo: Alerta clara (usando gris/índigo)
+             container.innerHTML = `<div class="p-3 text-sm font-semibold text-slate-800 bg-slate-200 rounded-lg border border-slate-300">🚫 El alumno ya tiene un préstamo activo.</div>`;
              return;
         }
 
@@ -1535,8 +1399,8 @@ const AppUI = {
             }
 
 
-            // CAMBIO vFintech: Estilos de botón Índigo/Gris
-            const buttonClass = isEligible ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md' : 'bg-gray-300 text-gray-600 cursor-not-allowed shadow-none';
+            // CAMBIO vMonocromo: Estilo Outline Índigo o Gris
+            const buttonClass = isEligible ? 'bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-50 shadow-sm' : 'bg-slate-300 text-slate-600 cursor-not-allowed shadow-none';
             const buttonDisabled = !isEligible ? 'disabled' : '';
             
             // CORRECCIÓN BUG ONCLICK: Escapar nombres
@@ -1544,12 +1408,12 @@ const AppUI = {
             const tipoEscapado = escapeHTML(tipo);
             const action = isEligible ? `AppTransacciones.realizarPrestamo('${studentNameEscapado}', '${tipoEscapado}')` : '';
             
-            // CAMBIO vFintech: Fondo y texto claros
+            // CAMBIO vMonocromo: Fondo y texto claros
             html += `
-                <div class="flex justify-between items-center p-3 border-b border-blue-100">
+                <div class="flex justify-between items-center p-3 border-b border-slate-200">
                     <div>
-                        <span class="font-semibold text-gray-800">${pkg.label} (${AppFormat.formatNumber(pkg.monto)} ℙ)</span>
-                        <span class="text-xs text-gray-600 block">Cuota: <strong>${AppFormat.formatNumber(cuotaDiaria)} ℙ</strong> (x${pkg.plazoDias} días). Total: ${AppFormat.formatNumber(totalAPagar)} ℙ.</span>
+                        <span class="font-semibold text-slate-800">${pkg.label} (${AppFormat.formatNumber(pkg.monto)} ℙ)</span>
+                        <span class="text-xs text-slate-600 block">Cuota: <strong>${AppFormat.formatNumber(cuotaDiaria)} ℙ</strong> (x${pkg.plazoDias} días). Total: ${AppFormat.formatNumber(totalAPagar)} ℙ.</span>
                     </div>
                     <button onclick="${action}" class="px-3 py-1 text-xs font-medium rounded-lg transition-colors ${buttonClass}" ${buttonDisabled}>
                         Otorgar ${isEligible ? '' : eligibilityMessage}
@@ -1562,16 +1426,17 @@ const AppUI = {
     },
     
     // --- FUNCIONES DE DEPÓSITOS (PESTAÑA 3) ---
+    // CAMBIO v21.0: Colores de la UI ajustados a monocromo
     loadDepositoPaquetes: function(selectedStudentName) {
         const container = document.getElementById('deposito-paquetes-container');
         const saldoSpan = document.getElementById('deposito-alumno-saldo');
         
-        // CAMBIO vFintech: Acento Índigo
+        // CAMBIO vMonocromo: Acento Índigo
         document.getElementById('deposito-info-tesoreria').textContent = `(Tesorería: ${AppFormat.formatNumber(AppState.datosAdicionales.saldoTesoreria)} ℙ)`;
 
         if (!selectedStudentName) {
-            // CAMBIO vFintech: Placeholder gris
-            container.innerHTML = '<div class="text-sm text-gray-500">Busque y seleccione un alumno para ver las opciones.</div>';
+            // CAMBIO vMonocromo: Placeholder gris
+            container.innerHTML = '<div class="text-sm text-slate-500">Busque y seleccione un alumno para ver las opciones.</div>';
             saldoSpan.textContent = '';
             return;
         }
@@ -1579,7 +1444,7 @@ const AppUI = {
         const student = AppState.datosAdicionales.allStudents.find(s => s.nombre === selectedStudentName);
         if (!student) return;
 
-        // CAMBIO vFintech: Texto gris
+        // CAMBIO vMonocromo: Texto gris
         saldoSpan.textContent = `(Saldo actual: ${AppFormat.formatNumber(student.pinceles)} ℙ)`;
 
         const paquetes = {
@@ -1592,8 +1457,8 @@ const AppUI = {
         let hasActiveLoan = AppState.datosAdicionales.prestamosActivos.some(p => p.alumno === selectedStudentName);
 
         if (hasActiveLoan) {
-             // CAMBIO vFintech: Alerta clara
-             container.innerHTML = `<div class="p-3 text-sm font-semibold text-red-700 bg-red-100 rounded-lg border border-red-200">🚫 El alumno tiene un préstamo activo. Debe saldarlo para invertir.</div>`;
+             // CAMBIO vMonocromo: Alerta clara (gris/índigo)
+             container.innerHTML = `<div class="p-3 text-sm font-semibold text-slate-800 bg-slate-200 rounded-lg border border-slate-300">🚫 El alumno tiene un préstamo activo. Debe saldarlo para invertir.</div>`;
              return;
         }
         
@@ -1601,6 +1466,7 @@ const AppUI = {
             const pkg = paquetes[tipo];
             
             const interesBruto = pkg.monto * (pkg.interes / 100);
+            // CAMBIO vMonocromo: Impuesto (gris/índigo)
             const impuesto = Math.ceil(interesBruto * AppConfig.IMPUESTO_DEPOSITO_TASA); // 5%
             const interesNeto = interesBruto - impuesto;
             const totalARecibirNeto = pkg.monto + interesNeto;
@@ -1613,8 +1479,8 @@ const AppUI = {
                 eligibilityMessage = `(Faltan ${AppFormat.formatNumber(pkg.monto - student.pinceles)} ℙ)`;
             }
 
-            // CAMBIO vFintech: Estilos de botón Verde/Gris
-            const buttonClass = isEligible ? 'bg-green-600 text-white hover:bg-green-700 shadow-md' : 'bg-gray-300 text-gray-600 cursor-not-allowed shadow-none';
+            // CAMBIO vMonocromo: Estilo Outline Índigo o Gris
+            const buttonClass = isEligible ? 'bg-white border border-indigo-600 text-indigo-600 hover:bg-indigo-50 shadow-sm' : 'bg-slate-300 text-slate-600 cursor-not-allowed shadow-none';
             const buttonDisabled = !isEligible ? 'disabled' : '';
             
             // CORRECCIÓN BUG ONCLICK: Escapar nombres
@@ -1622,17 +1488,17 @@ const AppUI = {
             const tipoEscapado = escapeHTML(tipo);
             const action = isEligible ? `AppTransacciones.realizarDeposito('${studentNameEscapado}', '${tipoEscapado}')` : '';
 
-            // CAMBIO vFintech: Fondo y texto claros
+            // CAMBIO vMonocromo: Fondo y texto claros
             html += `
-                <div class="flex justify-between items-center p-3 border-b border-green-100">
+                <div class="flex justify-between items-center p-3 border-b border-slate-200">
                     <div>
-                        <span class="font-semibold text-gray-800">${pkg.label} (${AppFormat.formatNumber(pkg.monto)} ℙ)</span>
-                        <span class="text-xs text-gray-600 block">
+                        <span class="font-semibold text-slate-800">${pkg.label} (${AppFormat.formatNumber(pkg.monto)} ℙ)</span>
+                        <span class="text-xs text-slate-600 block">
                             Recibe: <strong>${AppFormat.formatNumber(totalARecibirNeto)} ℙ</strong> 
                             (Tasa ${pkg.interes}% - Imp. ${AppFormat.formatNumber(impuesto)} ℙ)
                         </span>
                     </div>
-                    <button onclick="${action}" class="px-3 py-1 text-xs font-medium text-white rounded-lg transition-colors ${buttonClass}" ${buttonDisabled}>
+                    <button onclick="${action}" class="px-3 py-1 text-xs font-medium rounded-lg transition-colors ${buttonClass}" ${buttonDisabled}>
                         Depositar ${isEligible ? '' : eligibilityMessage}
                     </button>
                 </div>
@@ -1644,6 +1510,7 @@ const AppUI = {
 
 
     // --- Utilidades UI ---
+    // CAMBIO v21.0: Colores de estado ajustados a monocromo
     setConnectionStatus: function(status, title) {
         const dot = document.getElementById('status-dot');
         const indicator = document.getElementById('status-indicator');
@@ -1651,21 +1518,21 @@ const AppUI = {
         
         indicator.title = title;
 
-        // CAMBIO vFintech: Colores corporativos
-        dot.classList.remove('bg-green-600', 'bg-indigo-600', 'bg-red-600', 'animate-pulse-dot');
+        // CAMBIO vMonocromo: Colores corporativos (Indigo, Gris, Rojo)
+        dot.classList.remove('bg-green-600', 'bg-indigo-600', 'bg-red-600', 'animate-pulse-dot', 'bg-slate-300');
 
         switch (status) {
             case 'ok':
-                // CAMBIO vFintech: Verde
-                dot.classList.add('bg-green-600', 'animate-pulse-dot');
+                // Índigo para conectado (Primario)
+                dot.classList.add('bg-indigo-600', 'animate-pulse-dot');
                 break;
             case 'loading':
-                // CAMBIO vFintech: Índigo
+                // Índigo para carga (Primario)
                 dot.classList.add('bg-indigo-600', 'animate-pulse-dot');
                 break;
             case 'error':
-                // CAMBIO vFintech: Rojo
-                dot.classList.add('bg-red-600');
+                // Gris oscuro/Rojo para error
+                dot.classList.add('bg-red-600'); 
                 break;
         }
     },
@@ -1678,16 +1545,17 @@ const AppUI = {
 
     toggleSidebar: function() {
         const sidebar = document.getElementById('sidebar');
-        const btn = document.getElementById('toggle-sidebar-btn');
+        
+        // El botón de toggle en la barra superior no necesita cambio de icono en este diseño
+        // ya que el icono de hamburguesa se usa para abrir y el botón X interno para cerrar en móvil.
+        // La animación de transición maneja el resto.
         
         AppState.isSidebarOpen = !AppState.isSidebarOpen; 
 
         if (AppState.isSidebarOpen) {
             sidebar.classList.remove('-translate-x-full');
-            btn.innerHTML = '«'; // Flecha de cerrar
         } else {
             sidebar.classList.add('-translate-x-full');
-            btn.innerHTML = '»'; // Flecha de abrir
         }
         
         AppUI.resetSidebarTimer(); // Iniciar o limpiar el timer
@@ -1708,16 +1576,15 @@ const AppUI = {
         }
     },
 
-
+    // CAMBIO v21.0: Transforma los enlaces de la sidebar en botones Outline Índigo
     actualizarSidebar: function(grupos) {
         const nav = document.getElementById('sidebar-nav');
         nav.innerHTML = ''; 
         
-        const homeLink = document.createElement('a');
-        homeLink.href = '#';
+        const homeLink = document.createElement('button'); // CAMBIO: Usar BUTTON
         homeLink.dataset.groupName = "home"; 
-        // CAMBIO vFintech: Clases base claras
-        homeLink.className = "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link text-gray-700 hover:bg-gray-100";
+        // CAMBIO vMonocromo: Estilo de botón Outline Índigo completo (centrado)
+        homeLink.className = "flex items-center justify-center w-full px-3 py-2 border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm mb-1 nav-link";
         homeLink.innerHTML = `<span class="truncate">Inicio</span>`;
         homeLink.addEventListener('click', (e) => {
             e.preventDefault();
@@ -1733,11 +1600,10 @@ const AppUI = {
         nav.appendChild(homeLink);
 
         (grupos || []).forEach(grupo => {
-            const link = document.createElement('a');
-            link.href = '#';
+            const link = document.createElement('button'); // CAMBIO: Usar BUTTON
             link.dataset.groupName = grupo.nombre;
-            // CAMBIO vFintech: Clases base claras
-            link.className = "flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors nav-link text-gray-700 hover:bg-gray-100";
+            // CAMBIO vMonocromo: Estilo de botón Outline Índigo completo (centrado)
+            link.className = "flex items-center justify-center w-full px-3 py-2 border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm mb-1 nav-link";
             
             link.innerHTML = `
                 <span class="truncate">${grupo.nombre}</span>
@@ -1757,20 +1623,22 @@ const AppUI = {
         });
     },
 
+    // CAMBIO v21.0: Actualiza clases para el estilo de botón Índigo
     actualizarSidebarActivo: function() {
         const links = document.querySelectorAll('#sidebar-nav .nav-link');
         links.forEach(link => {
             const groupName = link.dataset.groupName;
             const isActive = (AppState.selectedGrupo === null && groupName === 'home') || (AppState.selectedGrupo === groupName);
 
+            // Reseteamos las clases del botón para que parezca un botón Outline Índigo inactivo o activo
+            link.classList.remove('bg-indigo-50', 'text-indigo-700', 'font-semibold', 'bg-white', 'text-indigo-600', 'border-indigo-600', 'hover:bg-indigo-50', 'shadow-sm');
+
             if (isActive) {
-                // CAMBIO vFintech: Estilo activo (Índigo sutil)
-                link.classList.add('bg-indigo-50', 'text-indigo-700', 'font-semibold');
-                link.classList.remove('text-gray-700', 'hover:bg-gray-100');
+                // Estilo activo: Fondo Índigo claro, texto Índigo oscuro, sin sombra de hover
+                link.classList.add('bg-indigo-50', 'text-indigo-700', 'font-semibold', 'border-indigo-600');
             } else {
-                // CAMBIO vFintech: Estilo inactivo (claro)
-                link.classList.remove('bg-indigo-50', 'text-indigo-700', 'font-semibold');
-                link.classList.add('text-gray-700', 'hover:bg-gray-100');
+                // Estilo inactivo: Outline Índigo estándar (fondo blanco, borde Índigo, texto Índigo, con hover)
+                link.classList.add('bg-white', 'border', 'border-indigo-600', 'text-indigo-600', 'hover:bg-indigo-50', 'shadow-sm');
             }
         });
     },
@@ -1778,8 +1646,9 @@ const AppUI = {
     /**
      * Muestra la vista de "Inicio"
      */
+    // CAMBIO v21.0: Aplica la estética monocromática a las tarjetas Home/Top 3
     mostrarPantallaNeutral: function(grupos) {
-        // CAMBIO vFintech: Texto oscuro
+        // CAMBIO vMonocromo: Texto oscuro
         document.getElementById('main-header-title').textContent = "Bienvenido al Banco del Pincel Dorado";
         document.getElementById('page-subtitle').innerHTML = ''; 
 
@@ -1798,11 +1667,11 @@ const AppUI = {
         let top3Html = '';
 
         // ===================================================================
-        // CORRECCIÓN 1: BÓVEDA (Total en Cuentas)
+        // CORRECCIÓN 1: BÓVEDA y TESORERÍA (Armonizadas)
         // ===================================================================
         const allStudents = AppState.datosAdicionales.allStudents;
         
-        // Tarjeta de Bóveda (AHORA CALCULA EL BRUTO POSITIVO)
+        // Tarjeta de Bóveda
         const totalGeneral = allStudents
             .filter(s => s.pinceles > 0)
             .reduce((sum, user) => sum + user.pinceles, 0);
@@ -1810,16 +1679,16 @@ const AppUI = {
         // Tarjeta de Tesorería
         const tesoreriaSaldo = AppState.datosAdicionales.saldoTesoreria;
         
-        // CAMBIO vFintech: Card Clara con gradiente (Bóveda)
+        // Bóveda (Gradiente Normal LTR)
         bovedaHtml = `
             <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl shadow-xl p-4 h-full flex flex-col justify-between text-white">
                 <div>
-                    <!-- Fila 1: Título y Badge -->
+                    <!-- Fila 1: Título y Badge (Tamaño fijo) -->
                     <div class="flex items-center justify-between">
                         <span class="text-sm font-medium opacity-80 truncate">Total en Cuentas</span>
-                        <span class="text-xs font-bold bg-white/20 text-white rounded-full px-2 py-0.5">BÓVEDA</span>
+                        <span class="text-xs font-bold bg-white/20 text-white rounded-full px-2 py-0.5 w-20 text-center flex-shrink-0">BÓVEDA</span>
                     </div>
-                    <!-- Fila 2: Subtítulo y Monto (Distribución Horizontal) -->
+                    <!-- Fila 2: Subtítulo y Monto -->
                     <div class="flex justify-between items-baseline mt-3">
                         <p class="text-lg font-semibold truncate">Pinceles Totales</p>
                         <p class="text-3xl font-bold">${AppFormat.formatNumber(totalGeneral)} ℙ</p>
@@ -1828,28 +1697,27 @@ const AppUI = {
             </div>
         `;
         
-        // CAMBIO vFintech: Card Clara (Tesorería)
+        // Tesorería (Gradiente Invertido RTL)
         tesoreriaHtml = `
-            <div class="bg-white rounded-xl shadow-lg p-4 h-full flex flex-col justify-between">
+            <div class="bg-gradient-to-l from-indigo-500 to-indigo-600 rounded-xl shadow-xl p-4 h-full flex flex-col justify-between text-white">
                 <div>
-                    <!-- Fila 1: Título y Badge -->
+                    <!-- Fila 1: Título y Badge (Tamaño fijo) -->
                     <div class="flex items-center justify-between">
-                        <span class="text-sm font-medium text-gray-500 truncate">Capital Operativo</span>
-                        <!-- CAMBIO vFintech: Badge Índigo -->
-                        <span class="text-xs font-bold bg-indigo-100 text-indigo-700 rounded-full px-2 py-0.5">TESORERÍA</span>
+                        <span class="text-sm font-medium opacity-80 truncate">Capital Operativo</span>
+                        <!-- Badge Blanco/Opaco para armonizar -->
+                        <span class="text-xs font-bold bg-white/20 text-white rounded-full px-2 py-0.5 w-20 text-center flex-shrink-0">TESORERÍA</span>
                     </div>
-                    <!-- Fila 2: Subtítulo y Monto (Distribución Horizontal) -->
+                    <!-- Fila 2: Subtítulo y Monto -->
                     <div class="flex justify-between items-baseline mt-3">
-                        <p class="text-lg font-semibold text-gray-900 truncate">Fondo del Banco</p>
-                        <!-- CAMBIO vFintech: Monto Índigo -->
-                        <p class="text-3xl font-bold text-indigo-600">${AppFormat.formatNumber(tesoreriaSaldo)} ℙ</p>
+                        <p class="text-lg font-semibold truncate">Fondo del Banco</p>
+                        <p class="text-3xl font-bold">${AppFormat.formatNumber(tesoreriaSaldo)} ℙ</p>
                     </div>
                 </div>
             </div>
         `;
         
         // ===================================================================
-        // Lógica "Alumnos Destacados"
+        // Lógica "Alumnos Destacados" (Top N - Monocromático)
         // ===================================================================
         
         const depositosActivos = AppState.datosAdicionales.depositosActivos;
@@ -1872,16 +1740,15 @@ const AppUI = {
             };
         });
 
-        const top3 = studentsWithCapital.sort((a, b) => b.capitalTotal - a.capitalTotal).slice(0, 3);
+        const topN = studentsWithCapital.sort((a, b) => b.capitalTotal - a.capitalTotal).slice(0, 3); // Top 3 para la cuadrícula Home
 
-        if (top3.length > 0) {
-            top3Html = top3.map((student, index) => {
-                // CAMBIO vFintech: Colores de rank claros
-                let rankColor = 'bg-gray-200 text-gray-600';
+        if (topN.length > 0) {
+            top3Html = topN.map((student, index) => {
+                // REQUERIMIENTO: Fondo blanco puro para las tarjetas de Top 3
+                let cardBg = 'bg-white border border-slate-200'; 
+                
+                // REQUERIMIENTO: Rangos en Índigo (sin fondo de color)
                 let rankText = 'text-indigo-600';
-                if (index === 0) { rankColor = 'bg-yellow-100 text-yellow-700'; rankText = 'text-yellow-600'; }
-                if (index === 1) { rankColor = 'bg-gray-200 text-gray-700'; rankText = 'text-gray-700'; }
-                if (index === 2) { rankColor = 'bg-orange-100 text-orange-700'; rankText = 'text-orange-600'; }
                 
                 const grupoNombre = student.grupoNombre || 'N/A';
                 
@@ -1889,21 +1756,21 @@ const AppUI = {
                 const totalInvertidoF = AppFormat.formatNumber(student.totalInvertidoDepositos);
 
                 return `
-                    <!-- CAMBIO vFintech: Card clara con sombra suave -->
-                    <div class="bg-white rounded-xl shadow-lg p-3 h-full flex flex-col justify-between">
+                    <div class="${cardBg} rounded-xl shadow-lg p-3 h-full flex flex-col justify-between transition-all hover:shadow-xl">
                         <div>
                             <div class="flex items-center justify-between mb-1">
-                                <!-- CAMBIO vFintech: Texto gris -->
-                                <span class="text-sm font-medium text-gray-500 truncate">${grupoNombre}</span>
-                                <span class="text-xs font-bold ${rankColor} rounded-full px-2 py-0.5">${index + 1}º</span>
+                                <!-- CAMBIO vMonocromo: Texto gris -->
+                                <span class="text-sm font-medium text-slate-500 truncate">${grupoNombre}</span>
+                                <!-- CAMBIO vMonocromo: Solo texto Índigo fuerte para el Rank (sin píldora de fondo) -->
+                                <span class="text-lg font-extrabold ${rankText}">${index + 1}º</span>
                             </div>
-                            <!-- CAMBIO vFintech: Texto oscuro -->
-                            <p class="text-base font-semibold text-gray-900 truncate">${student.nombre}</p>
+                            <!-- CAMBIO vMonocromo: Texto oscuro -->
+                            <p class="text-base font-semibold text-slate-900 truncate">${student.nombre}</p>
                         </div>
                         
                         <div class="text-right mt-2">
                             <div class="tooltip-container relative inline-block">
-                                <!-- CAMBIO vFintech: Monto Índigo -->
+                                <!-- CAMBIO vMonocromo: Monto Índigo -->
                                 <p class="text-xl font-bold ${rankText}">
                                     ${AppFormat.formatNumber(student.capitalTotal)} ℙ
                                 </p>
@@ -1921,19 +1788,20 @@ const AppUI = {
             }).join('');
         }
         
-        for (let i = top3.length; i < 3; i++) {
+        // Rellenar placeholders si Top < 3
+        for (let i = topN.length; i < 3; i++) {
             top3Html += `
-                <!-- CAMBIO vFintech: Placeholder claro -->
-                <div class="bg-white rounded-xl shadow-lg p-3 opacity-50 h-full flex flex-col justify-between">
+                <!-- CAMBIO vMonocromo: Placeholder claro -->
+                <div class="bg-white rounded-xl shadow-lg p-3 opacity-50 h-full flex flex-col justify-between border border-slate-200">
                     <div>
                         <div class="flex items-center justify-between mb-1">
-                            <span class="text-sm font-medium text-gray-400">-</span>
-                            <span class="text-xs font-bold bg-gray-100 text-gray-400 rounded-full px-2 py-0.5">${i + 1}º</span>
+                            <span class="text-sm font-medium text-slate-400">-</span>
+                            <span class="text-lg font-extrabold text-slate-400">${i + 1}º</span>
                         </div>
-                        <p class="text-base font-semibold text-gray-400 truncate">-</p>
+                        <p class="text-base font-semibold text-slate-400 truncate">-</p>
                     </div>
                     <div class="text-right mt-2">
-                         <p class="text-xl font-bold text-gray-400">- ℙ</p>
+                         <p class="text-xl font-bold text-slate-400">- ℙ</p>
                     </div>
                 </div>
             `;
@@ -1955,81 +1823,88 @@ const AppUI = {
 
 
     /**
-     * Muestra la tabla de un grupo específico
+     * Muestra la lista de estudiantes de un grupo específico
      */
+    // CAMBIO v21.0: Convierte la tabla en una lista libre con divisores Índigo y rank en texto Índigo
     mostrarDatosGrupo: function(grupo) {
-        // CAMBIO vFintech: Texto oscuro
+        // CAMBIO vMonocromo: Texto oscuro
         document.getElementById('main-header-title').textContent = grupo.nombre;
         
-        let totalColor = "text-gray-700"; 
-        if (grupo.total < 0) totalColor = "text-red-600";
-        if (grupo.total > 0) totalColor = "text-green-600"; // CAMBIO vFintech: Verde
+        // CAMBIO vMonocromo: Solo usar gris oscuro/negro para saldos negativos (eliminado el rojo/verde)
+        let totalColor = "text-slate-800"; 
+        if (grupo.total < 0) totalColor = "text-slate-800"; // Mantenemos el color oscuro para negativo
+        if (grupo.total > 0) totalColor = "text-slate-800"; // Mantenemos el color oscuro para positivo
         
         document.getElementById('page-subtitle').innerHTML = `
-            <!-- CAMBIO vFintech: Texto oscuro -->
-            <h2 class="text-xl font-semibold text-gray-900">Total del Grupo: 
+            <!-- CAMBIO vMonocromo: Texto oscuro/negro -->
+            <h2 class="text-xl font-semibold text-slate-900">Total del Grupo: 
                 <span class="${totalColor}">${AppFormat.formatNumber(grupo.total)} ℙ</span>
             </h2>
         `;
         
-        const tableContainer = document.getElementById('table-container');
+        const listContainer = document.getElementById('table-container');
+        listContainer.classList.remove('overflow-hidden', 'p-4', 'space-y-0'); // Remover clases de tabla/card interior
+
         const usuariosOrdenados = [...grupo.usuarios].sort((a, b) => b.pinceles - a.pinceles);
 
-        const filas = usuariosOrdenados.map((usuario, index) => {
+        // Creamos el contenedor de la lista libre
+        const listBody = document.createElement('div');
+        // Usamos flex/grid para la disposición de la lista
+        listBody.className = "divide-y divide-indigo-100 bg-white rounded-b-xl"; // Divisores Índigo
+
+        usuariosOrdenados.forEach((usuario, index) => {
             const pos = index + 1;
             
-            // CAMBIO vFintech: Colores de rank claros
-            let rankBg = 'bg-gray-200 text-gray-600';
-            if (pos === 1) rankBg = 'bg-yellow-100 text-yellow-700';
-            if (pos === 2) rankBg = 'bg-gray-200 text-gray-700';
-            if (pos === 3) rankBg = 'bg-orange-100 text-orange-700';
-            if (grupo.nombre === "Cicla") rankBg = 'bg-red-100 text-red-600';
+            // CAMBIO vMonocromo: Usar Índigo fuerte para el rank y gris/negro para el saldo
+            const rankTextClass = 'text-indigo-600';
+            const pincelesColor = usuario.pinceles < 0 ? 'text-slate-800' : 'text-slate-800'; // Negro/Gris oscuro para negativo/positivo
 
             // CORRECCIÓN BUG ONCLICK: Escapar nombres
             const grupoNombreEscapado = escapeHTML(grupo.nombre);
             const usuarioNombreEscapado = escapeHTML(usuario.nombre);
 
-            return `
-                <!-- CAMBIO vFintech: Hover claro -->
-                <tr class="hover:bg-gray-50 cursor-pointer" onclick="AppUI.showStudentModal('${grupoNombreEscapado}', '${usuarioNombreEscapado}', ${pos})">
-                    <td class="px-4 py-3 text-center">
-                        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${rankBg}">
-                            ${pos}
-                        </span>
-                    </td>
-                    <!-- CAMBIO vFintech: Texto oscuro -->
-                    <td class="px-6 py-3 text-sm font-medium text-gray-900 truncate">
-                        ${usuario.nombre}
-                    </td>
-                    <!-- CAMBIO vFintech: Texto oscuro/Verde/Rojo -->
-                    <td class="px-6 py-3 text-sm font-semibold ${usuario.pinceles < 0 ? 'text-red-600' : 'text-gray-800'} text-right">
-                        ${AppFormat.formatNumber(usuario.pinceles)} ℙ
-                    </td>
-                </tr>
-            `;
-        }).join('');
+            const itemDiv = document.createElement('div');
+            // Usamos grid-cols-12 para mantener la alineación de la cabecera
+            itemDiv.className = `grid grid-cols-12 px-6 py-3 hover:bg-slate-50 cursor-pointer transition-colors ${index === usuariosOrdenados.length - 1 ? '' : 'border-b border-indigo-100'}`; // Último elemento sin divisor inferior
 
-        tableContainer.innerHTML = `
-            <div class="overflow-x-auto">
-                <!-- CAMBIO vFintech: Divisor gris -->
-                <table class="min-w-full divide-y divide-gray-200">
-                    <!-- CAMBIO vFintech: Encabezado claro -->
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-16">Rank</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Pinceles</th>
-                        </tr>
-                    </thead>
-                    <!-- CAMBIO vFintech: Cuerpo blanco -->
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        ${filas.length > 0 ? filas : '<tr><td colspan="3" class="text-center p-6 text-gray-500">No hay alumnos en este grupo.</td></tr>'}
-                    </tbody>
-                </table>
+            itemDiv.setAttribute('onclick', `AppUI.showStudentModal('${grupoNombreEscapado}', '${usuarioNombreEscapado}', ${pos})`);
+
+            itemDiv.innerHTML = `
+                <div class="col-span-1 text-center font-extrabold ${rankTextClass} text-lg">
+                    ${pos}
+                </div>
+                <div class="col-span-8 text-left text-sm font-medium text-slate-900 truncate">
+                    ${usuario.nombre}
+                </div>
+                <div class="col-span-3 text-right text-sm font-semibold ${pincelesColor} text-slate-800">
+                    ${AppFormat.formatNumber(usuario.pinceles)} ℙ
+                </div>
+            `;
+            
+            listBody.appendChild(itemDiv);
+        });
+
+        // Limpiamos el contenedor y lo rellenamos con la cabecera y la nueva lista
+        listContainer.innerHTML = '';
+        listContainer.classList.add('bg-white', 'rounded-xl', 'shadow-lg'); // Restaura clases del contenedor principal
+
+        // Se re-crea la cabecera de la lista para mantener la alineación
+        const headerHtml = `
+            <div class="grid grid-cols-12 px-6 py-3 border-b border-slate-200 bg-slate-50 rounded-t-xl">
+                <div class="col-span-1 text-center text-xs font-medium text-slate-700 uppercase tracking-wider">Rank</div>
+                <div class="col-span-8 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">Nombre</div>
+                <div class="col-span-3 text-right text-xs font-medium text-slate-700 uppercase tracking-wider">Pinceles</div>
             </div>
         `;
+
+        listContainer.innerHTML = headerHtml;
+        listContainer.appendChild(listBody);
         
-        tableContainer.classList.remove('hidden');
+        if (usuariosOrdenados.length === 0) {
+            listContainer.innerHTML += `<div class="text-center p-6 text-slate-500">No hay alumnos en este grupo.</div>`;
+        }
+
+        listContainer.classList.remove('hidden');
 
         // 4. OCULTAR MÓDULOS DE HOME
         document.getElementById('home-stats-container').classList.add('hidden');
@@ -2037,58 +1912,59 @@ const AppUI = {
     },
 
     // ===================================================================
-    // FUNCIÓN CORREGIDA (Estadísticas v17.0)
+    // FUNCIÓN CORREGIDA (Alumnos en Riesgo - Monocromático)
     // ===================================================================
     actualizarAlumnosEnRiesgo: function() {
         const lista = document.getElementById('riesgo-lista');
         if (!lista) return;
 
-        // CORRECCIÓN: Ahora incluye a TODOS los alumnos (incluyendo Cicla)
-        // y los ordena de menor a mayor saldo para mostrar el verdadero riesgo.
-        const allStudents = AppState.datosAdicionales.allStudents;
-        
         // Ordenar a TODOS los alumnos por sus pinceles, de menor a mayor.
-        // Usamos [...allStudents] para no modificar el array original.
+        const allStudents = AppState.datosAdicionales.allStudents;
         const enRiesgo = [...allStudents].sort((a, b) => a.pinceles - b.pinceles);
         
         // Tomar los 6 con saldos más bajos.
         const top6Riesgo = enRiesgo.slice(0, 6); 
 
         if (top6Riesgo.length === 0) {
-            // CAMBIO vFintech: Placeholder gris
-            lista.innerHTML = `<tr><td colspan="3" class="p-4 text-sm text-gray-500 text-center">No hay alumnos en riesgo por el momento.</td></tr>`;
+            // CAMBIO vMonocromo: Placeholder gris
+            lista.innerHTML = `<tr class="bg-white"><td colspan="3" class="p-4 text-sm text-slate-500 text-center">No hay alumnos en riesgo por el momento.</td></tr>`;
             return;
         }
 
+        // CAMBIO v21.0: Usar divs para la estructura de la lista (ya que se perdió el formato de tabla)
+        // Se mantiene la estructura de inyección en el JS con strings para simplicidad
         lista.innerHTML = top6Riesgo.map((student, index) => {
             const grupoNombre = student.grupoNombre || 'N/A';
             const pinceles = AppFormat.formatNumber(student.pinceles);
-            // CAMBIO vFintech: Texto oscuro/rojo
-            const pincelesColor = student.pinceles <= 0 ? 'text-red-600' : 'text-gray-900';
+            
+            // CAMBIO vMonocromo: Usar negro/gris oscuro para el saldo (eliminado el rojo)
+            const pincelesColor = 'text-slate-800'; 
 
             return `
-                <!-- CAMBIO vFintech: Hover claro -->
-                <tr class="hover:bg-gray-50">
-                    <!-- CAMBIO vFintech: Texto oscuro/gris -->
-                    <td class="px-4 py-2 text-sm text-gray-900 font-medium truncate">${student.nombre}</td>
-                    <td class="px-4 py-2 text-sm text-gray-500 whitespace-nowrap">${grupoNombre}</td>
-                    <td class="px-4 py-2 text-sm font-semibold ${pincelesColor} text-right whitespace-nowrap">${pinceles} ℙ</td>
-                </tr>
+                <div class="grid grid-cols-3 px-4 py-2 hover:bg-slate-50 transition-colors">
+                    <!-- CAMBIO vMonocromo: Texto oscuro/gris -->
+                    <div class="col-span-1 text-sm text-slate-900 font-medium truncate">${student.nombre}</div>
+                    <div class="col-span-1 text-sm text-slate-500 whitespace-nowrap">${grupoNombre}</div>
+                    <div class="col-span-1 text-sm font-semibold ${pincelesColor} text-right whitespace-nowrap">${pinceles} ℙ</div>
+                </div>
             `;
         }).join('');
     },
     
     // ===================================================================
-    // FUNCIÓN CORREGIDA (Estadísticas v17.0)
+    // FUNCIÓN CORREGIDA (Estadísticas Rápidas - Monocromático)
     // ===================================================================
     actualizarEstadisticasRapidas: function(grupos) {
+        // La lista rápida fue eliminada en el HTML (v20.2), pero mantenemos la función por si se restaura o se usa la lógica de cálculo
+        // Si el contenedor existe, lo actualizamos.
+        const quickStatsContainer = document.getElementById('quick-stats-container');
+        if (quickStatsContainer && quickStatsContainer.classList.contains('hidden')) return;
+        
         const statsList = document.getElementById('quick-stats-list');
         if (!statsList) return;
 
         const allStudents = AppState.datosAdicionales.allStudents;
         const ciclaGrupo = grupos.find(g => g.nombre === 'Cicla');
-        
-        // CORRECCIÓN 2: ESTADÍSTICAS RÁPIDAS
         
         // Alumnos Activos (sin Cicla)
         const alumnosActivos = allStudents.filter(s => s.grupoNombre !== 'Cicla');
@@ -2102,56 +1978,62 @@ const AppUI = {
         // Pincel Promedio: Pinceles Positivos divididos entre Alumnos Activos (más útil)
         const promedioPinceles = totalAlumnosActivos > 0 ? (pincelesPositivos / totalAlumnosActivos) : 0;
         
-        // CAMBIO vFintech: Estilos claros
-        const createStat = (label, value, valueClass = 'text-gray-900') => `
-            <div class="stat-item flex justify-between items-baseline text-sm py-2 border-b border-gray-100">
-                <span class="text-gray-600">${label}:</span>
+        // CAMBIO vMonocromo: Estilos monocromáticos
+        const createStat = (label, value, valueClass = 'text-slate-900') => `
+            <div class="stat-item flex justify-between items-baseline text-sm py-2 border-b border-slate-100">
+                <span class="text-slate-600">${label}:</span>
                 <span class="font-semibold ${valueClass}">${value}</span>
             </div>
         `;
 
         statsList.innerHTML = `
             ${createStat('Alumnos Activos', totalAlumnosActivos)}
-            ${createStat('Alumnos en Cicla', totalEnCicla, 'text-red-600')}
+            ${createStat('Alumnos en Cicla', totalEnCicla)}
             ${createStat('Pincel Promedio (Activos)', `${AppFormat.formatNumber(promedioPinceles.toFixed(0))} ℙ`, 'text-indigo-600')}
-            ${createStat('Pinceles Positivos', `${AppFormat.formatNumber(pincelesPositivos)} ℙ`, 'text-green-600')}
-            ${createStat('Pinceles Negativos', `${AppFormat.formatNumber(pincelesNegativos)} ℙ`, 'text-red-600')}
+            ${createStat('Pinceles Positivos', `${AppFormat.formatNumber(pincelesPositivos)} ℙ`, 'text-slate-800')}
+            ${createStat('Pinceles Negativos', `${AppFormat.formatNumber(pincelesNegativos)} ℙ`, 'text-slate-800')}
         `;
     },
 
+    // CAMBIO v21.0: Monocromatiza los anuncios
     actualizarAnuncios: function() {
         const lista = document.getElementById('anuncios-lista');
         
-        // CAMBIO vFintech: Colores corporativos claros
+        // CAMBIO vMonocromo: Colores corporativos monocromáticos (todos basados en Índigo/Gris)
         const todosLosAnuncios = [
-            ...AnunciosDB['AVISO'].map(texto => ({ tipo: 'AVISO', texto, bg: 'bg-gray-100', text: 'text-gray-700' })),
+            // AVISO: Gris neutro
+            ...AnunciosDB['AVISO'].map(texto => ({ tipo: 'AVISO', texto, bg: 'bg-slate-100', text: 'text-slate-700' })),
+            // NUEVO: Índigo (el color principal)
             ...AnunciosDB['NUEVO'].map(texto => ({ tipo: 'NUEVO', texto, bg: 'bg-indigo-100', text: 'text-indigo-700' })),
-            ...AnunciosDB['CONSEJO'].map(texto => ({ tipo: 'CONSEJO', texto, bg: 'bg-green-100', text: 'text-green-700' })),
-            ...AnunciosDB['ALERTA'].map(texto => ({ tipo: 'ALERTA', texto, bg: 'bg-red-100', text: 'text-red-700' }))
+            // CONSEJO: Gris más oscuro para diferenciar
+            ...AnunciosDB['CONSEJO'].map(texto => ({ tipo: 'CONSEJO', texto, bg: 'bg-slate-200', text: 'text-slate-700' })),
+            // ALERTA: Índigo (como advertencia principal, sin rojo)
+            ...AnunciosDB['ALERTA'].map(texto => ({ tipo: 'ALERTA', texto, bg: 'bg-indigo-50', text: 'text-indigo-700' }))
         ];
         
         const anuncios = [...todosLosAnuncios].sort(() => 0.5 - Math.random()).slice(0, 5);
 
         lista.innerHTML = anuncios.map(anuncio => `
-            <!-- CAMBIO vFintech: Hover claro -->
-            <li class="flex items-start p-2 hover:bg-gray-50 rounded-lg transition-colors"> 
+            <!-- CAMBIO vMonocromo: Hover claro -->
+            <li class="flex items-start p-2 hover:bg-slate-50 rounded-lg transition-colors"> 
                 <span class="text-xs font-bold ${anuncio.bg} ${anuncio.text} rounded-full w-20 text-center py-0.5 mr-3 flex-shrink-0 mt-1">${anuncio.tipo}</span>
-                <span class="text-sm text-gray-700 flex-1">${anuncio.texto}</span>
+                <span class="text-sm text-slate-700 flex-1">${anuncio.texto}</span>
             </li>
         `).join('');
     },
 
+    // CAMBIO v21.0: Monocromatiza los anuncios del modal
     poblarModalAnuncios: function() {
         const listaModal = document.getElementById('anuncios-modal-lista');
         if (!listaModal) return;
 
         let html = '';
-        // CAMBIO vFintech: Colores corporativos claros
+        // CAMBIO vMonocromo: Colores corporativos monocromáticos
         const tipos = [
-            { id: 'AVISO', titulo: 'Avisos', bg: 'bg-gray-100', text: 'text-gray-700' },
+            { id: 'AVISO', titulo: 'Avisos', bg: 'bg-slate-100', text: 'text-slate-700' },
             { id: 'NUEVO', titulo: 'Novedades', bg: 'bg-indigo-100', text: 'text-indigo-700' },
-            { id: 'CONSEJO', titulo: 'Consejos', bg: 'bg-green-100', text: 'text-green-700' },
-            { id: 'ALERTA', titulo: 'Alertas', bg: 'bg-red-100', text: 'text-red-700' }
+            { id: 'CONSEJO', titulo: 'Consejos', bg: 'bg-slate-200', text: 'text-slate-700' },
+            { id: 'ALERTA', titulo: 'Alertas', bg: 'bg-indigo-50', text: 'text-indigo-700' }
         ];
 
         tipos.forEach(tipo => {
@@ -2159,14 +2041,14 @@ const AppUI = {
             if (anuncios && anuncios.length > 0) {
                 html += `
                     <div>
-                        <!-- CAMBIO vFintech: Texto oscuro -->
+                        <!-- CAMBIO vMonocromo: Título a Índigo/Gris -->
                         <h4 class="text-sm font-semibold ${tipo.text} mb-2">${tipo.titulo}</h4>
                         <ul class="space-y-2">
                             ${anuncios.map(texto => `
-                                <!-- CAMBIO vFintech: Fondo de lista gris claro -->
-                                <li class="flex items-start p-2 bg-gray-50 rounded-lg">
+                                <!-- CAMBIO vMonocromo: Fondo de lista gris claro -->
+                                <li class="flex items-start p-2 bg-slate-50 rounded-lg">
                                     <span class="text-xs font-bold ${tipo.bg} ${tipo.text} rounded-full w-20 text-center py-0.5 mr-3 flex-shrink-0 mt-1">${tipo.id}</span>
-                                    <span class="text-sm text-gray-700 flex-1">${texto}</span>
+                                    <span class="text-sm text-slate-700 flex-1">${texto}</span>
                                 </li>
                             `).join('')}
                         </ul>
@@ -2178,6 +2060,7 @@ const AppUI = {
         listaModal.innerHTML = html;
     },
 
+    // CAMBIO v21.0: Monocromatiza el modal de alumno
     showStudentModal: function(nombreGrupo, nombreUsuario, rank) {
         const student = AppState.datosAdicionales.allStudents.find(u => u.nombre === nombreUsuario);
         const grupo = AppState.datosActuales.find(g => g.nombre === nombreGrupo);
@@ -2194,45 +2077,45 @@ const AppUI = {
         const prestamoActivo = AppState.datosAdicionales.prestamosActivos.find(p => p.alumno === student.nombre);
         const depositoActivo = AppState.datosAdicionales.depositosActivos.find(d => d.alumno === student.nombre);
 
-        // CAMBIO vFintech: Estilos claros
-        const createStat = (label, value, valueClass = 'text-gray-900') => `
-            <div class="bg-gray-50 p-4 rounded-lg text-center">
-                <div class="text-xs font-medium text-gray-500 uppercase tracking-wide">${label}</div>
+        // CAMBIO vMonocromo: Estilos monocromáticos
+        const createStat = (label, value, valueClass = 'text-slate-900') => `
+            <div class="bg-slate-50 p-4 rounded-lg text-center border border-slate-200">
+                <div class="text-xs font-medium text-slate-500 uppercase tracking-wide">${label}</div>
                 <div class="text-2xl font-bold ${valueClass} truncate">${value}</div>
             </div>
         `;
 
         let extraHtml = '';
         if (prestamoActivo) {
-            // CAMBIO vFintech: Alerta clara
-            extraHtml += `<p class="text-sm font-bold text-red-700 text-center mt-3 p-2 bg-red-100 rounded-lg border border-red-200">⚠️ Préstamo Activo</p>`;
+            // CAMBIO vMonocromo: Alerta clara de préstamo (Gris/Índigo sin rojo)
+            extraHtml += `<p class="text-sm font-bold text-slate-800 text-center mt-3 p-2 bg-slate-200 rounded-lg border border-slate-300">⚠️ Préstamo Activo</p>`;
         }
         if (depositoActivo) {
             const vencimiento = new Date(depositoActivo.vencimiento);
             const fechaString = `${vencimiento.getDate()}/${vencimiento.getMonth() + 1}`;
-            // CAMBIO vFintech: Alerta clara
-            extraHtml += `<p class="text-sm font-bold text-green-700 text-center mt-3 p-2 bg-green-100 rounded-lg border border-green-200">🏦 Depósito Activo (Vence: ${fechaString})</p>`;
+            // CAMBIO vMonocromo: Alerta clara de depósito (Índigo para inversión)
+            extraHtml += `<p class="text-sm font-bold text-indigo-700 text-center mt-3 p-2 bg-indigo-100 rounded-lg border border-indigo-200">🏦 Depósito Activo (Vence: ${fechaString})</p>`;
         }
         
         modalContent.innerHTML = `
-            <div class="p-6">
-                <div class="flex justify-between items-start mb-4">
+            <div class="p-6 relative">
+                <div class="flex justify-between items-start mb-4 pr-12">
                     <div>
-                        <!-- CAMBIO vFintech: Texto oscuro -->
-                        <h2 class="text-xl font-semibold text-gray-900">${student.nombre}</h2>
-                        <p class="text-sm font-medium text-gray-500">${grupo.nombre}</p>
+                        <!-- CAMBIO vMonocromo: Título a Índigo -->
+                        <h2 class="text-xl font-semibold text-indigo-700">${student.nombre}</h2>
+                        <p class="text-sm font-medium text-slate-500">${grupo.nombre}</p>
                     </div>
-                    <button onclick="AppUI.hideModal('student-modal')" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     ${createStat('Rank en Grupo', `${rank}º`, 'text-indigo-600')}
                     ${createStat('Rank de Grupo', `${rankGrupo > 0 ? rankGrupo + 'º' : 'N/A'}`, 'text-indigo-600')}
-                    ${createStat('Total Pinceles', `${AppFormat.formatNumber(totalPinceles)} ℙ`, totalPinceles < 0 ? 'text-red-600' : 'text-green-600')}
-                    ${createStat('Total Grupo', `${AppFormat.formatNumber(grupo.total)} ℙ`)}
-                    ${createStat('% del Grupo', `${grupo.total !== 0 ? ((totalPinceles / grupo.total) * 100).toFixed(1) : 0}%`)}
-                    ${createStat('Grupo Original', student.grupoNombre || 'N/A' )}
+                    ${createStat('Total Pinceles', `${AppFormat.formatNumber(totalPinceles)} ℙ`, 'text-slate-800')}
+                    ${createStat('Total Grupo', `${AppFormat.formatNumber(grupo.total)} ℙ`, 'text-slate-800')}
+                    ${createStat('% del Grupo', `${grupo.total !== 0 ? ((totalPinceles / grupo.total) * 100).toFixed(1) : 0}%`, 'text-slate-800')}
+                    ${createStat('Grupo Original', student.grupoNombre || 'N/A', 'text-slate-800')}
                 </div>
                 ${extraHtml}
+                <button onclick="AppUI.hideModal('student-modal')" class="modal-close-btn absolute top-2 right-2 text-slate-400 hover:text-indigo-600 text-2xl p-1">&times;</button>
             </div>
         `;
         AppUI.showModal('student-modal');
@@ -2240,6 +2123,7 @@ const AppUI = {
     
     // CAMBIO v16.1: Lógica de Tienda y Control Manual
     // CAMBIO v17.1: Se eliminan las etiquetas "(Manual)" en los mensajes
+    // CAMBIO v21.0: Monocromatiza los mensajes de estado del timer
     updateCountdown: function() {
         const getLastThursday = (year, month) => {
             const lastDayOfMonth = new Date(year, month + 1, 0);
@@ -2266,14 +2150,14 @@ const AppUI = {
         // NUEVO v16.1 (Problema 3): Lógica de Control Manual
         const manualStatus = AppState.tienda.storeManualStatus;
         
-        // CORRECCIÓN: Definición de clases de estado para el modal (Fintech)
-        const openStatusClasses = 'bg-green-100 text-green-700 font-bold border border-green-200';
-        const closedStatusClasses = 'bg-red-100 text-red-700 font-bold border border-red-200';
+        // CAMBIO vMonocromo: Definición de clases de estado para el modal (Monocromo)
+        const openStatusClasses = 'bg-indigo-100 text-slate-800 font-bold border border-indigo-200'; // Índigo para abierto
+        const closedStatusClasses = 'bg-slate-200 text-slate-800 font-bold border border-slate-300'; // Gris para cerrado
         
         // CORRECCIÓN: Limpiar todas las clases dinámicas existentes en el elemento de estado del modal.
         if (tiendaTimerStatus) {
             // Utilizamos una función genérica para limpiar todas las clases de estado dinámicas
-            const allDynamicClasses = ['bg-green-100', 'text-green-700', 'border-green-200', 'bg-red-100', 'text-red-700', 'border-red-200'];
+            const allDynamicClasses = ['bg-indigo-100', 'text-indigo-700', 'border-indigo-200', 'bg-slate-200', 'text-slate-800', 'border-slate-300', 'bg-slate-50', 'text-slate-700', 'text-indigo-600', 'text-red-600'];
             tiendaTimerStatus.classList.remove(...allDynamicClasses);
         }
 
@@ -2282,6 +2166,7 @@ const AppUI = {
             // TIENDA FORZADA ABIERTA
             timerEl.classList.add('hidden');
             messageEl.classList.remove('hidden');
+            // CAMBIO vMonocromo: Texto Índigo
             messageEl.textContent = "¡La tienda está abierta!"; 
             if (tiendaTimerStatus) { 
                 tiendaTimerStatus.innerHTML = `¡TIENDA ABIERTA!`; 
@@ -2305,10 +2190,11 @@ const AppUI = {
             if (now >= storeOpen && now <= storeClose) { 
                 timerEl.classList.add('hidden');
                 messageEl.classList.remove('hidden');
+                // CAMBIO vMonocromo: Texto Índigo
                 messageEl.textContent = "¡La tienda está abierta!"; // Mensaje original
                 if (tiendaTimerStatus) { 
                     tiendaTimerStatus.innerHTML = `
-                        <span class="text-green-600 font-bold">¡TIENDA ABIERTA!</span> Oportunidad única.
+                        <span class="text-indigo-600 font-bold">¡TIENDA ABIERTA!</span> Oportunidad única.
                     `;
                     tiendaTimerStatus.classList.add(...openStatusClasses.split(' ').filter(c => c));
                 }
@@ -2345,11 +2231,11 @@ const AppUI = {
                 // CORRECCIÓN BUG TIMER (Problema 1): Actualizar también el timer del modal
                 if (tiendaTimerStatus) {
                     tiendaTimerStatus.innerHTML = `
-                        <span class="text-red-600 font-bold">TIENDA CERRADA.</span> Próxima apertura en:
+                        <span class="text-slate-800 font-bold">TIENDA CERRADA.</span> Próxima apertura en:
                         <div class="flex items-baseline justify-center gap-2 mt-2">
-                            <span class="text-xl font-bold text-indigo-600 w-8 text-right">${days}</span><span class="text-xs text-gray-500 uppercase -ml-1">Días</span>
-                            <span class="text-xl font-bold text-indigo-600 w-8 text-right">${hours}</span><span class="text-xs text-gray-500 uppercase -ml-1">Horas</span>
-                            <span class="text-xl font-bold text-indigo-600 w-8 text-right">${minutes}</span><span class="text-xs text-gray-500 uppercase -ml-1">Minutos</span>
+                            <span class="text-xl font-bold text-indigo-600 w-8 text-right">${days}</span><span class="text-xs text-slate-500 uppercase -ml-1">Días</span>
+                            <span class="text-xl font-bold text-indigo-600 w-8 text-right">${hours}</span><span class="text-xs text-slate-500 uppercase -ml-1">Horas</span>
+                            <span class="text-xl font-bold text-indigo-600 w-8 text-right">${minutes}</span><span class="text-xs text-slate-500 uppercase -ml-1">Minutos</span>
                         </div>
                     `;
                     tiendaTimerStatus.classList.add(...closedStatusClasses.split(' ').filter(c => c));
@@ -2473,6 +2359,7 @@ const AppTransacciones = {
             const result = await response.json();
 
             if (result.success === true) {
+                // CAMBIO vMonocromo: Usar Índigo/Gris para éxito
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Préstamo otorgado con éxito!");
                 AppData.cargarDatos(false); 
                 AppUI.loadPrestamoPaquetes(alumnoNombre); 
@@ -2512,6 +2399,7 @@ const AppTransacciones = {
             const result = await response.json();
 
             if (result.success === true) {
+                // CAMBIO vMonocromo: Usar Índigo/Gris para éxito
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Depósito creado con éxito!");
                 AppData.cargarDatos(false); 
                 AppUI.loadDepositoPaquetes(alumnoNombre); 
@@ -2575,6 +2463,7 @@ const AppTransacciones = {
             const result = await response.json();
 
             if (result.success === true) {
+                // CAMBIO vMonocromo: Usar Índigo/Gris para éxito
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Transferencia exitosa!");
                 
                 AppUI.resetSearchInput('p2pDestino');
@@ -2641,6 +2530,7 @@ const AppTransacciones = {
             const result = await response.json();
 
             if (result.success === true) {
+                // CAMBIO vMonocromo: Usar Índigo/Gris para éxito
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Bono canjeado con éxito!");
                 
                 // Limpiar campos
@@ -2707,6 +2597,7 @@ const AppTransacciones = {
             const result = await response.json();
 
             if (result.success === true) {
+                // CAMBIO vMonocromo: Usar Índigo/Gris para éxito
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Bono guardado con éxito!");
                 AppUI.clearBonoAdminForm();
                 AppData.cargarDatos(false); // Recargar todos los datos
@@ -2746,6 +2637,7 @@ const AppTransacciones = {
             const result = await response.json();
 
             if (result.success === true) {
+                // CAMBIO vMonocromo: Usar Índigo/Gris para éxito
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Bono eliminado con éxito!");
                 AppData.cargarDatos(false); // Recargar todos los datos
             } else {
@@ -2804,6 +2696,7 @@ const AppTransacciones = {
             const result = await response.json();
 
             if (result.success === true) {
+                // CAMBIO vMonocromo: Usar Índigo/Gris para éxito
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Compra exitosa!");
                 
                 // NO cerrar el modal, solo recargar datos
@@ -2825,6 +2718,7 @@ const AppTransacciones = {
     },
 
     crearActualizarItem: async function() {
+        // NOTA V19.5: La gestión ahora está en la pestaña tienda_gestion
         const statusMsg = document.getElementById('tienda-admin-status-msg');
         const submitBtn = document.getElementById('tienda-admin-submit-btn');
         
@@ -2872,6 +2766,7 @@ const AppTransacciones = {
             const result = await response.json();
 
             if (result.success === true) {
+                // CAMBIO vMonocromo: Usar Índigo/Gris para éxito
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Artículo guardado con éxito!");
                 AppUI.clearTiendaAdminForm();
                 AppData.cargarDatos(false); // Recargar todos los datos
@@ -2888,11 +2783,14 @@ const AppTransacciones = {
     
     // CAMBIO v17.0: Esta función ahora es llamada por el botón "Confirmar" en la tabla.
     eliminarItem: async function(itemId) {
-        const statusMsg = document.getElementById('tienda-admin-status-msg');
+        // NOTA V19.5: La tabla está en la pestaña tienda_inventario, pero usamos el mismo ID de mensaje
+        const statusMsg = document.getElementById('tienda-admin-status-msg'); 
         AppTransacciones.setLoading(statusMsg, `Eliminando artículo ${itemId}...`);
         
         // Deshabilitar todos los botones de la fila durante el proceso
-        document.getElementById(`tienda-item-row-${itemId}`).querySelectorAll('button').forEach(btn => btn.disabled = true);
+        // Buscamos la fila en el contenedor de la tabla
+        const row = document.getElementById(`tienda-item-row-${itemId}`);
+        if (row) row.querySelectorAll('button').forEach(btn => btn.disabled = true);
 
         try {
             const payload = {
@@ -2910,6 +2808,7 @@ const AppTransacciones = {
             const result = await response.json();
 
             if (result.success === true) {
+                // CAMBIO vMonocromo: Usar Índigo/Gris para éxito
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Artículo eliminado con éxito!");
                 AppData.cargarDatos(false); // Recargar todos los datos
             } else {
@@ -2925,7 +2824,8 @@ const AppTransacciones = {
     
     // NUEVO v16.1 (Problema 3): Control Manual de la Tienda
     toggleStoreManual: async function(status) {
-        const statusMsg = document.getElementById('tienda-admin-status-msg');
+        // NOTA V19.5: El control manual está en la pestaña tienda_gestion
+        const statusMsg = document.getElementById('tienda-admin-status-msg'); 
         AppTransacciones.setLoading(statusMsg, `Cambiando estado a: ${status}...`);
         
         // Deshabilitar botones temporalmente
@@ -2948,6 +2848,7 @@ const AppTransacciones = {
             const result = await response.json();
 
             if (result.success === true) {
+                // CAMBIO vMonocromo: Usar Índigo/Gris para éxito
                 AppTransacciones.setSuccess(statusMsg, result.message || "¡Estado de la tienda actualizado!");
                 AppData.cargarDatos(false); // Recargar todos los datos para obtener el nuevo estado
             } else {
@@ -2994,26 +2895,29 @@ const AppTransacciones = {
         }
     },
     
+    // CAMBIO v21.0: Monocromatiza los mensajes de estado
     setLoading: function(statusMsgEl, message) {
         if (statusMsgEl) {
             statusMsgEl.textContent = message;
-            // CAMBIO vFintech: Texto Índigo
+            // Texto Índigo (Primario)
             statusMsgEl.className = "text-sm text-center font-medium text-indigo-600 h-auto min-h-[1rem]";
         }
     },
 
+    // CAMBIO v21.0: Monocromatiza los mensajes de estado (Éxito)
     setSuccess: function(statusMsgEl, message) {
         if (statusMsgEl) {
             statusMsgEl.textContent = message;
-            // CAMBIO vFintech: Texto Verde
-            statusMsgEl.className = "text-sm text-center font-medium text-green-600 h-auto min-h-[1rem]";
+            // Texto Índigo (Primario)
+            statusMsgEl.className = "text-sm text-center font-medium text-indigo-600 h-auto min-h-[1rem]";
         }
     },
 
+    // CAMBIO v21.0: Monocromatiza los mensajes de estado (Error)
     setError: function(statusMsgEl, message) {
         if (statusMsgEl) {
             statusMsgEl.textContent = `Error: ${message}`;
-            // CAMBIO vFintech: Texto Rojo
+            // Texto Rojo (para error CRÍTICO, es la única excepción)
             statusMsgEl.className = "text-sm text-center font-medium text-red-600 h-auto min-h-[1em]";
         }
     }
