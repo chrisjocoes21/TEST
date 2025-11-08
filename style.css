@@ -88,7 +88,8 @@ body {
     background-color: white; 
     border: 1px solid #d1d5db; /* border-gray-300 */
     border-radius: 0.5rem; /* rounded-lg */
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+    /* Mantenemos sombra ligera gris para el desplegable */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
     margin-top: 0.25rem; /* mt-1 */
     max-height: 15rem; /* max-h-60 */
     overflow-y: auto;
@@ -147,15 +148,6 @@ body {
         display: none !important;
     }
 }
-
-
-/* =================================================================== */
-/* Estilos para Pestañas de Bonos (Innecesarios si usamos Tailwind) */
-/* =================================================================== */
-
-/* =================================================================== */
-/* Estilos para Pestañas de Tienda (Innecesarios si usamos Tailwind) */
-/* =================================================================== */
 
 /* CORRECCIÓN SALTO VERTICAL */
 .tienda-tab-content {
