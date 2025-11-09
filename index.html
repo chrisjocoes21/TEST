@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CAMBIO v21.2: Fondo principal slate-50, paleta Monocromática Índigo -->
+<!-- CAMBIO v24.0: Implementación final del Plan V18 (Uniformidad Total FORZADA + Reversión Frases) -->
 <html lang="es" class="h-full bg-slate-50 overflow-hidden">
 <head>
     <meta charset="UTF-8">
@@ -13,26 +13,42 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏦</text></svg>">
 
     <!-- Archivo de estilos personalizados -->
-    <link rel="stylesheet" href="style.css?v=21.2">
+    <link rel="stylesheet" href="style.css?v=24.0">
     <style>
+        /* Definición de la Paleta Dorada (Amber Elegante) */
+        /* Usaremos amber-600 para acentos principales, amber-500 para sombras y amber-100 para fondos claros */
+        .color-dorado-main { color: #d97706; /* amber-600 */ }
+        .bg-dorado-light { background-color: #fffbeb; /* amber-50 */ }
+        .border-dorado-main { border-color: #d97706; /* amber-600 */ }
+        .ring-dorado-main { --tw-ring-color: #d97706; }
+        .shadow-dorado-soft { --tw-shadow-color: #f59e0b; /* amber-500 */ } /* Para usar en shadow-lg shadow-dorado-soft/10 */
+
+        /* CONTENEDOR UNIFICADO DE MODALES (96% ANCHO) - PLAN V17/V18 */
+        /* Esta clase fuerza el mismo ancho para Administración, Bonos, Tienda y Reglas */
+        .full-width-modal-dialog {
+             width: 96vw !important; /* Ancho fijo para uniformidad */
+             max-width: 96vw !important; /* Asegura que no se expanda más allá */
+        }
+
         /* Animación para el botón de cierre */
         .modal-close-btn {
             transition: transform 0.3s ease-out, color 0.3s ease-out;
         }
         .modal-close-btn:hover {
             transform: rotate(90deg);
-            color: #4f46e5; /* indigo-600 */
+            color: #d97706; /* Dorado */
         }
         /* Animación para el botón de hamburguesa */
         .menu-toggle-icon {
-             transition: transform 0.3s ease-out, color 0.3s ease-out;
+             transition: transform 0.3s ease-out, color 0.3s ease-out, opacity 0.3s ease-out;
         }
         .menu-toggle-icon:hover {
-            color: #4f46e5; /* indigo-600 */
+            color: #d97706; /* Dorado */
+            transform: rotate(90deg); /* Rotación suave al hacer hover */
         }
     </style>
 </head>
-<!-- CAMBIO vMonocromo: Texto base slate-800 -->
+<!-- CAMBIO V16: Base slate-800 -->
 <body class="h-full overflow-hidden text-slate-800"> 
     <div id="app-container" class="flex h-full">
         
@@ -47,10 +63,10 @@
             
             <!-- Encabezado de la Sidebar -->
             <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-white flex-shrink-0 h-16">
-                <!-- CAMBIO vMonocromo: Primario (Índigo) -->
-                <span class="text-xl font-extrabold text-indigo-600">BPD</span>
+                <!-- CAMBIO V16: Color Dorado -->
+                <span class="text-xl font-extrabold color-dorado-main">BPD</span>
                 <!-- Botón de cerrar explícito para móvil -->
-                <button id="close-sidebar-btn" class="lg:hidden text-slate-400 hover:text-indigo-600 focus:outline-none">
+                <button id="close-sidebar-btn" class="lg:hidden text-slate-400 hover:color-dorado-main focus:outline-none">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -71,16 +87,16 @@
                     <!-- Versión se inyecta aquí -->
                 </div>
                 
-                <!-- Botón P2P (Estilo Outline Índigo) -->
-                <button id="p2p-portal-btn" class="flex items-center justify-center w-full px-4 py-2 bg-white border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
+                <!-- Botón P2P (Estilo Outline Dorado) -->
+                <button id="p2p-portal-btn" class="flex items-center justify-center w-full px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
                     </svg>
                     <span>Portal P2P</span>
                 </button>
                 
-                <!-- Botón de Gestión (Estilo Outline Índigo) -->
-                <button id="gestion-btn" class="flex items-center justify-center w-full px-4 py-2 bg-white border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
+                <!-- Botón de Gestión (Estilo Outline Dorado) -->
+                <button id="gestion-btn" class="flex items-center justify-center w-full px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                     </svg>
@@ -100,8 +116,8 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                     </svg>
                 </button>
-                <!-- CAMBIO vMonocromo: Texto slate-900 -->
-                <h1 id="main-header-title" class="text-lg font-semibold text-slate-900 truncate">
+                <!-- CAMBIO V17: El título principal ahora es Dorado -->
+                <h1 id="main-header-title" class="text-lg font-semibold color-dorado-main truncate">
                     Cargando...
                 </h1>
 
@@ -115,50 +131,52 @@
                 <div id="page-subtitle" class="mb-6"></div>
                 
                 <!-- V20.1: Este contenedor se usará como el 'listado libre' sin la estructura de tabla -->
-                <div id="table-container" class="bg-white rounded-xl shadow-lg shadow-indigo-600/10 border border-indigo-200 overflow-hidden hidden">
+                <!-- CAMBIO V16: Se eliminan todas las clases de contenedor aquí. LISTA DE GRUPOS SIN MARCO NI FONDO BLANCO. -->
+                <div id="table-container" class="hidden">
                     <!-- Contenido inyectado por JS -->
                 </div>
 
                 <!-- Contenedor de Resumen Compacto (Home) -->
                 <div id="home-stats-container" class="mb-6 hidden">
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-2">
-                        <!-- CAMBIO vMonocromo: Texto slate-900 -->
+                        <!-- CAMBIO V16: Texto slate-900 -->
                         <h3 class="text-base font-semibold text-slate-900">Resumen del Banco</h3>
                         <h3 class="text-base font-semibold text-slate-900">Alumnos Destacados</h3>
                     </div>
                     
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <!-- Bóveda (Fondo Índigo, Borde Gris, Sombra Índigo) -->
-                        <div id="boveda-card-container" class="h-full shadow-lg shadow-indigo-600/10 border border-slate-200 rounded-xl"></div>
+                        <!-- Bóveda (Fondo Dorado, Borde Gris, Sombra Dorada) -->
+                        <div id="boveda-card-container" class="h-full shadow-lg shadow-dorado-soft/10 border border-slate-200 rounded-xl"></div>
                         
-                        <!-- Top 3 Grid (Se quitó el contenedor padre, las tarjetas lo definen) -->
+                        <!-- Top 3 Grid (Compactado y liberado del contenedor padre) -->
                         <div id="top-3-grid" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
                         
-                        <!-- Tesorería (Fondo Índigo, Borde Gris, Sombra Índigo) -->
-                        <div id="tesoreria-card-container" class="h-full shadow-lg shadow-indigo-600/10 border border-slate-200 rounded-xl"></div>
+                        <!-- Tesorería (Fondo Dorado, Borde Gris, Sombra Dorada) -->
+                        <div id="tesoreria-card-container" class="h-full shadow-lg shadow-dorado-soft/10 border border-slate-200 rounded-xl"></div>
                         
-                        <!-- Botones Principales (Fondo Blanco, Borde Índigo, Sombra Índigo) -->
-                        <div class="flex flex-col justify-between gap-4 px-3 bg-white rounded-xl shadow-lg shadow-indigo-600/10 border border-indigo-200 p-4 h-full">
+                        <!-- Botones Principales (Fondo Blanco, Borde Dorado, Sombra Dorada) -->
+                        <div class="flex flex-col justify-between gap-4 px-3 bg-white rounded-xl shadow-lg shadow-dorado-soft/10 border border-amber-200 p-4 h-full">
                             <!-- Timer -->
                             <div id="countdown-timer" class="flex-shrink-0 text-sm font-medium text-slate-700 flex items-baseline gap-2">
-                                <span id="days" class="text-xl font-bold text-indigo-600 w-8 text-right">00</span><span class="text-xs text-slate-500 uppercase -ml-1">Días</span>
-                                <span id="hours" class="text-xl font-bold text-indigo-600 w-8 text-right">00</span><span class="text-xs text-slate-500 uppercase -ml-1">Horas</span>
-                                <span id="minutes" class="text-xl font-bold text-indigo-600 w-8 text-right">00</span><span class="text-xs text-slate-500 uppercase -ml-1">Minutos</span>
-                                <span id="seconds" class="text-xl font-bold text-indigo-600 w-8 text-right">00</span><span class="text-xs text-slate-500 uppercase -ml-1">Segundos</span>
+                                <!-- CAMBIO V16: Color Dorado -->
+                                <span id="days" class="text-xl font-bold color-dorado-main w-8 text-right">00</span><span class="text-xs text-slate-500 uppercase -ml-1">Días</span>
+                                <span id="hours" class="text-xl font-bold color-dorado-main w-8 text-right">00</span><span class="text-xs text-slate-500 uppercase -ml-1">Horas</span>
+                                <span id="minutes" class="text-xl font-bold color-dorado-main w-8 text-right">00</span><span class="text-xs text-slate-500 uppercase -ml-1">Minutos</span>
+                                <span id="seconds" class="text-xl font-bold color-dorado-main w-8 text-right">00</span><span class="text-xs text-slate-500 uppercase -ml-1">Segundos</span>
                             </div>
-                            <!-- Mensaje -->
-                            <div id="store-message" class="hidden w-full text-center text-indigo-600 font-semibold">
-                                ¡La tienda está abierta!
+                            <!-- Mensaje (V18: Volvemos a texto simple, JS lo manejará) -->
+                            <div id="store-message" class="hidden w-full text-center text-slate-800 font-semibold">
+                                <!-- JS inyectará "Tienda Abierta" o "Tienda Cerrada" -->
                             </div>
-                            <!-- Botones (Estilo Outline Índigo) -->
+                            <!-- Botones (Estilo Outline Dorado) -->
                             <div class="flex gap-3 flex-shrink-0 w-full">
-                                <button id="reglas-btn" class="flex-1 px-4 py-2 bg-white border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
+                                <button id="reglas-btn" class="flex-1 px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">
                                     Ver Reglas
                                 </button>
-                                <button id="bonos-btn" class="flex-1 px-4 py-2 bg-white border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
+                                <button id="bonos-btn" class="flex-1 px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">
                                     Bonos
                                 </button>
-                                <button id="tienda-btn" class="flex-1 px-4 py-2 bg-white border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
+                                <button id="tienda-btn" class="flex-1 px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">
                                     Tienda
                                 </button>
                             </div>
@@ -168,9 +186,9 @@
                 
                 <!-- MÓDULOS DE HOME -->
                 <div id="home-modules-grid" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
-                    <!-- Panel de "Alumnos en Riesgo" (Fondo Blanco, Borde Índigo, Sombra Índigo) -->
-                    <div id="riesgo-container" class="bg-white rounded-xl shadow-lg shadow-indigo-600/10 lg:col-span-6 border border-indigo-200">
-                        <!-- CAMBIO vMonocromo: Texto slate-900, borde slate-200 -->
+                    <!-- Panel de "Alumnos en Riesgo" (Fondo Blanco, Borde Dorado, Sombra Dorada) -->
+                    <div id="riesgo-container" class="bg-white rounded-xl shadow-lg shadow-dorado-soft/10 lg:col-span-6 border border-amber-200">
+                        <!-- CAMBIO V16: Texto slate-900, borde slate-200 -->
                         <h3 class="text-base font-semibold text-slate-900 p-4 border-b border-slate-200">Alumnos en Riesgo</h3>
                         <div class="overflow-x-auto">
                             <!-- V20.1: Estructura de lista sin tabla para la coherencia visual -->
@@ -179,8 +197,8 @@
                                 <div class="col-span-1 text-left text-xs font-medium text-slate-700 uppercase tracking-wider">Grupo</div>
                                 <div class="col-span-1 text-right text-xs font-medium text-slate-700 uppercase tracking-wider">Pinceles</div>
                             </div>
-                            <!-- CAMBIO vMonocromo: Divisor Índigo -->
-                            <div id="riesgo-lista" class="bg-white divide-y divide-indigo-100">
+                            <!-- CAMBIO V16: Divisor Dorado -->
+                            <div id="riesgo-lista" class="bg-white divide-y divide-amber-100">
                                 <div colspan="3" class="p-4 text-sm text-slate-500 text-center">Cargando datos...</div>
                             </div>
                         </div>
@@ -189,22 +207,22 @@
                     <!-- Panel de "Estadísticas Rápidas" - ELIMINADO PARA DEJAR ESPACIO LIBRE -->
                     <div id="quick-stats-container" class="hidden"></div> 
 
-                    <!-- Tablón de Anuncios (Fondo Blanco, Borde Índigo, Sombra Índigo) -->
-                    <div id="anuncios-container" class="bg-white rounded-xl shadow-lg shadow-indigo-600/10 lg:col-span-6 border border-indigo-200">
+                    <!-- Tablón de Anuncios (Fondo Blanco, Borde Dorado, Sombra Dorada) -->
+                    <div id="anuncios-container" class="bg-white rounded-xl shadow-lg shadow-dorado-soft/10 lg:col-span-6 border border-amber-200">
                         <div class="flex justify-between items-center p-4 border-b border-slate-200">
                             <h3 class="text-base font-semibold text-slate-900">Tablón de Anuncios</h3>
-                            <!-- CAMBIO: Botón pequeño Outline Índigo -->
-                            <button id="anuncios-modal-btn" class="px-3 py-1 bg-white border border-indigo-600 text-indigo-600 text-xs font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">Ver Todos</button>
+                            <!-- CAMBIO V16: Botón pequeño Outline Dorado -->
+                            <button id="anuncios-modal-btn" class="px-3 py-1 bg-white border border-amber-600 text-amber-600 text-xs font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">Ver Todos</button>
                         </div>
-                        <!-- CAMBIO vMonocromo: Divisor Índigo -->
-                        <ul id="anuncios-lista" class="divide-y divide-indigo-100 p-4 space-y-1"></ul>
+                        <!-- CAMBIO V16: Divisor Dorado -->
+                        <ul id="anuncios-lista" class="divide-y divide-amber-100 p-4 space-y-1"></ul>
                     </div>
                 </div>
 
             </main>
 
             <!-- Copyright -->
-            <!-- CAMBIO vMonocromo: Texto slate-500 -->
+            <!-- CAMBIO V16: Texto slate-500 -->
             <p id="copyright-footer" class="flex-shrink-0 bg-slate-50 p-4 text-xs text-slate-500 text-center">
                 © 2025 Banco del Pincel Dorado | Desarrollado por Didac-Click Group.
             </p>
@@ -214,63 +232,63 @@
     <!-- Overlay de Carga -->
     <div id="loading-overlay" class="fixed inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center z-[10000] transition-opacity duration-300">
         <div class="text-center">
-            <!-- CAMBIO vMonocromo: Primario (Índigo) -->
-            <h1 class="text-5xl font-bold text-indigo-600 mb-2">
+            <!-- CAMBIO V16: Primario (Dorado) -->
+            <h1 class="text-5xl font-bold color-dorado-main mb-2">
                 Banco del Pincel Dorado
             </h1>
-            <!-- CAMBIO V20.2: Título a color oscuro -->
+            <!-- CAMBIO V16: Título a color oscuro -->
             <p class="text-lg text-slate-800 mb-6">
                 "Donde el esfuerzo académico tiene su recompensa"
             </p>
-            <!-- Animación de Puntos (Primario Índigo) -->
+            <!-- Animación de Puntos (Primario Dorado) -->
             <div class="flex justify-center items-center space-x-2">
-                <span class="w-3 h-3 bg-indigo-600 rounded-full animate-pulse-dot" style="animation-delay: 0s;"></span>
-                <span class="w-3 h-3 bg-indigo-600 rounded-full animate-pulse-dot" style="animation-delay: 0.2s;"></span>
-                <span class="w-3 h-3 bg-indigo-600 rounded-full animate-pulse-dot" style="animation-delay: 0.4s;"></span>
+                <span class="w-3 h-3 bg-amber-600 rounded-full animate-pulse-dot" style="animation-delay: 0s;"></span>
+                <span class="w-3 h-3 bg-amber-600 rounded-full animate-pulse-dot" style="animation-delay: 0.2s;"></span>
+                <span class="w-3 h-3 bg-amber-600 rounded-full animate-pulse-dot" style="animation-delay: 0.4s;"></span>
             </div>
         </div>
     </div>
 
     <!-- Modal de Acceso (Clave) -->
     <div id="gestion-modal" class="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- Borde Índigo -->
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-md transform scale-95 transition-transform duration-300 border-2 border-indigo-600">
+        <!-- Borde Dorado -->
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md transform scale-95 transition-transform duration-300 border-2 border-amber-600">
             <div class="p-6 relative">
-                <!-- Título Índigo -->
-                <h2 class="text-lg font-semibold text-indigo-700 text-center mb-4 pr-8">Acceso a Administración</h2>
+                <!-- Título Dorado -->
+                <h2 class="text-lg font-semibold color-dorado-main text-center mb-4 pr-8">Acceso a Administración</h2>
                 <div class="mb-4">
                     <!-- Labels Gris oscuro -->
                     <label for="clave-input" class="block text-sm font-medium text-slate-700 mb-1">Clave de Acceso</label>
-                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                    <input type="password" id="clave-input" placeholder="Ingrese su clave" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                    <input type="password" id="clave-input" placeholder="Ingrese su clave" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                 </div>
                 <div class="flex justify-end gap-3">
-                    <!-- Botón Acceder (Outline Índigo) -->
-                    <button id="modal-submit" class="px-4 py-2 bg-white border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">Acceder</button>
+                    <!-- Botón Acceder (Outline Dorado) -->
+                    <button id="modal-submit" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">Acceder</button>
                 </div>
                 <!-- Botón X de Cierre -->
-                <button id="modal-cancel" class="modal-close-btn absolute top-2 right-2 text-slate-400 hover:text-indigo-600 text-2xl p-1">&times;</button>
+                <button id="modal-cancel" class="modal-close-btn absolute top-2 right-2 text-slate-400 hover:color-dorado-main text-2xl p-1">&times;</button>
             </div>
         </div>
     </div>
     
-    <!-- MODAL DE ADMINISTRACIÓN -->
+    <!-- MODAL DE ADMINISTRACIÓN (ANCHO TOTAL FIJO) -->
     <div id="transaccion-modal" class="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- Borde Índigo -->
-        <div id="transaccion-modal-dialog" class="bg-white rounded-lg shadow-xl w-full max-w-4xl transform scale-95 transition-transform duration-300 overflow-hidden border-2 border-indigo-600"> 
-            <!-- Header Índigo/Gris -->
+        <!-- Borde Dorado - CAMBIO V17/V18: Ancho Fijo (96vw) -->
+        <div id="transaccion-modal-dialog" class="bg-white rounded-lg shadow-xl full-width-modal-dialog transform scale-95 transition-transform duration-300 overflow-hidden border-2 border-amber-600"> 
+            <!-- Header Dorado/Gris -->
             <div class="bg-slate-50 border-b border-slate-200">
                 <div class="flex justify-between items-center p-4">
-                    <!-- Título Índigo -->
-                    <h2 class="text-lg font-semibold text-indigo-700">
+                    <!-- Título Dorado -->
+                    <h2 class="text-lg font-semibold color-dorado-main">
                         Panel de Administración
                     </h2>
                     <!-- Botón X de Cierre -->
-                    <button id="transaccion-modal-close-btn" class="modal-close-btn text-slate-400 hover:text-indigo-600 text-2xl p-1">&times;</button>
+                    <button id="transaccion-modal-close-btn" class="modal-close-btn text-slate-400 hover:color-dorado-main text-2xl p-1">&times;</button>
                 </div>
                 <div class="flex border-b border-slate-200 px-4 overflow-x-auto">
-                    <!-- Pestañas: Texto Índigo (activo) o Gris (inactivo) -->
-                    <button data-tab="transaccion" class="tab-btn active-tab whitespace-nowrap px-4 py-2 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600 transition-colors hover:bg-slate-100">
+                    <!-- Pestañas: Texto Dorado (activo) o Gris (inactivo) -->
+                    <button data-tab="transaccion" class="tab-btn active-tab whitespace-nowrap px-4 py-2 text-sm font-medium border-b-2 border-amber-600 text-amber-600 transition-colors hover:bg-slate-100">
                         Transacción Múltiple
                     </button>
                     <button data-tab="prestamos" class="tab-btn whitespace-nowrap px-4 py-2 text-sm font-medium border-b-2 border-transparent text-slate-700 transition-colors hover:bg-slate-100">
@@ -291,10 +309,11 @@
                 </div>
             </div>
 
-            <div id="transaccion-modal-content-wrapper" class="p-6 h-[540px] overflow-y-auto">
+            <!-- CAMBIO V17/V18: El p-6 se mantiene, pero el tab-content dentro tiene la altura fija h-[550px] -->
+            <div id="transaccion-modal-content-wrapper" class="p-6">
                 
                 <!-- PESTAÑA 1: TRANSACCIÓN MÚLTIPLE -->
-                <div id="tab-transaccion" class="tab-content active"> 
+                <div id="tab-transaccion" class="tab-content active no-scrollbar"> 
                     <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <!-- Labels Gris oscuro -->
@@ -316,39 +335,40 @@
                         <!-- Labels Gris oscuro -->
                         <label for="transaccion-cantidad-input" class="block text-sm font-medium text-slate-700 mb-1">
                             Cantidad (para cada usuario seleccionado)
-                            <!-- Primario (Índigo) -->
-                            <span id="tesoreria-saldo-transaccion" class="text-xs text-indigo-600 ml-2 font-normal"></span>
+                            <!-- Primario (Dorado) -->
+                            <span id="tesoreria-saldo-transaccion" class="text-xs color-dorado-main ml-2 font-normal"></span>
                         </label>
-                        <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                        <input type="number" id="transaccion-cantidad-input" placeholder="Ej: 1000 o -50" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                        <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                        <input type="number" id="transaccion-cantidad-input" placeholder="Ej: 1000 o -50" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                         <div id="transaccion-calculo-impuesto" class="text-xs text-slate-500 mt-1 h-4"></div>
                     </div>
                     <div class="mt-6 flex justify-end">
-                        <!-- Botón Outline Índigo -->
-                        <button id="transaccion-submit-btn" data-accion="transaccion_multiple" class="px-4 py-2 bg-white border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm w-full md:w-auto">
+                        <!-- Botón Outline Dorado -->
+                        <button id="transaccion-submit-btn" data-accion="transaccion_multiple" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm w-full md:w-auto">
                             <span id="transaccion-btn-text">Realizar Transacción</span>
                         </button>
                     </div>
                 </div>
 
                 <!-- PESTAÑA 2: PRÉSTAMOS -->
-                <div id="tab-prestamos" class="tab-content hidden">
+                <div id="tab-prestamos" class="tab-content hidden no-scrollbar">
                     <div class="mb-4 relative">
                         <!-- Labels Gris oscuro -->
                         <label for="prestamo-alumno-search" class="block text-sm font-medium text-slate-700 mb-1">
                             Buscar Alumno
                             <span id="prestamo-alumno-saldo" class="text-xs text-slate-500 ml-2 font-normal"></span>
                         </label>
-                        <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                        <input type="text" id="prestamo-alumno-search" placeholder="Escriba el nombre del alumno..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                        <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                        <input type="text" id="prestamo-alumno-search" placeholder="Escriba el nombre del alumno..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                         <div id="prestamo-search-results" class="search-results-container hidden absolute z-10 w-full bg-white border border-slate-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto"></div>
                     </div>
-                    <!-- Alerta Índigo/Gris -->
-                    <div class="mt-4 p-4 border border-indigo-100 rounded-lg bg-indigo-50">
+                    <!-- Alerta Dorado/Gris -->
+                    <div class="mt-4 p-4 border border-amber-100 rounded-lg bg-amber-50">
                         <!-- Título oscuro -->
                         <h4 class="text-base font-semibold text-slate-800 mb-3">
                             Paquetes de Préstamo
-                            <span id="tesoreria-saldo-prestamo" class="text-sm text-indigo-600 ml-2 font-normal float-right"></span>
+                            <!-- CAMBIO V16: Color Dorado -->
+                            <span id="tesoreria-saldo-prestamo" class="text-sm color-dorado-main ml-2 font-normal float-right"></span>
                         </h4>
                         <div id="prestamo-paquetes-container" class="space-y-3">
                             <div class="text-sm text-slate-500">Seleccione un alumno para ver las opciones de préstamo.</div>
@@ -357,23 +377,24 @@
                 </div>
 
                 <!-- PESTAÑA 3: DEPÓSITOS -->
-                <div id="tab-depositos" class="tab-content hidden">
+                <div id="tab-depositos" class="tab-content hidden no-scrollbar">
                     <div class="mb-4 relative">
                         <!-- Labels Gris oscuro -->
                         <label for="deposito-alumno-search" class="block text-sm font-medium text-slate-700 mb-1">
                             Buscar Alumno
                             <span id="deposito-alumno-saldo" class="text-xs text-slate-500 ml-2 font-normal"></span>
                         </label>
-                        <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                        <input type="text" id="deposito-alumno-search" placeholder="Escriba el nombre del alumno..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                        <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                        <input type="text" id="deposito-alumno-search" placeholder="Escriba el nombre del alumno..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                         <div id="deposito-search-results" class="search-results-container hidden absolute z-10 w-full bg-white border border-slate-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto"></div>
                     </div>
-                    <!-- Alerta Índigo/Gris -->
-                    <div class="mt-4 p-4 border border-indigo-100 rounded-lg bg-indigo-50">
+                    <!-- Alerta Dorado/Gris -->
+                    <div class="mt-4 p-4 border border-amber-100 rounded-lg bg-amber-50">
                         <!-- Título oscuro -->
                         <h4 class="text-base font-semibold text-slate-800 mb-3">
                             Certificados de Depósito a Plazo
-                            <span id="deposito-info-tesoreria" class="text-sm text-indigo-600 ml-2 font-normal float-right"></span>
+                            <!-- CAMBIO V16: Color Dorado -->
+                            <span id="deposito-info-tesoreria" class="text-sm color-dorado-main ml-2 font-normal float-right"></span>
                         </h4>
                         <div id="deposito-paquetes-container" class="space-y-3">
                             <div class="text-sm text-slate-500">Seleccione un alumno para ver las opciones de depósito.</div>
@@ -382,49 +403,67 @@
                 </div>
 
                 <!-- PESTAÑA 4: GESTIÓN DE BONOS -->
-                <div id="tab-bonos_admin" class="tab-content hidden">
+                <div id="tab-bonos_admin" class="tab-content hidden no-scrollbar">
                      <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
                         <div id="bono-admin-form-container" class="lg:col-span-2">
-                            <!-- Título Índigo -->
-                            <h3 class="text-lg font-semibold text-indigo-700 mb-4">Crear / Actualizar Bono</h3>
+                            <!-- Título Dorado -->
+                            <h3 class="text-lg font-semibold color-dorado-main mb-4">Crear / Actualizar Bono</h3>
                             <form id="bono-admin-form" class="space-y-4">
                                 <div>
                                     <!-- Labels Gris oscuro -->
                                     <label for="bono-admin-clave-input" class="block text-sm font-medium text-slate-700 mb-1">Clave (ID Único)</label>
-                                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                    <input type="text" id="bono-admin-clave-input" placeholder="Ej: BONONUEVO" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50 uppercase">
+                                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                                    <input type="text" id="bono-admin-clave-input" placeholder="Ej: BONONUEVO" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50 uppercase">
                                     <p class="text-xs text-slate-500 mt-1">Si la clave ya existe, se actualizará el bono.</p>
                                 </div>
                                 <div>
                                     <!-- Labels Gris oscuro -->
                                     <label for="bono-admin-nombre-input" class="block text-sm font-medium text-slate-700 mb-1">Nombre Descriptivo</label>
-                                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                    <input type="text" id="bono-admin-nombre-input" placeholder="Ej: Bono de Bienvenida" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                                    <input type="text" id="bono-admin-nombre-input" placeholder="Ej: Bono de Bienvenida" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                                 </div>
                                 <div>
                                     <!-- Labels Gris oscuro -->
                                     <label for="bono-admin-recompensa-input" class="block text-sm font-medium text-slate-700 mb-1">Recompensa (Pinceles)</label>
-                                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                    <input type="number" id="bono-admin-recompensa-input" placeholder="Ej: 5000" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                                    <input type="number" id="bono-admin-recompensa-input" placeholder="Ej: 5000" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                                 </div>
+                                
+                                <!-- CAMBIO V17: Contenedor de Checkboxes - Distribución Horizontal (Grid) -->
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Grupos Permitidos</label>
+                                    <div id="bono-admin-grupos-checkboxes-container" class="w-full h-auto max-h-48 overflow-y-auto no-scrollbar bg-slate-50 border border-slate-300 rounded-lg p-2 grid grid-cols-3 md:grid-cols-4 gap-x-3 gap-y-1">
+                                        <p class="text-xs text-slate-500">Cargando grupos...</p>
+                                    </div>
+                                </div>
+
+                                <!-- CAMBIO V16: Expiración por Horas -->
+                                <div>
+                                    <label for="bono-admin-expiracion-input" class="block text-sm font-medium text-slate-700 mb-1">Duración (Horas)</label>
+                                    <!-- CAMBIO V16: Input tipo number para horas -->
+                                    <input type="number" id="bono-admin-expiracion-input" placeholder="Ej: 24 (horas)" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
+                                    <p class="text-xs text-slate-500 mt-1">Tiempo que estará activo. Dejar vacío = Sin Expiración.</p>
+                                </div>
+
                                 <div>
                                     <!-- Labels Gris oscuro -->
                                     <label for="bono-admin-usos-input" class="block text-sm font-medium text-slate-700 mb-1">Usos Totales (Lote)</label>
-                                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                    <input type="number" id="bono-admin-usos-input" placeholder="Ej: 100" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                                    <input type="number" id="bono-admin-usos-input" placeholder="Ej: 100" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                                 </div>
+                                
                                 <div class="flex items-center justify-end gap-3 pt-2">
-                                    <!-- Botón Limpiar (Outline Índigo) -->
-                                    <button type="button" id="bono-admin-clear-btn" class="px-4 py-2 bg-white border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">Limpiar</button>
-                                    <!-- Botón Outline Índigo -->
-                                    <button type="submit" id="bono-admin-submit-btn" class="px-4 py-2 bg-white border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">Crear / Actualizar Bono</button>
+                                    <!-- Botón Limpiar (Outline Dorado) -->
+                                    <button type="button" id="bono-admin-clear-btn" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">Limpiar</button>
+                                    <!-- Botón Outline Dorado -->
+                                    <button type="submit" id="bono-admin-submit-btn" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">Crear / Actualizar Bono</button>
                                 </div>
                                 <div id="bono-admin-status-msg" class="text-sm text-center font-medium pt-2 h-auto min-h-[1rem]"></div>
                             </form>
                         </div>
                         <div id="bonos-admin-lista-container" class="lg:col-span-3">
-                            <!-- Título Índigo -->
-                            <h3 class="text-lg font-semibold text-indigo-700 mb-4">Bonos Configurados</h3>
+                            <!-- Título Dorado -->
+                            <h3 class="text-lg font-semibold color-dorado-main mb-4">Bonos Configurados</h3>
                             <div class="border border-slate-200 rounded-lg overflow-hidden">
                                 <table class="min-w-full divide-y divide-slate-200">
                                     <thead class="bg-slate-50 sticky top-0">
@@ -447,83 +486,100 @@
                 </div>
 
                 <!-- PESTAÑA 5: TIENDA (GESTIÓN) -->
-                <div id="tab-tienda_gestion" class="tab-content hidden">
+                <div id="tab-tienda_gestion" class="tab-content hidden no-scrollbar">
                      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
                         <div id="tienda-admin-form-container">
-                            <!-- Título Índigo -->
-                            <h3 class="text-lg font-semibold text-indigo-700 mb-4">Crear / Actualizar Artículo</h3>
+                            <!-- Título Dorado -->
+                            <h3 class="text-lg font-semibold color-dorado-main mb-4">Crear / Actualizar Artículo</h3>
                             <form id="tienda-admin-form" class="space-y-4">
                                 <div>
                                     <!-- Labels Gris oscuro -->
                                     <label for="tienda-admin-itemid-input" class="block text-sm font-medium text-slate-700 mb-1">ItemID (ID Único)</label>
-                                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                    <input type="text" id="tienda-admin-itemid-input" placeholder="Ej: exonerar_tema" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50 disabled:bg-slate-100">
+                                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                                    <input type="text" id="tienda-admin-itemid-input" placeholder="Ej: exonerar_tema" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50 disabled:bg-slate-100">
                                     <p class="text-xs text-slate-500 mt-1">Si el ID ya existe, se actualizará el artículo.</p>
                                 </div>
                                 <div>
                                     <!-- Labels Gris oscuro -->
                                     <label for="tienda-admin-nombre-input" class="block text-sm font-medium text-slate-700 mb-1">Nombre del Artículo</label>
-                                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                    <input type="text" id="tienda-admin-nombre-input" placeholder="Ej: Exonerar un Tema" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                                    <input type="text" id="tienda-admin-nombre-input" placeholder="Ej: Exonerar un Tema" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                                 </div>
                                 <div>
                                     <!-- Labels Gris oscuro -->
                                     <label for="tienda-admin-desc-input" class="block text-sm font-medium text-slate-700 mb-1">Descripción (Tooltip)</label>
-                                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                    <textarea id="tienda-admin-desc-input" rows="3" placeholder="Ej: Permite omitir un tema..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50"></textarea>
+                                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                                    <textarea id="tienda-admin-desc-input" rows="3" placeholder="Ej: Permite omitir un tema..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50"></textarea>
                                 </div>
                                 <div>
                                     <!-- Labels Gris oscuro -->
                                     <label for="tienda-admin-tipo-input" class="block text-sm font-medium text-slate-700 mb-1">Tipo / Categoría</label>
-                                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                    <input type="text" id="tienda-admin-tipo-input" placeholder="Ej: Académico, Privilegio, Estatus" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                                    <input type="text" id="tienda-admin-tipo-input" placeholder="Ej: Académico, Privilegio, Estatus" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                                 </div>
+                                
+                                <!-- CAMBIO V17: Contenedor de Checkboxes - Distribución Horizontal (Grid) -->
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">Grupos Permitidos</label>
+                                    <div id="tienda-admin-grupos-checkboxes-container" class="w-full h-auto max-h-48 overflow-y-auto no-scrollbar bg-slate-50 border border-slate-300 rounded-lg p-2 grid grid-cols-3 md:grid-cols-4 gap-x-3 gap-y-1">
+                                         <p class="text-xs text-slate-500">Cargando grupos...</p>
+                                    </div>
+                                </div>
+
+                                <!-- CAMBIO V16: Expiración por Horas -->
+                                <div>
+                                    <label for="tienda-admin-expiracion-input" class="block text-sm font-medium text-slate-700 mb-1">Duración (Horas)</label>
+                                    <!-- CAMBIO V16: Input tipo number para horas -->
+                                    <input type="number" id="tienda-admin-expiracion-input" placeholder="Ej: 48 (horas)" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
+                                    <p class="text-xs text-slate-500 mt-1">Tiempo que estará activo. Dejar vacío = Sin Expiración.</p>
+                                </div>
+
                                 <div>
                                     <!-- Labels Gris oscuro -->
                                     <label for="tienda-admin-precio-input" class="block text-sm font-medium text-slate-700 mb-1">Precio Base (Pinceles)</label>
-                                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                    <input type="number" id="tienda-admin-precio-input" placeholder="Ej: 200000" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                                    <input type="number" id="tienda-admin-precio-input" placeholder="Ej: 200000" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                                 </div>
                                 <div>
                                     <!-- Labels Gris oscuro -->
                                     <label for="tienda-admin-stock-input" class="block text-sm font-medium text-slate-700 mb-1">Stock (Lote)</label>
-                                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                    <input type="number" id="tienda-admin-stock-input" placeholder="Ej: 5 (o 9999 para ilimitado)" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                                    <input type="number" id="tienda-admin-stock-input" placeholder="Ej: 5 (o 9999 para ilimitado)" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                                 </div>
                                 <div class="flex items-center justify-end gap-3 pt-2">
-                                    <!-- Botón Limpiar (Outline Índigo) -->
-                                    <button type="button" id="tienda-admin-clear-btn" class="px-4 py-2 bg-white border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">Limpiar</button>
-                                    <!-- Botón Outline Índigo -->
-                                    <button type="submit" id="tienda-admin-submit-btn" class="px-4 py-2 bg-white border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">Crear / Actualizar</button>
+                                    <!-- Botón Limpiar (Outline Dorado) -->
+                                    <button type="button" id="tienda-admin-clear-btn" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">Limpiar</button>
+                                    <!-- Botón Outline Dorado -->
+                                    <button type="submit" id="tienda-admin-submit-btn" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">Crear / Actualizar</button>
                                 </div>
                                 <div id="tienda-admin-status-msg" class="text-sm text-center font-medium pt-2 h-auto min-h-[1rem]"></div>
                             </form>
                         </div>
                         <div id="tienda-admin-controls-container">
-                            <!-- Título Índigo -->
-                            <h3 class="text-lg font-semibold text-indigo-700 mb-2">Control Manual</h3>
+                            <!-- Título Dorado -->
+                            <h3 class="text-lg font-semibold color-dorado-main mb-2">Control Manual</h3>
                             <!-- Texto a color gris oscuro -->
                             <p class="text-sm text-slate-700 mb-3">Anula el temporizador para forzar la apertura o cierre.</p>
                             <div class="bg-slate-50 border border-slate-200 rounded-lg p-3 mb-3">
                                 <span class="text-sm text-slate-700">Estado Actual:</span>
-                                <!-- Primario (Índigo) como default -->
-                                <span id="tienda-admin-status-label" class="text-sm font-bold text-indigo-600">Cargando...</span> 
+                                <!-- Primario (Dorado) como default -->
+                                <span id="tienda-admin-status-label" class="text-sm font-bold color-dorado-main">Cargando...</span> 
                             </div>
                             <div class="grid grid-cols-3 gap-2">
-                                <!-- Botones de control manual (Outline Índigo) -->
-                                <button type="button" id="tienda-force-open-btn" onclick="AppTransacciones.toggleStoreManual('open')" class="px-3 py-2 bg-white border border-indigo-600 text-indigo-600 text-xs font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">Forzar Apertura</button>
-                                <button type="button" id="tienda-force-close-btn" onclick="AppTransacciones.toggleStoreManual('closed')" class="px-3 py-2 bg-white border border-indigo-600 text-indigo-600 text-xs font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">Forzar Cierre</button>
-                                <button type="button" id="tienda-force-auto-btn" onclick="AppTransacciones.toggleStoreManual('auto')" class="px-3 py-2 bg-white border border-indigo-600 text-indigo-600 text-xs font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">Modo Automático</button>
+                                <!-- Botones de control manual (Outline Dorado) -->
+                                <button type="button" id="tienda-force-open-btn" onclick="AppTransacciones.toggleStoreManual('open')" class="px-3 py-2 bg-white border border-amber-600 text-amber-600 text-xs font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">Forzar Apertura</button>
+                                <button type="button" id="tienda-force-close-btn" onclick="AppTransacciones.toggleStoreManual('closed')" class="px-3 py-2 bg-white border border-amber-600 text-amber-600 text-xs font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">Forzar Cierre</button>
+                                <button type="button" id="tienda-force-auto-btn" onclick="AppTransacciones.toggleStoreManual('auto')" class="px-3 py-2 bg-white border border-amber-600 text-amber-600 text-xs font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">Modo Automático</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- PESTAÑA 6: TIENDA (INVENTARIO) -->
-                <div id="tab-tienda_inventario" class="tab-content hidden">
+                <div id="tab-tienda_inventario" class="tab-content hidden no-scrollbar">
                     <div id="tienda-admin-lista-container">
-                        <!-- Título Índigo -->
-                        <h3 class="text-lg font-semibold text-indigo-700 mb-4">Inventario Actual</h3>
+                        <!-- Título Dorado -->
+                        <h3 class="text-lg font-semibold color-dorado-main mb-4">Inventario Actual</h3>
                         <div class="border border-slate-200 rounded-lg overflow-hidden">
                             <table class="min-w-full divide-y divide-slate-200">
                                 <thead class="bg-slate-50 sticky top-0">
@@ -547,8 +603,8 @@
                 <div id="transaccion-status-msg" class="text-sm text-center font-medium px-6 pt-4 h-auto min-h-[1rem]"></div>
             </div>
             <div class="bg-slate-50 p-4 border-t border-slate-200 flex justify-between gap-3 flex-shrink-0">
-                <!-- Botón Ver Base de Datos (Outline Índigo) -->
-                <a id="db-link-btn" href="https." target="_blank" class="px-4 py-2 bg-white border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm flex items-center">
+                <!-- Botón Ver Base de Datos (Outline Dorado) -->
+                <a id="db-link-btn" href="https." target="_blank" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm flex items-center">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5 mr-1">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3-3m0 0-3-3m-1.5 1.5H19.5" />
                     </svg>
@@ -559,55 +615,55 @@
         </div>
     </div>
     
-    <!-- MODAL DE TRANSFERENCIAS P2P -->
+    <!-- MODAL DE TRANSFERENCIAS P2P (ANCHO MÁS PEQUEÑO) -->
     <div id="p2p-transfer-modal" class="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- Borde Índigo -->
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg transform scale-95 transition-transform duration-300 overflow-hidden border-2 border-indigo-600"> 
-            <!-- Header Índigo/Gris -->
+        <!-- Borde Dorado - Mantenemos un ancho menor para P2P (max-w-lg) -->
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg transform scale-95 transition-transform duration-300 overflow-hidden border-2 border-amber-600"> 
+            <!-- Header Dorado/Gris -->
             <div class="bg-slate-50 border-b border-slate-200">
                 <div class="flex justify-between items-center p-4">
-                    <!-- Título Índigo -->
-                    <h2 class="text-lg font-semibold text-indigo-700">
+                    <!-- Título Dorado -->
+                    <h2 class="text-lg font-semibold color-dorado-main">
                         Portal de Transferencias P2P
                     </h2>
                     <!-- Botón X de Cierre -->
-                    <button id="p2p-modal-close-btn" class="modal-close-btn text-slate-400 hover:text-indigo-600 text-2xl p-1">&times;</button>
+                    <button id="p2p-modal-close-btn" class="modal-close-btn text-slate-400 hover:color-dorado-main text-2xl p-1">&times;</button>
                 </div>
             </div>
             <div class="p-6 space-y-4">
                 <div class="relative">
                     <!-- Labels Gris oscuro -->
                     <label for="p2p-search-origen" class="block text-sm font-medium text-slate-700 mb-1">Tu Nombre (Remitente)</label>
-                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                    <input type="text" id="p2p-search-origen" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                    <input type="text" id="p2p-search-origen" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                     <div id="p2p-origen-results" class="search-results-container hidden absolute z-20 w-full bg-white border border-slate-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto"></div>
                 </div>
                 <div>
                     <!-- Labels Gris oscuro -->
                     <label for="p2p-clave" class="block text-sm font-medium text-slate-700 mb-1">Tu Clave P2P</label>
-                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                    <input type="password" id="p2p-clave" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                    <input type="password" id="p2p-clave" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                 </div>
                 <div class="relative">
                     <!-- Labels Gris oscuro -->
                     <label for="p2p-search-destino" class="block text-sm font-medium text-slate-700 mb-1">Enviar a (Destinatario)</label>
-                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                    <input type="text" id="p2p-search-destino" placeholder="Busca el nombre del destinatario..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                    <input type="text" id="p2p-search-destino" placeholder="Busca el nombre del destinatario..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                     <div id="p2p-destino-results" class="search-results-container hidden absolute z-10 w-full bg-white border border-slate-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto"></div>
                 </div>
                 <div>
                     <!-- Labels Gris oscuro -->
                     <label for="p2p-cantidad" class="block text-sm font-medium text-slate-700 mb-1">Cantidad a Enviar</label>
-                    <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                    <input type="number" id="p2p-cantidad" placeholder="Ej: 1000" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
+                    <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                    <input type="number" id="p2p-cantidad" placeholder="Ej: 1000" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
                 </div>
                 <!-- Texto de impuesto a color gris oscuro -->
                 <div id="p2p-calculo-impuesto" class="text-sm text-center text-slate-700 h-5"></div>
                 <div id="p2p-status-msg" class="text-sm text-center font-medium px-6 pt-2 h-auto min-h-[1rem]"></div>
             </div>
             <div class="bg-slate-50 p-4 border-t border-slate-200 flex justify-end gap-3 flex-shrink-0">
-                <!-- Botón Outline Índigo -->
-                <button id="p2p-submit-btn" class="px-4 py-2 bg-white border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
+                <!-- Botón Outline Dorado -->
+                <button id="p2p-submit-btn" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">
                     <span id="p2p-btn-text">Realizar Transferencia</span>
                 </button>
                 <!-- Se eliminó el botón 'Cerrar' aquí -->
@@ -615,19 +671,21 @@
         </div>
     </div>
 
-    <!-- Modal de Reglas -->
+    <!-- Modal de Reglas (ANCHO TOTAL FIJO) -->
     <div id="reglas-modal" class="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- Borde Índigo -->
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-5xl transform scale-95 transition-transform duration-300 border-2 border-indigo-600">
+        <!-- Borde Dorado - CAMBIO V17/V18: Ancho Fijo (96vw) -->
+        <div class="bg-white rounded-lg shadow-xl full-width-modal-dialog transform scale-95 transition-transform duration-300 border-2 border-amber-600">
+            <!-- CAMBIO V18: Se envuelve el contenido en un div.p-6/p-8 para igualar el padding de Administración -->
             <div class="p-6 md:p-8">
-                <!-- Título Índigo -->
+                <!-- Título Dorado -->
                 <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-semibold text-indigo-700">Reglas y Economía del Banco</h2>
+                    <h2 class="text-xl font-semibold color-dorado-main">Reglas y Economía del Banco</h2>
                     <!-- Botón X de Cierre -->
-                    <button id="reglas-modal-close" class="modal-close-btn text-slate-400 hover:text-indigo-600 text-2xl p-1">&times;</button>
+                    <button id="reglas-modal-close" class="modal-close-btn text-slate-400 hover:color-dorado-main text-2xl p-1">&times;</button>
                 </div>
                 
-                <div class="space-y-6 max-h-[70vh] overflow-y-auto pr-4 text-slate-700 no-scrollbar">
+                <!-- CAMBIO V17: Altura Fija (550px) para uniformidad. Scroll invisible -->
+                <div class="space-y-6 h-[550px] overflow-y-auto pr-4 text-slate-700 no-scrollbar">
                     
                     <!-- Sección Tesorería (Texto Restaurado y Mejorado) -->
                     <div class="space-y-3">
@@ -635,10 +693,11 @@
                         <p class="text-slate-700 text-justify">
                             El Banco (Tesorería) es la única entidad que tiene la potestad de crear y destruir Pinceles (ℙ), lo que garantiza una economía de suma cero y previene la inflación descontrolada. El saldo de la Tesorería representa el capital operativo total del sistema y es el origen de todo el capital distribuido.
                         </p>
+                        <!-- CAMBIO V17: Removido el UL/LI con viñetas -->
                         <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-2">
                             <p class="text-sm text-slate-700"><strong class="font-medium text-slate-800">Impuestos P2P:</strong> Cada transferencia de Pinceles entre alumnos (P2P) está sujeta a un impuesto del 10%. Este impuesto es retenido por la Tesorería, asegurando que el capital se redistribuya de manera controlada.</p>
                             <p class="text-sm text-slate-700"><strong class="font-medium text-slate-800">Impuesto a Depósitos:</strong> Los intereses generados por los Certificados de Depósito a Plazo están sujetos a una retención del 5% al momento del vencimiento. Este monto se resta del interés bruto y se transfiere a la Tesorería.</p>
-                            <p class="text-sm text-slate-700"><strong class="font-medium text-slate-800">Tasas de Interés:</strong> Todas las tasas de interés y comisiones están fijadas por la administración del Banco y no están sujetas a negociación.</p>
+                            <p class="text-sm text-slate-700"><strong class="font-medium text-slate-800">Impuesto al Patrimonio Neto (ISP):</strong> El cobro de impuestos por riqueza ahora es PROGRESIVO y diario, y se calcula por tramos sobre el saldo que exceda la exención base de 100 ℙ.</p>
                         </div>
                     </div>
                     
@@ -648,7 +707,7 @@
                          <p class="text-slate-700 text-justify">
                             Los alumnos pueden solicitar préstamos a la Tesorería para recuperar saldos negativos o financiar inversiones (sujeto a evaluación de capacidad de pago). Un alumno solo puede tener un préstamo activo a la vez.
                          </p>
-                         <!-- Advertencia de Penalización (Cambiado de Rojo a Índigo/Gris) -->
+                         <!-- Advertencia de Penalización (Cambiado de Rojo a Dorado/Gris) -->
                          <div class="bg-slate-200 p-4 rounded-lg border border-slate-300">
                             <h5 class="font-semibold text-slate-800 mb-1">Penalización por Mora (Préstamo Vencido)</h5>
                             <p class="text-sm text-slate-700">Si un préstamo no es pagado antes de su fecha de vencimiento, el monto pendiente generará una penalización que <strong>aumentará un 1% CADA DÍA</strong> hasta que se liquide la deuda por completo.</p>
@@ -664,11 +723,8 @@
                          <p class="text-slate-700 text-justify">
                             Los Depósitos a Plazo son instrumentos de inversión que ofrecen un retorno fijo sobre el capital depositado después de un período de tiempo predefinido (plazo). Este mecanismo está diseñado para fomentar el ahorro.
                          </p>
-                         <ul class="list-disc pl-5 text-sm text-slate-700 space-y-1">
-                             <li>El capital y el interés se pagan al alumno al finalizar el plazo.</li>
-                             <li>La inversión mínima y las tasas de interés varían según el paquete de depósito seleccionado.</li>
-                             <li>Un alumno con un préstamo activo no es elegible para crear un Depósito a Plazo.</li>
-                         </ul>
+                         <!-- CAMBIO V17: Removido el UL/LI con viñetas -->
+                         <p class="text-sm text-slate-700">El capital y el interés se pagan al alumno al finalizar el plazo. La inversión mínima y las tasas de interés varían según el paquete de depósito seleccionado. Un alumno con un préstamo activo no es elegible para crear un Depósito a Plazo.</p>
                     </div>
 
                     <!-- Sección Cicla (Texto Restaurado y Mejorado) -->
@@ -677,11 +733,8 @@
                          <p class="text-slate-700 text-justify">
                             El grupo "Cicla" es un estado de penalización. Los alumnos que no logren mantener un saldo positivo y cuya deuda exceda los límites establecidos por el Banco serán movidos automáticamente a este grupo.
                          </p>
-                         <ul class="list-disc pl-5 text-sm text-slate-700 space-y-1">
-                             <li>Los alumnos en Cicla pierden temporalmente el acceso a ciertos privilegios o actividades.</li>
-                             <li>La única forma de salir de Cicla es obteniendo un préstamo de rescate o por una acción directa de la administración que cubra la deuda.</li>
-                             <li>El objetivo es motivar una gestión financiera responsable.</li>
-                         </ul>
+                         <!-- CAMBIO V17: Removido el UL/LI con viñetas -->
+                         <p class="text-sm text-slate-700">Los alumnos en Cicla pierden temporalmente el acceso a ciertos privilegios o actividades. La única forma de salir de Cicla es obteniendo un préstamo de rescate o por una acción directa de la administración que cubra la deuda. El objetivo es motivar una gestión financiera responsable.</p>
                     </div>
 
                 </div>
@@ -689,147 +742,180 @@
         </div>
     </div>
 
-    <!-- Modal de Anuncios -->
+    <!-- Modal de Anuncios (ANCHO TOTAL FIJO) -->
     <div id="anuncios-modal" class="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- Borde Índigo -->
-        <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl transform scale-95 transition-transform duration-300 border-2 border-indigo-600">
+        <!-- Borde Dorado - CAMBIO V17/V18: Ancho Fijo (96vw) -->
+        <div class="bg-white rounded-lg shadow-xl full-width-modal-dialog transform scale-95 transition-transform duration-300 border-2 border-amber-600">
+            <!-- CAMBIO V18: Se envuelve el contenido para igualar el padding de Administración -->
             <div class="p-6">
-                <!-- Título Índigo -->
+                <!-- Título Dorado -->
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold text-indigo-700">Todos los Anuncios</h2>
+                    <h2 class="text-lg font-semibold color-dorado-main">Todos los Anuncios</h2>
                     <!-- Botón X de Cierre -->
-                    <button id="anuncios-modal-close" class="modal-close-btn text-slate-400 hover:text-indigo-600 text-2xl p-1">&times;</button>
+                    <button id="anuncios-modal-close" class="modal-close-btn text-slate-400 hover:color-dorado-main text-2xl p-1">&times;</button>
                 </div>
-                <div id="anuncios-modal-lista" class="max-h-[60vh] overflow-y-auto space-y-4 pr-2">
+                <!-- CAMBIO V17: Altura Fija (550px) para uniformidad. Scroll invisible -->
+                <div id="anuncios-modal-lista" class="h-[550px] overflow-y-auto space-y-4 pr-2 no-scrollbar">
                     <p class="text-slate-500 text-center">Cargando anuncios...</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Alumno -->
+    <!-- Modal de Alumno (MANTENEMOS ANCHO PEQUEÑO) -->
     <div id="student-modal" class="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-[1002] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- Borde Índigo -->
-        <div id="student-modal-content" class="bg-white rounded-lg shadow-xl w-full max-w-lg transform scale-95 transition-transform duration-300 border-2 border-indigo-600">
+        <!-- Borde Dorado -->
+        <div id="student-modal-content" class="bg-white rounded-lg shadow-xl w-full max-w-lg transform scale-95 transition-transform duration-300 border-2 border-amber-600">
             <!-- Contenido dinámico (Incluye su propio botón X de cierre en script.js) -->
         </div>
     </div>
 
-    <!-- MODAL DE BONOS (Usuario) -->
+    <!-- MODAL DE BONOS (Usuario) (ANCHO TOTAL FIJO) -->
     <div id="bonos-modal" class="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- Borde Índigo -->
-        <div id="bonos-modal-dialog" class="bg-white rounded-lg shadow-xl w-full max-w-6xl transform scale-95 transition-transform duration-300 overflow-hidden border-2 border-indigo-600">
-            <!-- Header Índigo/Gris -->
+        <!-- Borde Dorado - CAMBIO V17/V18: Ancho Fijo (96vw) -->
+        <div id="bonos-modal-dialog" class="bg-white rounded-lg shadow-xl full-width-modal-dialog transform scale-95 transition-transform duration-300 overflow-hidden border-2 border-amber-600">
+            <!-- Header Dorado/Gris -->
             <div class="bg-slate-50 border-b border-slate-200">
                 <div class="flex justify-between items-center p-4">
-                    <!-- Título Índigo -->
-                    <h2 class="text-lg font-semibold text-indigo-700">Canjear Bono</h2>
+                    <!-- Título Dorado -->
+                    <h2 class="text-lg font-semibold color-dorado-main">Canjear Bono</h2>
                     <!-- Botón X de Cierre -->
-                    <button id="bonos-modal-close" class="modal-close-btn text-slate-400 hover:text-indigo-600 text-2xl p-1">&times;</button>
+                    <button id="bonos-modal-close" class="modal-close-btn text-slate-400 hover:color-dorado-main text-2xl p-1">&times;</button>
                 </div>
             </div>
-            <div class="p-6 h-[550px] overflow-y-auto pr-2">
-                <div id="bono-tab-canjear">
-                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                        <div class="lg:col-span-2 space-y-4">
-                            <!-- Título Índigo -->
-                            <h3 class="text-lg font-semibold text-indigo-700">Información de Canje</h3>
-                            <div class="relative">
-                                <!-- Labels Gris oscuro -->
-                                <label for="bono-search-alumno" class="block text-sm font-medium text-slate-700 mb-1">Tu Nombre</label>
-                                <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                <input type="text" id="bono-search-alumno" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
-                                <div id="bono-search-results" class="search-results-container hidden absolute z-20 w-full bg-white border border-slate-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto"></div>
-                            </div>
-                            <div>
-                                <!-- Labels Gris oscuro -->
-                                <label for="bono-clave-p2p" class="block text-sm font-medium text-slate-700 mb-1">Tu Clave P2P</label>
-                                <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                <input type="password" id="bono-clave-p2p" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
-                            </div>
-                            <div>
-                                <!-- Labels Gris oscuro -->
-                                <label for="bono-clave-input" class="block text-sm font-medium text-slate-700 mb-1">Clave del Bono</label>
-                                <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                <input type="text" id="bono-clave-input" placeholder="Ej: BIENVENIDA2025" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50 uppercase">
-                            </div>
-                        </div>
-                        <div class="lg:col-span-3">
-                            <!-- Título Índigo -->
-                            <h3 class="text-lg font-semibold text-indigo-700 mb-4">Bonos Disponibles</h3>
-                            <div id="bonos-lista-disponible" class="grid grid-cols-1 md:grid-cols-2 gap-3 pr-2 no-scrollbar">
-                                <p class="text-sm text-slate-500 text-center col-span-2">Cargando bonos...</p>
-                            </div>
-                        </div>
+            
+            <!-- CONTENEDOR PRINCIPAL DEL BONO (PASO 1: LISTA) - CAMBIO V17: Altura Fija (550px) -->
+            <div id="bono-step-list-container" class="p-6 h-[550px] overflow-y-auto pr-2 no-scrollbar">
+                <!-- Título Dorado -->
+                <h3 class="text-lg font-semibold color-dorado-main mb-4">Bonos Disponibles</h3>
+                <!-- NUEVO V12: La lista usa ahora todo el ancho -->
+                <div id="bonos-lista-disponible" class="grid grid-cols-1 md:grid-cols-2 gap-3 pr-2 no-scrollbar">
+                    <p class="text-sm text-slate-500 text-center col-span-2">Cargando bonos...</p>
+                </div>
+            </div>
+            
+            <!-- NUEVO V12: CONTENEDOR DE CANJE (PASO 2: FORMULARIO, OCULTO POR DEFECTO) -->
+            <div id="bono-step-form-container" class="p-6 hidden h-[550px] no-scrollbar">
+                 <div class="max-w-md mx-auto space-y-4">
+                    <!-- Título Dorado -->
+                    <h3 class="text-lg font-semibold color-dorado-main mb-4">Confirmar Canje</h3>
+                    
+                    <div id="bono-summary" class="bg-amber-50 border border-amber-200 p-3 rounded-lg">
+                        <p class="font-semibold text-slate-800">Artículo:</p>
+                        <p id="bono-item-name-display" class="text-base font-bold color-dorado-main"></p>
+                        <p id="bono-item-reward-display" class="text-sm text-slate-700"></p>
                     </div>
-                </div>
+
+                    <div class="relative">
+                        <label for="bono-search-alumno-step2" class="block text-sm font-medium text-slate-700 mb-1">Tu Nombre</label>
+                        <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                        <input type="text" id="bono-search-alumno-step2" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
+                        <div id="bono-origen-results-step2" class="search-results-container hidden absolute z-20 w-full bg-white border border-slate-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto"></div>
+                    </div>
+                    <div>
+                        <label for="bono-clave-p2p-step2" class="block text-sm font-medium text-slate-700 mb-1">Tu Clave P2P</label>
+                        <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                        <input type="password" id="bono-clave-p2p-step2" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
+                    </div>
+                    <!-- Campo de clave de bono (oculto y autocompletado) -->
+                    <input type="hidden" id="bono-clave-input-step2">
+
+                    <div id="bono-step2-status-msg" class="text-sm text-center font-medium px-6 pt-2 h-auto min-h-[1rem]"></div>
+
+                    <div class="flex justify-between gap-3 pt-2">
+                        <button id="bono-step-back-btn" type="button" class="px-4 py-2 bg-slate-100 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-200 transition-colors">Volver</button>
+                        <!-- Botón Outline Dorado -->
+                        <button id="bono-submit-step2-btn" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">
+                            <span id="bono-btn-text-step2">Confirmar Canje</span>
+                        </button>
+                    </div>
+                 </div>
             </div>
+
+
+            <!-- FOOTER DEL MODAL DE BONOS (COMÚN) -->
             <div id="bonos-modal-footer" class="bg-slate-50 p-4 border-t border-slate-200 flex justify-end gap-3 flex-shrink-0">
-                <div id="bono-status-msg" class="text-sm text-left font-medium text-indigo-600 h-auto min-h-[1rem] flex-1 items-center flex"></div>
-                <!-- Botón Outline Índigo -->
-                <button id="bono-submit-btn" class="px-4 py-2 bg-white border border-indigo-600 text-indigo-600 text-sm font-medium rounded-lg hover:bg-indigo-50 transition-colors shadow-sm">
-                    <span id="bono-btn-text">Canjear Bono</span>
-                </button>
-                <!-- Se eliminó el botón 'Cerrar' aquí -->
+                <div id="bono-status-msg" class="text-sm text-left font-medium color-dorado-main h-auto min-h-[1rem] flex-1 items-center flex"></div>
             </div>
         </div>
     </div>
     
-    <!-- MODAL DE TIENDA (Usuario) -->
+    <!-- MODAL DE TIENDA (Usuario) (ANCHO TOTAL FIJO) -->
     <div id="tienda-modal" class="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- Borde Índigo -->
-        <div id="tienda-modal-dialog" class="bg-white rounded-lg shadow-xl w-full max-w-7xl transform scale-95 transition-transform duration-300 overflow-hidden border-2 border-indigo-600">
-            <!-- Header Índigo/Gris -->
+        <!-- Borde Dorado - CAMBIO V17/V18: Ancho Fijo (96vw) -->
+        <div id="tienda-modal-dialog" class="bg-white rounded-lg shadow-xl full-width-modal-dialog transform scale-95 transition-transform duration-300 overflow-hidden border-2 border-amber-600">
+            <!-- Header Dorado/Gris -->
             <div class="bg-slate-50 border-b border-slate-200">
                 <div class="flex justify-between items-center p-4">
-                    <!-- Título Índigo -->
-                    <h2 class="text-lg font-semibold text-indigo-700">Tienda de Artículos del Mes</h2>
+                    <!-- Título Dorado -->
+                    <h2 class="text-lg font-semibold color-dorado-main">Tienda de Artículos del Mes</h2>
                     <!-- Botón X de Cierre -->
-                    <button id="tienda-modal-close" class="modal-close-btn text-slate-400 hover:text-indigo-600 text-2xl p-1">&times;</button>
+                    <button id="tienda-modal-close" class="modal-close-btn text-slate-400 hover:color-dorado-main text-2xl p-1">&times;</button>
                 </div>
             </div>
-            <div class="p-6">
-                <div id="tienda-tab-comprar">
-                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-                        <div class="lg:col-span-2 space-y-4">
-                            <!-- Título Índigo -->
-                            <h3 class="text-lg font-semibold text-indigo-700">Información del Comprador</h3>
-                            <div class="relative">
-                                <!-- Labels Gris oscuro -->
-                                <label for="tienda-search-alumno" class="block text-sm font-medium text-slate-700 mb-1">Tu Nombre</label>
-                                <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                <input type="text" id="tienda-search-alumno" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
-                                <div id="tienda-search-results" class="search-results-container hidden absolute z-20 w-full bg-white border border-slate-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto"></div>
-                            </div>
-                            <div>
-                                <!-- Labels Gris oscuro -->
-                                <label for="tienda-clave-p2p" class="block text-sm font-medium text-slate-700 mb-1">Tu Clave P2P</label>
-                                <!-- CORRECCIÓN V7: Añadir clases focus:bg-indigo-50 para el realce -->
-                                <input type="password" id="tienda-clave-p2p" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:bg-indigo-50/50">
-                            </div>
-                            <div id="tienda-timer-status" class="text-center p-3 rounded-lg bg-slate-50 text-slate-700 font-medium">
-                                Cargando estado de la tienda...
-                            </div>
-                        </div>
-                        <div class="lg:col-span-3">
-                            <!-- Título Índigo -->
-                            <h3 class="text-lg font-semibold text-indigo-700 mb-4">Artículos del Mes</h3>
-                            <!-- CAMBIO V7: Se ajustó el grid a 1 o 2 columnas para el diseño horizontal -->
-                            <div id="tienda-items-container" class="grid grid-cols-1 lg:grid-cols-2 gap-4 h-[500px] overflow-y-auto pr-2 no-scrollbar bg-white p-4 rounded-lg border border-slate-200 shadow-inner">
-                                <p class="text-sm text-slate-500 text-center col-span-2">Cargando artículos...</p>
-                            </div>
-                        </div>
+            
+            <!-- CONTENEDOR PRINCIPAL DE LA TIENDA (PASO 1: LISTA) - CAMBIO V17: Altura Fija (550px) -->
+            <div id="tienda-step-list-container" class="p-6 space-y-4 h-[550px] overflow-y-auto pr-2 no-scrollbar">
+                <!-- Título Dorado -->
+                <h3 class="text-lg font-semibold color-dorado-main mb-4">Artículos Disponibles</h3>
+                <!-- NUEVO V12: La lista usa ahora todo el ancho -->
+                <div id="tienda-items-container" class="grid grid-cols-1 lg:grid-cols-2 gap-3 pr-2 no-scrollbar bg-white p-4 rounded-lg border border-slate-200 shadow-inner">
+                    <p class="text-sm text-slate-500 text-center col-span-2">Cargando artículos...</p>
+                </div>
+            </div>
+            
+            <!-- NUEVO V12: CONTENEDOR DE COMPRA (PASO 2: FORMULARIO, OCULTO POR DEFECTO) -->
+            <div id="tienda-step-form-container" class="p-6 hidden h-[550px] no-scrollbar">
+                 <div class="max-w-lg mx-auto space-y-4">
+                    <!-- Título Dorado -->
+                    <h3 class="text-lg font-semibold color-dorado-main mb-4">Confirmar Compra</h3>
+                    
+                    <div id="item-summary" class="bg-amber-50 border border-amber-200 p-4 rounded-lg">
+                        <p class="font-semibold text-slate-800">Comprando:</p>
+                        <p id="tienda-item-name-display" class="text-xl font-bold color-dorado-main"></p>
+                        <p id="tienda-item-price-display" class="text-sm text-slate-700"></p>
+                        <p id="tienda-item-cost-display" class="text-sm text-slate-700"></p>
                     </div>
-                </div>
+
+                    <div class="relative">
+                        <label for="tienda-search-alumno-step2" class="block text-sm font-medium text-slate-700 mb-1">Tu Nombre</label>
+                        <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                        <input type="text" id="tienda-search-alumno-step2" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
+                        <div id="tienda-origen-results-step2" class="search-results-container hidden absolute z-10 w-full bg-white border border-slate-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto"></div>
+                    </div>
+                    <div>
+                        <label for="tienda-clave-p2p-step2" class="block text-sm font-medium text-slate-700 mb-1">Tu Clave P2P</label>
+                        <!-- CAMBIO V16: Clases focus:bg-amber-50 y focus:ring-amber-600 -->
+                        <input type="password" id="tienda-clave-p2p-step2" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-amber-500 focus:bg-amber-50/50">
+                    </div>
+                    
+                    <div id="tienda-step2-status-msg" class="text-sm text-center font-medium px-6 pt-2 h-auto min-h-[1rem]"></div>
+
+                    <div class="flex justify-between gap-3 pt-2">
+                        <!-- CAMBIO: Aplicando estilos Outline Dorado al botón 'Volver a Tienda' -->
+                        <button id="tienda-step-back-btn" type="button" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">Volver a Tienda</button>
+                        <!-- Botón Outline Dorado (sin cambios) -->
+                        <button id="tienda-submit-step2-btn" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">
+                            <span id="tienda-btn-text-step2">Confirmar Compra</span>
+                        </button>
+                    </div>
+                 </div>
             </div>
-            <div id="tienda-modal-footer" class="bg-slate-50 p-4 border-t border-slate-200 flex justify-end gap-3 flex-shrink-0">
-                <div id="tienda-status-msg" class="text-sm text-left font-medium text-indigo-600 h-auto min-h-[1rem] flex-1 items-center flex"></div>
-                <!-- Se eliminó el botón 'Cerrar' aquí -->
+
+
+            <!-- NUEVO V12: FOOTER DEL MODAL DE TIENDA (COMÚN) -->
+            <div id="tienda-modal-footer" class="bg-slate-50 p-4 border-t border-slate-200 flex flex-col gap-2">
+                <!-- Indicador de Estado/Timer (Movido aquí) -->
+                <div id="tienda-timer-status" class="text-center p-2 rounded-lg bg-slate-50 text-slate-700 font-medium border border-slate-200">
+                    Cargando estado de la tienda...
+                </div>
+                <!-- Mensaje de estado de la transacción -->
+                <div id="tienda-status-msg" class="text-sm text-left font-medium color-dorado-main h-auto min-h-[1rem] flex-1 items-center flex"></div>
             </div>
         </div>
     </div>
 
     <!-- Lógica de la Aplicación -->
-    <script src="script.js?v=21.2" type="module" defer></script>
+    <script src="script.js?v=24.0" type="module" defer></script>
 </body>
 </html>
