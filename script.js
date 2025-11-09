@@ -12,7 +12,7 @@ const AppConfig = {
     
     // CAMBIO V26.3: Nueva versión (FIX: Listado Step 1 sin filtro de grupo)
     APP_STATUS: 'RC', 
-    APP_VERSION: 'v26.3', 
+    APP_VERSION: 'v26.4', // ACTUALIZADO
     
     // CAMBIO v0.3.0: Impuesto P2P (debe coincidir con el Backend)
     IMPUESTO_P2P_TASA: 0.10, // 10%
@@ -112,7 +112,21 @@ const AppFormat = {
     // CAMBIO v0.4.4: Formato de Pinceles sin decimales
     formatNumber: (num) => new Intl.NumberFormat('es-DO', { maximumFractionDigits: 0 }).format(num),
     // NUEVO v0.4.0: Formateo de Pinceles (2 decimales) - REEMPLAZADO por formatNumber
-    formatPincel: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num)
+    formatPincel: (num) => new Intl.NumberFormat('es-DO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(num),
+
+    // CORRECCIÓN V26.4: FIX ZONA HORARIA. Devuelve la fecha local en formato YYYY-MM-DDTHH:mm
+    // Esto previene que el backend asuma UTC y le sume el offset de zona horaria del servidor.
+    toLocalISOString: (date) => {
+        const pad = (num) => String(num).padStart(2, '0');
+        
+        const year = date.getFullYear();
+        const month = pad(date.getMonth() + 1); // getMonth() es 0-indexado
+        const day = pad(date.getDate());
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
+
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
 };
 
 // --- BASE DE DATOS DE ANUNCIOS ---
@@ -965,7 +979,7 @@ const AppUI = {
             container.innerHTML = `<p class="text-sm text-slate-500 text-center col-span-1 md:col-span-2">No hay bonos disponibles en este momento.</p>`;
             return;
         }
-// ... (rest of the populateBonoList function)
+        
         container.innerHTML = bonosActivos.map(bono => {
             const recompensa = AppFormat.formatNumber(bono.recompensa);
             const usosRestantes = bono.usos_totales - bono.usos_actuales;
@@ -2931,8 +2945,8 @@ const AppTransacciones = {
         let expiracion_fecha = '';
         if (!isNaN(duracionHoras) && duracionHoras > 0) {
             const expiryDate = new Date(Date.now() + duracionHoras * 60 * 60 * 1000);
-            // Formato ISO para el backend (ej: "2025-01-30T15:00")
-            expiracion_fecha = expiryDate.toISOString().slice(0, 16); 
+            // CORRECCIÓN V26.4: Usar formato de hora local para evitar el offset de UTC (eliminando 'Z')
+            expiracion_fecha = AppFormat.toLocalISOString(expiryDate); 
         }
 
         let errorValidacion = "";
@@ -3179,8 +3193,8 @@ const AppTransacciones = {
         let expiracion_fecha = '';
         if (!isNaN(duracionHoras) && duracionHoras > 0) {
             const expiryDate = new Date(Date.now() + duracionHoras * 60 * 60 * 1000);
-            // Formato ISO para el backend (ej: "2025-01-30T15:00")
-            expiracion_fecha = expiryDate.toISOString().slice(0, 16); 
+            // CORRECCIÓN V26.4: Usar formato de hora local para evitar el offset de UTC (eliminando 'Z')
+            expiracion_fecha = AppFormat.toLocalISOString(expiryDate);
         }
 
         const item = {
