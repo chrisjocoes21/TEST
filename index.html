@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- CAMBIO v26.0: Implementación de Centrado de Contador y Limpieza de Modal Tienda -->
+<!-- CAMBIO V29.3: Rediseño visual Sorteo Diario (Botones esquina, centro limpio, CTA inferior) -->
 <html lang="es" class="h-full bg-slate-50 overflow-hidden">
 <head>
     <meta charset="UTF-8">
@@ -8,15 +8,14 @@
     <!-- Carga de Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Carga de Fuente Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏦</text></svg>">
 
     <!-- Archivo de estilos personalizados -->
-    <link rel="stylesheet" href="style.css?v=24.0">
+    <link rel="stylesheet" href="style.css?v=29.3">
     <style>
         /* Definición de la Paleta Dorada (Amber Elegante) */
-        /* Usaremos amber-600 para acentos principales, amber-500 para sombras y amber-100 para fondos claros */
         .color-dorado-main { color: #d97706; /* amber-600 */ }
         .bg-dorado-light { background-color: #fffbeb; /* amber-50 */ }
         .border-dorado-main { border-color: #d97706; /* amber-600 */ }
@@ -24,7 +23,6 @@
         .shadow-dorado-soft { --tw-shadow-color: #f59e0b; /* amber-500 */ } /* Para usar en shadow-lg shadow-dorado-soft/10 */
 
         /* CONTENEDOR UNIFICADO DE MODALES (96% ANCHO) - PLAN V17/V18 */
-        /* Esta clase fuerza el mismo ancho para Administración, Bonos, Tienda y Reglas */
         .full-width-modal-dialog {
              width: 96vw !important; /* Ancho fijo para uniformidad */
              max-width: 96vw !important; /* Asegura que no se expanda más allá */
@@ -131,7 +129,6 @@
                 <div id="page-subtitle" class="mb-6"></div>
                 
                 <!-- V20.1: Este contenedor se usará como el 'listado libre' sin la estructura de tabla -->
-                <!-- CAMBIO V16: Se eliminan todas las clases de contenedor aquí. LISTA DE GRUPOS SIN MARCO NI FONDO BLANCO. -->
                 <div id="table-container" class="hidden">
                     <!-- Contenido inyectado por JS -->
                 </div>
@@ -157,15 +154,13 @@
                         <!-- Botones Principales (Fondo Blanco, Borde Dorado, Sombra Dorada) -->
                         <div class="flex flex-col justify-between gap-4 px-3 bg-white rounded-xl shadow-lg shadow-dorado-soft/10 border border-amber-200 p-4 h-full">
                             <!-- Timer -->
-                            <!-- CAMBIO V26.0: Añadida clase justify-center para centrar el contador -->
+                            <!-- CAMBIO V28.0: Eliminados Segundos -->
                             <div id="countdown-timer" class="flex-shrink-0 text-sm font-medium text-slate-700 flex items-baseline gap-2 justify-center">
-                                <!-- CAMBIO V16: Color Dorado -->
                                 <span id="days" class="text-xl font-bold color-dorado-main w-8 text-right">00</span><span class="text-xs text-slate-500 uppercase -ml-1">Días</span>
                                 <span id="hours" class="text-xl font-bold color-dorado-main w-8 text-right">00</span><span class="text-xs text-slate-500 uppercase -ml-1">Horas</span>
                                 <span id="minutes" class="text-xl font-bold color-dorado-main w-8 text-right">00</span><span class="text-xs text-slate-500 uppercase -ml-1">Minutos</span>
-                                <span id="seconds" class="text-xl font-bold color-dorado-main w-8 text-right">00</span><span class="text-xs text-slate-500 uppercase -ml-1">Segundos</span>
                             </div>
-                            <!-- Mensaje (V18: Volvemos a texto simple, JS lo manejará) -->
+                            <!-- Mensaje -->
                             <div id="store-message" class="hidden w-full text-center text-slate-800 font-semibold">
                                 <!-- JS inyectará "Tienda Abierta" o "Tienda Cerrada" -->
                             </div>
@@ -205,25 +200,112 @@
                         </div>
                     </div>
 
+                    <!-- NUEVO MÓDULO SORTEO DIARIO (REDIMENSIONADO Y REDISEÑADO) -->
+                    <!-- CAMBIO V29.3: Fondo Blanco, Posicionamiento Relative para los Absolutos -->
+                    <div id="quiniela-card-container" class="bg-white rounded-xl shadow-lg shadow-dorado-soft/10 lg:col-span-6 border border-amber-200 text-slate-800 relative overflow-hidden">
+                        
+                        <!-- Vista de Apuesta (Estado "Abierto" - Centrado y Limpio) -->
+                        <div id="quiniela-view-abierto" class="hidden h-full flex flex-col justify-between">
+                            
+                            <!-- 1. CONTROLES DE ESQUINA (Absolute Positioning) -->
+                            <div class="absolute inset-x-0 top-0 p-3 flex justify-between items-start z-10">
+                                <!-- Contador (Top Left, Minimal Pill) -->
+                                <!-- El script.js actualizará las horas y minutos -->
+                                <div id="quiniela-countdown-pill" class="flex items-center space-x-1 text-xs font-semibold bg-slate-100 px-2 py-1 rounded-full border border-slate-200 shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 text-slate-600">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="text-slate-600">Cierra en:</span>
+                                    <!-- IDs q-hours and q-minutes, Color Dorado -->
+                                    <span class="font-bold color-dorado-main"><span id="q-hours">00</span>h <span id="q-minutes">00</span>m</span>
+                                </div>
+                                
+                                <!-- Botón Info (Top Right, Minimal) -->
+                                <button id="quiniela-rules-btn" class="text-slate-400 hover:color-dorado-main p-1 rounded-full transition-colors focus:outline-none">
+                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                                     </svg>
+                                </button>
+                            </div>
+                            
+                            <!-- 2. CENTRAL CONTENT (Centrado Vertical y Horizontal) -->
+                            <div class="p-6 flex flex-col items-center justify-center text-center flex-grow m-auto"> 
+                                <!-- Título negro -->
+                                <h3 class="text-lg font-semibold text-slate-900 mb-1">Sorteo Diario</h3>
+                                
+                                <p class="text-sm text-slate-600 uppercase tracking-wider font-medium mb-1">Bote Acumulado Hoy</p>
+                                <!-- Monto en Dorado Intenso -->
+                                <p id="quiniela-home-bote" class="text-5xl md:text-6xl font-extrabold color-dorado-main mb-4">-- ℙ</p>
+                            </div>
+
+                            <!-- 3. CTA BUTTON (Bottom, Full Width, Prominente) -->
+                            <div class="p-4 pt-0">
+                                <button id="quiniela-home-btn" class="w-full px-4 py-3 text-lg font-bold rounded-xl text-white transition-colors shadow-lg shadow-amber-600/50 
+                                    bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800">
+                                    ¡PARTICIPA Y GANA!
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Vista de Procesamiento (Estado "Procesando") - Centrado -->
+                        <div id="quiniela-view-procesando" class="hidden h-full flex flex-col justify-center items-center min-h-[190px] p-6 text-center">
+                             <!-- Título oscuro -->
+                            <h3 class="text-xl font-semibold text-slate-900 mb-3">Sorteo en Proceso</h3>
+                            <p class="text-sm text-slate-600 mb-4">El sorteo de las 6 PM se está realizando. Vuelve a las 8 PM para los resultados.</p>
+                            <!-- Animación de Puntos (Dorado) -->
+                            <div class="flex justify-center items-center space-x-2">
+                                <span class="w-3 h-3 bg-amber-600 rounded-full animate-pulse-dot" style="animation-delay: 0s;"></span>
+                                <span class="w-3 h-3 bg-amber-600 rounded-full animate-pulse-dot" style="animation-delay: 0.2s;"></span>
+                                <span class="w-3 h-3 bg-amber-600 rounded-full animate-pulse-dot" style="animation-delay: 0.4s;"></span>
+                            </div>
+                        </div>
+                        
+                        <!-- Vista de Resultados (Estado "Cerrado" - Centrado) -->
+                        <div id="quiniela-view-cerrado" class="hidden h-full flex flex-col justify-between items-center text-center min-h-[190px]">
+                            <!-- Controles de Esquina (Contador de Reapertura - Arriba a la Izquierda) -->
+                            <div class="absolute inset-x-0 top-0 p-3 flex justify-between items-start z-10">
+                                <div id="quiniela-countdown-pill-cerrado" class="flex items-center space-x-1 text-xs font-semibold bg-slate-100 px-2 py-1 rounded-full border border-slate-200 shadow-sm">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-3 h-3 text-slate-600">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.75-13a.75.75 0 00-1.5 0v5c0 .414.336.75.75.75h4a.75.75 0 000-1.5h-3.25V5z" clip-rule="evenodd" />
+                                    </svg>
+                                    <span class="text-slate-600">Reabre en:</span>
+                                    <!-- IDs q-hours and q-minutes, Color Dorado -->
+                                    <span class="font-bold color-dorado-main"><span id="q-hours-cerrado">00</span>h <span id="q-minutes-cerrado">00</span>m</span>
+                                </div>
+                                <button id="quiniela-rules-btn-cerrado" class="text-slate-400 hover:color-dorado-main p-1 rounded-full transition-colors focus:outline-none">
+                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+                                     </svg>
+                                </button>
+                            </div>
+                            
+                            <div class="p-6 pb-2 w-full flex-grow flex flex-col justify-center items-center">
+                                <!-- Título oscuro -->
+                                <h3 class="text-xl font-semibold text-slate-900 mb-1">Número Ganador</h3>
+                                <p class="text-sm text-slate-600 mb-2">Resultados de ayer/hoy:</p>
+                                <!-- Número Ganador en Dorado muy grande -->
+                                <p id="quiniela-home-ganador" class="text-7xl font-extrabold color-dorado-main my-2">--</p>
+                                <p id="quiniela-home-premio" class="text-base font-medium text-slate-700 mt-2 mb-4">Cargando premio...</p>
+                            </div>
+                            <!-- CONTENEDOR DE MARQUESINA (Nombres de Ganadores) -->
+                            <div id="quiniela-ganadores-marquee-container" class="w-full bg-slate-100 py-2 overflow-hidden border-t border-slate-200">
+                                <div id="quiniela-ganadores-marquee" class="whitespace-nowrap font-semibold text-sm text-slate-800">
+                                    <span class="px-8">Esperando resultados...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Panel de "Estadísticas Rápidas" - ELIMINADO PARA DEJAR ESPACIO LIBRE -->
                     <div id="quick-stats-container" class="hidden"></div> 
 
-                    <!-- Tablón de Anuncios (Fondo Blanco, Borde Dorado, Sombra Dorada) -->
-                    <div id="anuncios-container" class="bg-white rounded-xl shadow-lg shadow-dorado-soft/10 lg:col-span-6 border border-amber-200">
-                        <div class="flex justify-between items-center p-4 border-b border-slate-200">
-                            <h3 class="text-base font-semibold text-slate-900">Tablón de Anuncios</h3>
-                            <!-- CAMBIO V16: Botón pequeño Outline Dorado -->
-                            <button id="anuncios-modal-btn" class="px-3 py-1 bg-white border border-amber-600 text-amber-600 text-xs font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">Ver Todos</button>
-                        </div>
-                        <!-- CAMBIO V16: Divisor Dorado -->
-                        <ul id="anuncios-lista" class="divide-y divide-amber-100 p-4 space-y-1"></ul>
-                    </div>
+                    <!-- Tablón de Anuncios (ELIMINADO V28.0) -->
+                    <!-- Se eliminó el div id="anuncios-container" -->
                 </div>
 
             </main>
 
             <!-- Copyright -->
-            <!-- CAMBIO V16: Texto slate-500 -->
             <p id="copyright-footer" class="flex-shrink-0 bg-slate-50 p-4 text-xs text-slate-500 text-center">
                 © 2025 Banco del Pincel Dorado | Desarrollado por Didac-Click Group.
             </p>
@@ -743,26 +825,6 @@
         </div>
     </div>
 
-    <!-- Modal de Anuncios (ANCHO TOTAL FIJO) -->
-    <div id="anuncios-modal" class="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
-        <!-- Borde Dorado - CAMBIO V17/V18: Ancho Fijo (96vw) -->
-        <div class="bg-white rounded-lg shadow-xl full-width-modal-dialog transform scale-95 transition-transform duration-300 border-2 border-amber-600">
-            <!-- CAMBIO V18: Se envuelve el contenido para igualar el padding de Administración -->
-            <div class="p-6">
-                <!-- Título Dorado -->
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold color-dorado-main">Todos los Anuncios</h2>
-                    <!-- Botón X de Cierre -->
-                    <button id="anuncios-modal-close" class="modal-close-btn text-slate-400 hover:color-dorado-main text-2xl p-1">&times;</button>
-                </div>
-                <!-- CAMBIO V17: Altura Fija (550px) para uniformidad. Scroll invisible -->
-                <div id="anuncios-modal-lista" class="h-[550px] overflow-y-auto space-y-4 pr-2 no-scrollbar">
-                    <p class="text-slate-500 text-center">Cargando anuncios...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Modal de Alumno (MANTENEMOS ANCHO PEQUEÑO) -->
     <div id="student-modal" class="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-[1002] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
         <!-- Borde Dorado -->
@@ -786,11 +848,11 @@
             </div>
             
             <!-- CONTENEDOR PRINCIPAL DEL BONO (PASO 1: LISTA) - CAMBIO V17: Altura Fija (550px) -->
-            <div id="bono-step-list-container" class="p-6 h-[550px] overflow-y-auto pr-2 no-scrollbar">
+            <div id="bono-step-list-container" class="p-6 space-y-4 h-[550px] overflow-y-auto pr-2 no-scrollbar">
                 <!-- Título Dorado -->
                 <h3 class="text-lg font-semibold color-dorado-main mb-4">Bonos Disponibles</h3>
                 <!-- NUEVO V12: La lista usa ahora todo el ancho -->
-                <div id="bonos-lista-disponible" class="grid grid-cols-1 md:grid-cols-2 gap-3 pr-2 no-scrollbar">
+                <div id="bonos-lista-disponible" class="grid grid-cols-1 md:grid-cols-2 gap-3 pr-2 no-scrollbar bg-white p-4 rounded-lg border border-slate-200 shadow-inner">
                     <p class="text-sm text-slate-500 text-center col-span-2">Cargando bonos...</p>
                 </div>
             </div>
@@ -912,8 +974,102 @@
             </div>
         </div>
     </div>
+    
+    <!-- INICIO: MODAL DE SORTEO DIARIO -->
+    <!-- CAMBIO V28.0: Renombrado a Sorteo Diario -->
+    <div id="quiniela-modal" class="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <!-- Borde Dorado, Ancho Pequeño (max-w-lg) -->
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg transform scale-95 transition-transform duration-300 overflow-hidden border-2 border-amber-600"> 
+            <!-- Header -->
+            <div class="bg-slate-50 border-b border-slate-200">
+                <div class="flex justify-between items-center p-4">
+                    <!-- CAMBIO V28.0: Renombrado a Sorteo Diario -->
+                    <h2 class="text-lg font-semibold color-dorado-main">Sorteo Diario</h2>
+                    <button id="quiniela-modal-close-btn" class="modal-close-btn text-slate-400 hover:color-dorado-main text-2xl p-1">&times;</button>
+                </div>
+            </div>
+            <!-- Contenido del Modal -->
+            <div class="p-6 space-y-4">
+                <!-- Display del Bote -->
+                <div class="text-center bg-amber-50 border border-amber-200 p-3 rounded-lg">
+                    <p class="text-sm text-slate-700">Bote del Premio (80% del total):</p>
+                    <!-- El JS actualizará este valor -->
+                    <p id="quiniela-bote-display" class="text-3xl font-bold color-dorado-main">0 ℙ</p>
+                    <p id="quiniela-costo-display" class="text-sm text-slate-600 mt-1">Costo por intento: 0 ℙ</p>
+                </div>
+                
+                <!-- Formulario de Apuesta (reusa la autenticación P2P) -->
+                <div class="relative">
+                    <label for="quiniela-search-alumno" class="block text-sm font-medium text-slate-700 mb-1">Tu Nombre</label>
+                    <input type="text" id="quiniela-search-alumno" placeholder="Busca tu nombre..." class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-amber-50/50">
+                    <!-- Contenedor para los resultados de búsqueda -->
+                    <div id="quiniela-alumno-results" class="search-results-container hidden absolute z-20 w-full bg-white border border-slate-300 rounded-lg shadow-lg mt-1 max-h-60 overflow-y-auto"></div>
+                </div>
+                <div>
+                    <label for="quiniela-clave-p2p" class="block text-sm font-medium text-slate-700 mb-1">Tu Clave P2P</label>
+                    <input type="password" id="quiniela-clave-p2p" placeholder="Ingresa tu clave de 5 dígitos" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-amber-50/50">
+                </div>
+                <div>
+                    <label for="quiniela-numero" class="block text-sm font-medium text-slate-700 mb-1">Tu Apuesta (Número 1-100)</label>
+                    <input type="number" id="quiniela-numero" placeholder="Ej: 77" min="1" max="100" class="w-full px-3 py-2 border border-slate-300 rounded-lg shadow-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-amber-50/50">
+                </div>
+                
+                <!-- Mostrar apuestas anteriores del usuario -->
+                <div id="quiniela-mis-apuestas-container" class="pt-2">
+                     <label class="block text-xs font-medium text-slate-500 mb-1">Mis Apuestas de Hoy:</label>
+                     <div id="quiniela-mis-apuestas-lista" class="text-sm text-slate-700">-</div>
+                </div>
+
+                <!-- Mensaje de Estado -->
+                <div id="quiniela-status-msg-modal" class="text-sm text-center font-medium px-6 pt-2 h-auto min-h-[1rem]"></div>
+            </div>
+            <!-- Footer del Modal -->
+            <div class="bg-slate-50 p-4 border-t border-slate-200 flex justify-end gap-3 flex-shrink-0">
+                <button id="quiniela-submit-btn-modal" class="px-4 py-2 bg-white border border-amber-600 text-amber-600 text-sm font-medium rounded-lg hover:bg-amber-50 transition-colors shadow-sm">
+                    <span id="quiniela-btn-text-modal">Apostar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- FIN: MODAL DE SORTEO DIARIO -->
+
+    <!-- NUEVO V28.1: Modal de Reglas del Sorteo -->
+    <div id="quiniela-reglas-modal" class="fixed inset-0 bg-slate-900/75 flex items-center justify-center z-[1001] p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-md transform scale-95 transition-transform duration-300 border-2 border-amber-600">
+             <div class="bg-slate-50 border-b border-slate-200 flex justify-between items-center p-4">
+                <h2 class="text-lg font-semibold color-dorado-main">Reglas del Sorteo Diario</h2>
+                <button id="quiniela-reglas-close-btn" class="modal-close-btn text-slate-400 hover:color-dorado-main text-2xl p-1">&times;</button>
+            </div>
+            <div class="p-6 space-y-4 text-slate-700">
+                <div>
+                    <h4 class="font-semibold text-amber-700 mb-1">¿Qué es?</h4>
+                    <p class="text-sm">Es una oportunidad diaria para ganar Pinceles extra adivinando el número ganador entre 1 y 100.</p>
+                </div>
+                <div>
+                    <h4 class="font-semibold text-amber-700 mb-1">¿Cómo funciona?</h4>
+                    <ul class="list-disc list-inside text-sm space-y-1 ml-2">
+                        <li>Elige un número del 1 al 100.</li>
+                        <li>Costo por intento: <strong>1,000 ℙ</strong>.</li>
+                        <li>Puedes intentar tantas veces como quieras.</li>
+                    </ul>
+                </div>
+                <div>
+                     <h4 class="font-semibold text-amber-700 mb-1">Premios y Cierre</h4>
+                     <ul class="list-disc list-inside text-sm space-y-1 ml-2">
+                        <li>Cierre de apuestas: <strong>6:00 PM</strong> todos los días.</li>
+                        <li>Reapertura de apuestas: <strong>8:00 PM</strong> todos los días.</li>
+                        <li>El Bote se reparte equitativamente entre todos los ganadores.</li>
+                        <li>Si nadie gana, ¡el Bote se acumula para mañana!</li>
+                     </ul>
+                </div>
+                 <div class="text-xs text-slate-500 italic mt-4 pt-4 border-t border-slate-100">
+                    * El Bote incluye un fondo base garantizado por la Tesorería más el 80% de todas las apuestas del día.
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Lógica de la Aplicación -->
-    <script src="script.js?v=24.0" type="module" defer></script>
+    <script src="script.js?v=29.3" type="module" defer></script>
 </body>
 </html>
