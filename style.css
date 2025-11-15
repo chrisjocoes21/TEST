@@ -29,26 +29,20 @@ body {
 }
 
 /* =================================================================== */
-/* Animación del Botón de Menú (Hamburguesa) */
+/* Animación del Botón de Menú (Hamburguesa) y Cierre (X) */
 /* =================================================================== */
 .menu-toggle-icon {
      transition: transform 0.3s ease-out, color 0.3s ease-out;
 }
 .menu-toggle-icon:hover {
-    /* CAMBIO V16: Dorado */
     color: #d97706; /* amber-600 */
     transform: rotate(90deg); 
 }
-
-/* =================================================================== */
-/* Animación del Botón de Cierre (X) */
-/* =================================================================== */
 .modal-close-btn {
     transition: transform 0.3s ease-out, color 0.3s ease-out;
 }
 .modal-close-btn:hover {
     transform: rotate(90deg);
-    /* CAMBIO V16: Dorado */
     color: #d97706; /* amber-600 */
 }
 
@@ -60,23 +54,18 @@ body {
     height: 6px;
 }
 ::-webkit-scrollbar-thumb {
-    /* Gris de tailwind */
     background: #cbd5e1; 
     border-radius: 3px;
     border: 2px solid transparent; 
     background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-    /* Gris más oscuro */
     background: #94a3b8; 
 }
 ::-webkit-scrollbar-track {
-    /* Gris claro (como el fondo de la app) */
     background: #f1f5f9; 
     border-radius: 3px;
 }
-
-/* Ocultar scrollbar - CRÍTICO PARA PLAN V15 */
 .no-scrollbar::-webkit-scrollbar {
     display: none;
 }
@@ -92,17 +81,14 @@ body {
     border-radius: 0;
     margin-right: 0.5rem;
 }
-/* CAMBIO V16: Color de acento a Dorado */
-#transaccion-modal .tab-btn.active-tab {
+#transaccion-modal .tab-btn.active-tab,
+#transacciones-combinadas-modal .tab-btn.active-tab {
     border-bottom-color: #d97706 !important; /* amber-600 */
     color: #d97706 !important; /* amber-600 */
 }
 
-/* CORRECCIÓN PLAN V15: Altura unificada para el contenido de las pestañas de admin */
+/* Altura unificada para el contenido de las pestañas de admin */
 .tab-content {
-    /* Aseguramos una altura máxima que respeta el footer y header del modal */
-    /* La altura de 550px se determinó para el max-w-6xl anterior. */
-    /* En la nueva configuración full-width, mantenemos una altura generosa para forzar el scroll interno */
     height: 550px; 
     overflow-y: auto; 
 }
@@ -114,11 +100,9 @@ body {
     position: absolute;
     z-index: 10;
     width: 100%;
-    /* Mantenido en blanco para contraste */
     background-color: white; 
     border: 1px solid #d1d5db; /* border-gray-300 */
     border-radius: 0.5rem; /* rounded-lg */
-    /* Mantenemos sombra ligera gris para el desplegable */
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
     margin-top: 0.25rem; /* mt-1 */
     max-height: 15rem; /* max-h-60 */
@@ -126,7 +110,7 @@ body {
 }
 
 /* =================================================================== */
-/* ESTILOS DE TOOLTIP (Modo Oscuro, se mantiene para contraste) */
+/* ESTILOS DE TOOLTIP (Modo Oscuro) */
 /* =================================================================== */
 
 .tooltip-container {
@@ -134,47 +118,111 @@ body {
     display: inline-block;
 }
 
-/* El texto del tooltip */
 .tooltip-text {
-    visibility: hidden; /* Oculto por defecto */
+    visibility: hidden; 
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
-    background-color: #1f2937; /* bg-gray-800 - se mantiene oscuro para contraste */
+    background-color: #1f2937; /* bg-gray-800 */
     color: #ffffff;
     text-align: left;
     border-radius: 0.5rem; /* rounded-lg */
-    padding: 0.5rem 0.75rem; /* py-2 px-3 */
+    padding: 0.5rem 0.75rem; 
     position: absolute;
     z-index: 50;
     
-    top: 125%; /* Debajo del elemento */
+    top: 125%; 
     bottom: auto; 
     left: 50%;
-    transform: translateX(-50%); /* Centrarlo */
+    transform: translateX(-50%); 
     
     display: block !important;
 }
 
-/* Flecha del tooltip */
 .tooltip-text svg {
     position: absolute;
-    bottom: 100%; /* Arriba del tooltip */
+    bottom: 100%; 
     top: auto; 
     left: 0;
     width: 100%;
-    height: 0.5rem; /* h-2 */
-    color: #1f2937; /* text-gray-800 */
+    height: 0.5rem; 
+    color: #1f2937; 
 }
 
-/* Mostrar al hacer hover */
 .tooltip-container:hover .tooltip-text {
     visibility: visible;
     opacity: 1;
 }
 
-/* Ocultar en móvil (donde el hover no es ideal) */
 @media (max-width: 768px) {
     .tooltip-text {
         display: none !important;
     }
+}
+
+/* =================================================================== */
+/* Hero Section Dinámica (Carrusel SLIDE) */
+/* =================================================================== */
+/* FIX 1: ALTURA CONSOLIDADA PARA EVITAR EL CLS/SCROLL */
+.hero-section-bpd {
+    min-height: 250px;
+}
+
+/* Estilo base de los slides */
+.hero-slide {
+    pointer-events: auto; 
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; 
+    text-align: left; 
+    /* AJUSTE USUARIO: Sombra de texto eliminada */
+    text-shadow: none;
+}
+
+/* Estilos específicos para el slide de reglas */
+.hero-slide:nth-child(2) {
+    /* AJUSTE USUARIO: text-shadow: none; (eliminado por redundante) */
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+/* =================================================================== */
+/* ESTILOS PARA INPUT RANGE (SLIDER) CORREGIDO */
+/* Asegura que el relleno de color dorado se vea en el track */
+/* =================================================================== */
+
+.range-lg {
+  height: 8px; 
+  -webkit-appearance: none;
+  background: #cbd5e1; /* slate-300 - ESTO SERÁ SOBREESCRITO POR JS */
+  border-radius: 4px;
+}
+
+/* Estilo del thumb (círculo) para Chrome/Safari/Edge */
+.range-lg::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; 
+  height: 16px;
+  border-radius: 50%;
+  background: #d97706; /* amber-600 */
+  cursor: pointer;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.4);
+  margin-top: -4px;
+}
+
+/* Estilo del thumb para Firefox */
+.range-lg::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #d97706; /* amber-600 */
+  cursor: pointer;
+  border: none;
+}
+
+/* Estilo del track para Firefox - Importante para que el relleno del track funcione */
+.range-lg::-moz-range-track {
+  height: 8px;
+  background: #cbd5e1; 
+  border-radius: 4px;
 }
